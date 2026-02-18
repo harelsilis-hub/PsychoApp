@@ -79,7 +79,7 @@ const HomePage = () => {
           className="text-center mt-16"
         >
           <button
-            onClick={() => navigate('/sorting-hat')}
+            onClick={() => navigate('/placement-test')}
             className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
           >
             Get Started

@@ -37,6 +37,7 @@ class PlacementResponse(BaseModel):
 
     session: PlacementSessionInfo = Field(..., description="Current session information")
     word: WordResponse | None = Field(None, description="Next word to test (None if complete)")
+    distractors: list[WordResponse] = Field(default_factory=list, description="Distractor words (wrong answers for multiple choice)")
     is_complete: bool = Field(..., description="Whether the placement test is complete")
     message: str | None = Field(None, description="Completion message or additional info")
 
@@ -46,4 +47,5 @@ class PlacementStartResponse(BaseModel):
 
     session: PlacementSessionInfo = Field(..., description="Placement session information")
     word: WordResponse = Field(..., description="First word to test")
+    distractors: list[WordResponse] = Field(default_factory=list, description="Distractor words (wrong answers for multiple choice)")
     message: str = Field(default="Placement test started", description="Welcome message")

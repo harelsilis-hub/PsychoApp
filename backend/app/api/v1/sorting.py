@@ -54,13 +54,18 @@ async def start_placement_test(
             detail="Unable to find suitable word for placement test. Please ensure words exist in the database.",
         )
 
+    # Get distractors for multiple choice
+    distractors = await SortingHatService.get_distractors(db, word, count=3)
+
     # Convert to response schemas
     session_info = PlacementSessionInfo.model_validate(session)
     word_response = WordResponse.model_validate(word)
+    distractor_responses = [WordResponse.model_validate(d) for d in distractors]
 
     return PlacementStartResponse(
         session=session_info,
         word=word_response,
+        distractors=distractor_responses,
         message=f"Placement test started. Question {session.question_count + 1} of up to {SortingHatService.MAX_QUESTIONS}.",
     )
 
@@ -141,8 +146,10 @@ async def submit_placement_answer(
             ),
         )
 
-    # Test continues
+    # Test continues - get distractors for the next word
+    distractors = await SortingHatService.get_distractors(db, next_word, count=3)
     word_response = WordResponse.model_validate(next_word)
+    distractor_responses = [WordResponse.model_validate(d) for d in distractors]
 
     # Check if this is a regression question
     is_regression = updated_session.question_count % SortingHatService.REGRESSION_INTERVAL == 0
@@ -151,6 +158,7 @@ async def submit_placement_answer(
     return PlacementResponse(
         session=session_info,
         word=word_response,
+        distractors=distractor_responses,
         is_complete=False,
         message=(
             f"Question {updated_session.question_count + 1} of up to {SortingHatService.MAX_QUESTIONS}"

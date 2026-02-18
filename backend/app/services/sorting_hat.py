@@ -202,3 +202,47 @@ class SortingHatService:
         )
         result = await db.execute(stmt)
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_distractors(
+        db: AsyncSession, correct_word: Word, count: int = 3
+    ) -> list[Word]:
+        """
+        Get distractor words (wrong answers) for multiple choice.
+
+        Args:
+            db: Database session.
+            correct_word: The correct word.
+            count: Number of distractors to return (default 3).
+
+        Returns:
+            List of distractor Word instances.
+        """
+        # Get random words excluding the correct word
+        # Try to get words from a similar difficulty range for better distractors
+        difficulty_range = 20  # ±20 levels from the correct word
+
+        stmt = (
+            select(Word)
+            .where(Word.id != correct_word.id)
+            .where(Word.difficulty_rank >= max(1, correct_word.difficulty_rank - difficulty_range))
+            .where(Word.difficulty_rank <= min(100, correct_word.difficulty_rank + difficulty_range))
+            .order_by(func.random())
+            .limit(count * 2)  # Get more to ensure we have enough
+        )
+        result = await db.execute(stmt)
+        candidates = result.scalars().all()
+
+        # If we don't have enough from the same range, get any random words
+        if len(candidates) < count:
+            stmt = (
+                select(Word)
+                .where(Word.id != correct_word.id)
+                .order_by(func.random())
+                .limit(count)
+            )
+            result = await db.execute(stmt)
+            candidates = result.scalars().all()
+
+        # Return the requested number of distractors
+        return list(candidates[:count])
