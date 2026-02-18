@@ -1,7 +1,9 @@
 import { BookOpen, Brain, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="container mx-auto px-4 py-16">
@@ -76,7 +78,10 @@ const HomePage = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="text-center mt-16"
         >
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all">
+          <button
+            onClick={() => navigate('/sorting-hat')}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl text-lg font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+          >
             Get Started
           </button>
           <p className="mt-4 text-gray-500">
