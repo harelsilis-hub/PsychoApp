@@ -11,4 +11,6 @@ services:
       - key: DATABASE_URL
         value: sqlite+aiosqlite:///./vocabulary.db
       - key: ALLOWED_ORIGINS
-        value: https://your-vercel-app.vercel.app   # replace after Vercel deploy
+        value: https://frontend-one-mu-68.vercel.app
+      - key: PYTHON_VERSION
+        value: 3.11.0
