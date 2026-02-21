@@ -23,4 +23,9 @@ export const progressAPI = {
     const response = await apiClient.get('/v1/progress/unit-stats');
     return response.data;
   },
+
+  resetUnitProgress: async (unitNumber) => {
+    const response = await apiClient.delete(`/v1/progress/unit/${unitNumber}/reset`);
+    return response.data;
+  },
 };

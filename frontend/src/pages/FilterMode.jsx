@@ -20,6 +20,7 @@ const FilterMode = () => {
   const [slideDir, setSlideDir] = useState(null); // 'left' | 'right'
   const [done, setDone] = useState(false);         // all words exhausted without 10 unknowns
   const [isFlipped, setIsFlipped] = useState(false); // show Hebrew translation
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     reviewAPI.getFilterWords(unitNum)
@@ -95,6 +96,22 @@ const FilterMode = () => {
     );
   }
 
+  const handleReset = async () => {
+    setIsResetting(true);
+    try {
+      await progressAPI.resetUnitProgress(unitNum);
+      const data = await reviewAPI.getFilterWords(unitNum);
+      setWords(data.words || []);
+      setIndex(0);
+      setUnknowns([]);
+      setDone(false);
+    } catch (err) {
+      console.error('Reset failed:', err);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // ── No words / all mastered ────────────────────────────────
   if (!loading && words.length === 0) {
     return (
@@ -109,12 +126,21 @@ const FilterMode = () => {
           <p className="text-gray-500 mb-6">
             You've already mastered all words in Unit {unitNum}. Try the quiz to consolidate your knowledge.
           </p>
-          <button
-            onClick={() => navigate(`/unit/${unitNum}`)}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
-          >
-            Back to Unit
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate(`/unit/${unitNum}`)}
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
+            >
+              Back to Unit
+            </button>
+            <button
+              onClick={handleReset}
+              disabled={isResetting}
+              className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              {isResetting ? 'Resetting…' : 'Reset & Re-filter Unit'}
+            </button>
+          </div>
         </motion.div>
       </div>
     );

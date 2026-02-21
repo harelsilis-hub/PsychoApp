@@ -2,10 +2,13 @@
 Progress API endpoints - User progress tracking and triage mode.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.word import Word
+from app.models.user_word_progress import UserWordProgress
 from app.services.progress import ProgressService
 from app.schemas.progress import (
     TriageUpdate,
@@ -68,6 +71,35 @@ async def get_unit_progress_stats(
     """
     stats = await ProgressService.get_unit_stats(db, current_user.id)
     return stats
+
+
+@router.delete("/unit/{unit_number}/reset")
+async def reset_unit_progress(
+    unit_number: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Delete all word progress records for a unit, resetting words to New status."""
+    if unit_number < 1 or unit_number > 10:
+        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+
+    try:
+        word_ids_stmt = select(Word.id).where(Word.unit == unit_number)
+        result = await db.execute(word_ids_stmt)
+        word_ids = [row[0] for row in result.all()]
+
+        if word_ids:
+            await db.execute(
+                delete(UserWordProgress).where(
+                    UserWordProgress.user_id == current_user.id,
+                    UserWordProgress.word_id.in_(word_ids),
+                )
+            )
+            await db.commit()
+
+        return {"success": True, "reset_count": len(word_ids)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset unit: {str(e)}")
 
 
 @router.get("/triage/next", response_model=dict)
