@@ -44,6 +44,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             "UPDATE users SET current_streak = 1 WHERE current_streak = 0",
             "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
+            # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
+            "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
+            "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
+            "UPDATE words SET hebrew = '\u05e2\u05d5\u05d1\u05e8' WHERE english = 'embryo'  AND length(hebrew) <= 2",
         ]
         for migration_sql in migrations:
             try:
