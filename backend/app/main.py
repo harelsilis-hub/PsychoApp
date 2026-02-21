@@ -2,6 +2,7 @@
 Main FastAPI application entry point.
 Initializes the database and sets up routes.
 """
+import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI
@@ -66,9 +67,13 @@ app = FastAPI(
 )
 
 # CORS middleware configuration
+# Set ALLOWED_ORIGINS env var in production, e.g. "https://your-app.vercel.app"
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000")
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Update with specific origins in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
