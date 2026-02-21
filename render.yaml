@@ -11,6 +11,6 @@ services:
       - key: DATABASE_URL
         value: sqlite+aiosqlite:///./vocabulary.db
       - key: ALLOWED_ORIGINS
-        value: https://frontend-one-mu-68.vercel.app
+        value: https://psychoapp-il.vercel.app,https://frontend-one-mu-68.vercel.app
       - key: PYTHON_VERSION
         value: 3.11.0
