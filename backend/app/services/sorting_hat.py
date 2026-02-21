@@ -20,6 +20,26 @@ class SortingHatService:
     REGRESSION_PERCENTAGE = 0.20  # 20% lower than current_min
     MIN_RANGE_THRESHOLD = 5  # Stop when range is smaller than this
     MAX_QUESTIONS = 20  # Maximum number of questions
+    MAX_LEVEL = 20  # Maximum level (1-20 scale)
+
+    @staticmethod
+    def difficulty_rank_to_level(difficulty_rank: int) -> int:
+        """
+        Convert difficulty_rank (1-100) to level (1-20).
+
+        Formula: ceil(difficulty_rank / 5)
+        - difficulty_rank 1-5 → Level 1
+        - difficulty_rank 6-10 → Level 2
+        - difficulty_rank 96-100 → Level 20
+
+        Args:
+            difficulty_rank: The difficulty rank (1-100).
+
+        Returns:
+            Level (1-20).
+        """
+        import math
+        return min(SortingHatService.MAX_LEVEL, max(1, math.ceil(difficulty_rank / 5)))
 
     @staticmethod
     async def get_next_word(
@@ -124,8 +144,10 @@ class SortingHatService:
         if is_complete:
             # Placement test is complete
             session.is_active = False
-            # Final level is the midpoint of the final range
-            session.final_level = (session.current_min + session.current_max) // 2
+            # Final difficulty_rank is the midpoint of the final range
+            final_difficulty_rank = (session.current_min + session.current_max) // 2
+            # Convert difficulty_rank (1-100) to level (1-20)
+            session.final_level = SortingHatService.difficulty_rank_to_level(final_difficulty_rank)
 
             # Update the user's level in the database
             from app.models.user import User
@@ -155,10 +177,13 @@ class SortingHatService:
             New PlacementSession instance.
         """
         # Check if user already has an active placement session
+        # Get the most recent one if multiple exist
         stmt = (
             select(PlacementSession)
             .where(PlacementSession.user_id == user_id)
             .where(PlacementSession.is_active == True)
+            .order_by(PlacementSession.created_at.desc())
+            .limit(1)
         )
         result = await db.execute(stmt)
         existing_session = result.scalar_one_or_none()
@@ -199,6 +224,8 @@ class SortingHatService:
             select(PlacementSession)
             .where(PlacementSession.user_id == user_id)
             .where(PlacementSession.is_active == True)
+            .order_by(PlacementSession.created_at.desc())
+            .limit(1)
         )
         result = await db.execute(stmt)
         return result.scalar_one_or_none()

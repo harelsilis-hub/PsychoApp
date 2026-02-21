@@ -14,14 +14,11 @@ const SortingHatPage = () => {
   const [error, setError] = useState(null);
   const [isRegressionCheck, setIsRegressionCheck] = useState(false);
 
-  // For demo purposes - in production, get from auth context
-  const userId = 1;
-
   const startTest = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await sortingAPI.startPlacementTest(userId);
+      const data = await sortingAPI.startPlacementTest();
       setSession(data.session);
       setCurrentWord(data.word);
       setStage('testing');
@@ -38,7 +35,7 @@ const SortingHatPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await sortingAPI.submitAnswer(userId, isKnown);
+      const data = await sortingAPI.submitAnswer(isKnown);
       setSession(data.session);
 
       if (data.is_complete) {

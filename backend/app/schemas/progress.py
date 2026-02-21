@@ -49,5 +49,40 @@ class ProgressUpdate(BaseModel):
 class ReviewResult(BaseModel):
     """Schema for submitting a review result."""
 
+    user_id: int | None = Field(None, description="User ID (ignored — taken from JWT token)")
     word_id: int = Field(..., description="Word ID being reviewed")
     quality: int = Field(..., ge=0, le=5, description="Quality of recall (0-5 for SM-2)")
+
+
+class TriageUpdate(BaseModel):
+    """Schema for triage mode word sorting."""
+
+    user_id: int | None = Field(None, description="User ID (ignored — taken from JWT token)")
+    word_id: int = Field(..., description="Word ID")
+    is_known: bool = Field(..., description="True if user knows the word (Mastered), False if learning")
+
+
+class TriageResponse(BaseModel):
+    """Schema for triage update response."""
+
+    success: bool = Field(..., description="Whether the update was successful")
+    status: str = Field(..., description="New status of the word (Mastered or Learning)")
+    message: str = Field(..., description="Status message")
+
+
+class UserStatsResponse(BaseModel):
+    """Schema for user statistics and dashboard data."""
+
+    user_id: int = Field(..., description="User ID")
+    level: int = Field(..., description="User's current level from placement test")
+    xp: int = Field(..., description="User's experience points")
+    words_mastered: int = Field(..., description="Number of mastered words")
+    words_learning: int = Field(..., description="Number of words in learning queue")
+    words_in_review: int = Field(..., description="Number of words in review status")
+    total_words: int = Field(..., description="Total words in database")
+    due_count: int = Field(default=0, description="Number of words due for review now")
+    new_learning_count: int = Field(default=0, description="Number of new learning words ready to review")
+    reviews_today: int = Field(default=0, description="Number of reviews completed today")
+    current_streak: int = Field(default=0)
+    daily_words_reviewed: int = Field(default=0)
+    daily_goal: int = Field(default=15)

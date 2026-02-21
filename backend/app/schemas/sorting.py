@@ -8,7 +8,7 @@ from app.schemas.word import WordResponse
 class PlacementStart(BaseModel):
     """Schema for starting a new placement test."""
 
-    user_id: int = Field(..., description="User ID for the placement test")
+    user_id: int | None = Field(None, description="User ID (ignored — taken from JWT token)")
 
 
 class PlacementUpdate(BaseModel):

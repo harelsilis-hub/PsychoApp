@@ -1,6 +1,7 @@
 """User model definition."""
-from typing import List, TYPE_CHECKING
-from sqlalchemy import String, Integer
+from datetime import date
+from typing import List, Optional, TYPE_CHECKING
+from sqlalchemy import String, Integer, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -32,6 +33,9 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    daily_words_reviewed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 
     # Relationships
     progress: Mapped[List["UserWordProgress"]] = relationship(

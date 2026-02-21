@@ -1,178 +1,111 @@
 """
-Seed script for psychometric vocabulary words.
-Populates the database with 60 words evenly distributed across difficulty levels 1-100.
+Seed script for Israeli Psychometric Entrance Test vocabulary.
+SOURCE: database_english.json (project root) — no words generated manually.
+
+Unit assignment:
+- 10 units → each word is assigned its source unit number (1-10)
 """
 import asyncio
+import json
 import sys
-from sqlalchemy import select, delete
+from pathlib import Path
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import engine, AsyncSessionLocal, Base
 from app.models.word import Word
 
-
-# 60 psychometric words distributed across 10 difficulty levels (1-10 mapped to 1-100 scale)
-# Each level has 6 words
-PSYCHOMETRIC_WORDS = [
-    # Level 1 (1-10) - Very Basic Words
-    {"english": "cat", "hebrew": "חתול", "difficulty_rank": 5},
-    {"english": "dog", "hebrew": "כלב", "difficulty_rank": 5},
-    {"english": "book", "hebrew": "ספר", "difficulty_rank": 7},
-    {"english": "water", "hebrew": "מים", "difficulty_rank": 3},
-    {"english": "house", "hebrew": "בית", "difficulty_rank": 4},
-    {"english": "food", "hebrew": "אוכל", "difficulty_rank": 6},
-
-    # Level 2 (11-20) - Basic Words
-    {"english": "table", "hebrew": "שולחן", "difficulty_rank": 12},
-    {"english": "chair", "hebrew": "כיסא", "difficulty_rank": 13},
-    {"english": "window", "hebrew": "חלון", "difficulty_rank": 15},
-    {"english": "door", "hebrew": "דלת", "difficulty_rank": 14},
-    {"english": "friend", "hebrew": "חבר", "difficulty_rank": 16},
-    {"english": "family", "hebrew": "משפחה", "difficulty_rank": 18},
-
-    # Level 3 (21-30) - Elementary Words
-    {"english": "happy", "hebrew": "שמח", "difficulty_rank": 22},
-    {"english": "beautiful", "hebrew": "יפה", "difficulty_rank": 24},
-    {"english": "difficult", "hebrew": "קשה", "difficulty_rank": 26},
-    {"english": "important", "hebrew": "חשוב", "difficulty_rank": 28},
-    {"english": "question", "hebrew": "שאלה", "difficulty_rank": 25},
-    {"english": "answer", "hebrew": "תשובה", "difficulty_rank": 27},
-
-    # Level 4 (31-40) - Intermediate Words
-    {"english": "knowledge", "hebrew": "ידע", "difficulty_rank": 33},
-    {"english": "wisdom", "hebrew": "חוכמה", "difficulty_rank": 35},
-    {"english": "strength", "hebrew": "כוח", "difficulty_rank": 37},
-    {"english": "courage", "hebrew": "אומץ", "difficulty_rank": 36},
-    {"english": "patient", "hebrew": "סבלני", "difficulty_rank": 38},
-    {"english": "careful", "hebrew": "זהיר", "difficulty_rank": 34},
-
-    # Level 5 (41-50) - Upper Intermediate
-    {"english": "achieve", "hebrew": "להשיג", "difficulty_rank": 43},
-    {"english": "develop", "hebrew": "לפתח", "difficulty_rank": 45},
-    {"english": "analyze", "hebrew": "לנתח", "difficulty_rank": 47},
-    {"english": "comprehend", "hebrew": "להבין", "difficulty_rank": 46},
-    {"english": "significant", "hebrew": "משמעותי", "difficulty_rank": 48},
-    {"english": "relevant", "hebrew": "רלוונטי", "difficulty_rank": 44},
-
-    # Level 6 (51-60) - Advanced
-    {"english": "abate", "hebrew": "לדעוך", "difficulty_rank": 53},
-    {"english": "benevolent", "hebrew": "נדיב לב", "difficulty_rank": 55},
-    {"english": "candid", "hebrew": "כן", "difficulty_rank": 57},
-    {"english": "diligent", "hebrew": "חרוץ", "difficulty_rank": 56},
-    {"english": "eloquent", "hebrew": "רהוט", "difficulty_rank": 58},
-    {"english": "frugal", "hebrew": "חסכני", "difficulty_rank": 54},
-
-    # Level 7 (61-70) - Sophisticated
-    {"english": "gregarious", "hebrew": "חברותי", "difficulty_rank": 63},
-    {"english": "hypothesis", "hebrew": "השערה", "difficulty_rank": 65},
-    {"english": "impartial", "hebrew": "חסר פניות", "difficulty_rank": 67},
-    {"english": "judicious", "hebrew": "שיפוטי", "difficulty_rank": 66},
-    {"english": "meticulous", "hebrew": "קפדן", "difficulty_rank": 68},
-    {"english": "notorious", "hebrew": "ידוע לשמצה", "difficulty_rank": 64},
-
-    # Level 8 (71-80) - Expert
-    {"english": "ostentatious", "hebrew": "ראוותני", "difficulty_rank": 73},
-    {"english": "paradigm", "hebrew": "פרדיגמה", "difficulty_rank": 75},
-    {"english": "quintessential", "hebrew": "מהותי", "difficulty_rank": 77},
-    {"english": "resilient", "hebrew": "עמיד", "difficulty_rank": 76},
-    {"english": "sagacious", "hebrew": "נבון", "difficulty_rank": 78},
-    {"english": "tenacious", "hebrew": "עיקש", "difficulty_rank": 74},
-
-    # Level 9 (81-90) - Master
-    {"english": "ephemeral", "hebrew": "חולף", "difficulty_rank": 83},
-    {"english": "ubiquitous", "hebrew": "נמצא בכל מקום", "difficulty_rank": 85},
-    {"english": "vicarious", "hebrew": "עקיף", "difficulty_rank": 87},
-    {"english": "whimsical", "hebrew": "גחמני", "difficulty_rank": 86},
-    {"english": "zealous", "hebrew": "נלהב", "difficulty_rank": 88},
-    {"english": "abstruse", "hebrew": "סתום", "difficulty_rank": 84},
-
-    # Level 10 (91-100) - Expert/Academic
-    {"english": "inscrutable", "hebrew": "בלתי חדיר", "difficulty_rank": 93},
-    {"english": "perspicacious", "hebrew": "חד ראייה", "difficulty_rank": 95},
-    {"english": "recondite", "hebrew": "מעמיק", "difficulty_rank": 97},
-    {"english": "sagacity", "hebrew": "תבונה", "difficulty_rank": 96},
-    {"english": "verisimilitude", "hebrew": "דמיון לאמת", "difficulty_rank": 98},
-    {"english": "equivocal", "hebrew": "דו משמעי", "difficulty_rank": 94},
-]
+# Resolve JSON path relative to this file (PsychoApp/database_english.json)
+JSON_PATH = Path(__file__).resolve().parent.parent.parent / "database_english.json"
 
 
-async def seed_words(session: AsyncSession):
-    """Seed the database with psychometric words."""
-    print("\n[SEEDING] Starting psychometric word seeding...")
+def load_words_from_json() -> list[dict]:
+    """Read database_english.json and return list of word dicts with unit."""
+    if not JSON_PATH.exists():
+        raise FileNotFoundError(f"JSON file not found at: {JSON_PATH}")
 
-    # Check if words already exist
-    stmt = select(Word).limit(1)
-    result = await session.execute(stmt)
-    existing = result.scalar_one_or_none()
+    with open(JSON_PATH, encoding="utf-8") as f:
+        data = json.load(f)
 
-    if existing:
-        print("[WARNING] Words already exist in database.")
-        print("[INFO] Clearing existing words and re-seeding...")
+    words = []
+    units = sorted(data.keys(), key=lambda u: int(u.split()[-1]))  # sort Unit 1..10
 
-        # Clear existing words
-        await session.execute(delete(Word))
-        await session.commit()
-        print("[CLEARED] Existing words deleted.")
+    for unit_idx, unit_name in enumerate(units):
+        unit_number = unit_idx + 1  # 1-based
 
-    # Insert words
-    words_added = 0
-    for word_data in PSYCHOMETRIC_WORDS:
-        word = Word(
-            english=word_data["english"],
-            hebrew=word_data["hebrew"],
-            difficulty_rank=word_data["difficulty_rank"]
-        )
-        session.add(word)
-        words_added += 1
+        entries = data[unit_name]
+        for english, hebrew in entries.items():
+            words.append({
+                "english": english,
+                "hebrew": hebrew,
+                "unit": unit_number,
+            })
 
+    return words
+
+
+async def seed_words(session: AsyncSession, words: list[dict]):
+    """Wipe Words table and insert all words from JSON."""
+    print("\n" + "=" * 60)
+    print("  PSYCHOMETRIC VOCABULARY SEEDER — database_english.json")
+    print("=" * 60)
+
+    # Step 1: Wipe
+    print(f"\n[1/4] Wiping Words table...")
+    await session.execute(delete(Word))
     await session.commit()
-    print(f"[SUCCESS] Added {words_added} psychometric words to database.")
+    print("      Done — table is empty.")
 
-    # Verify seeding
-    stmt = select(Word)
-    result = await session.execute(stmt)
-    total_words = len(result.scalars().all())
-    print(f"[VERIFY] Total words in database: {total_words}")
+    # Step 2: Insert
+    print(f"\n[2/4] Inserting {len(words)} words from JSON...")
+    for w in words:
+        session.add(Word(
+            english=w["english"],
+            hebrew=w["hebrew"],
+            unit=w["unit"],
+        ))
+    await session.commit()
+    print("      Insert committed.")
 
-    # Show difficulty distribution
-    print("\n[DISTRIBUTION] Words by difficulty level:")
-    for level in range(1, 11):
-        min_rank = (level - 1) * 10 + 1
-        max_rank = level * 10
-        stmt = select(Word).where(
-            Word.difficulty_rank >= min_rank,
-            Word.difficulty_rank <= max_rank
-        )
-        result = await session.execute(stmt)
-        count = len(result.scalars().all())
-        print(f"  Level {level} ({min_rank}-{max_rank}): {count} words")
+    # Step 3: Verify count
+    print(f"\n[3/4] Verifying count...")
+    result = await session.execute(select(func.count()).select_from(Word))
+    total = result.scalar_one()
+    print(f"      Total words in DB: {total}")
+
+    # Step 4: Cross-check
+    print(f"\n[4/4] Cross-check against JSON...")
+    expected = len(words)
+    if total == expected:
+        print(f"      PASS — DB count ({total}) matches JSON ({expected})")
+    else:
+        print(f"      FAIL — DB count ({total}) != JSON ({expected})")
+
+    print("\n" + "=" * 60)
+    print(f"  TOTAL WORDS IN DATABASE: {total}")
+    print("=" * 60 + "\n")
 
 
 async def main():
-    """Main function to run the seeder."""
-    print("=" * 60)
-    print("PSYCHOMETRIC VOCABULARY DATA SEEDER")
-    print("=" * 60)
+    print(f"Reading from: {JSON_PATH}")
+    words = load_words_from_json()
+    print(f"Loaded {len(words)} words from JSON.")
 
-    # Create tables if they don't exist
+    # Drop and recreate all tables (full schema reset)
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
-    # Seed the data
     async with AsyncSessionLocal() as session:
-        await seed_words(session)
-
-    print("\n[COMPLETE] Seeding complete!")
-    print("=" * 60)
+        await seed_words(session, words)
 
 
 if __name__ == "__main__":
-    # Handle Windows encoding
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         try:
-            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stdout.reconfigure(encoding="utf-8")
         except AttributeError:
             import codecs
-            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+            sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
     asyncio.run(main())

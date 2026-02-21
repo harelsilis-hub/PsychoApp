@@ -7,7 +7,7 @@ class WordBase(BaseModel):
 
     english: str = Field(..., description="English translation")
     hebrew: str = Field(..., description="Hebrew word")
-    difficulty_rank: int = Field(..., ge=1, le=100, description="Difficulty ranking (1-100)")
+    unit: int = Field(..., ge=1, le=10, description="Unit number (1-10)")
 
 
 class WordCreate(WordBase):
@@ -21,6 +21,12 @@ class WordResponse(WordBase):
 
     id: int = Field(..., description="Word's unique identifier")
     audio_url: str | None = Field(None, description="URL to pronunciation audio")
+    global_difficulty_level: int | None = Field(
+        None,
+        ge=1,
+        le=20,
+        description="Crowd-sourced difficulty level (1=easiest, 20=hardest). Null until first recalculation.",
+    )
 
     model_config = {"from_attributes": True}
 
@@ -30,5 +36,5 @@ class WordUpdate(BaseModel):
 
     english: str | None = Field(None, description="English translation")
     hebrew: str | None = Field(None, description="Hebrew word")
-    difficulty_rank: int | None = Field(None, ge=1, le=100, description="Difficulty ranking")
+    unit: int | None = Field(None, ge=1, le=10, description="Unit number (1-10)")
     audio_url: str | None = Field(None, description="URL to pronunciation audio")

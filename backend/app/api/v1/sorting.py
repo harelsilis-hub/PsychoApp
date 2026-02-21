@@ -1,13 +1,11 @@
 """
 Sorting Hat API endpoints - Adaptive placement test.
-
-This module provides endpoints for the "Sorting Hat" adaptive vocabulary
-placement test using binary search algorithm.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
+from app.models.user import User
 from app.services.sorting_hat import SortingHatService
 from app.schemas.sorting import (
     PlacementStart,
@@ -17,47 +15,32 @@ from app.schemas.sorting import (
     PlacementSessionInfo,
 )
 from app.schemas.word import WordResponse
+from app.auth.dependencies import get_current_user
 
 router = APIRouter()
 
 
 @router.post("/start", response_model=PlacementStartResponse, status_code=status.HTTP_201_CREATED)
 async def start_placement_test(
-    placement_data: PlacementStart,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> PlacementStartResponse:
     """
     Start a new placement test session.
-
     Creates a new placement session and returns the first word to test.
-    If an active session already exists, returns that session with its next word.
-
-    Args:
-        placement_data: Contains user_id for the placement test.
-        db: Database session.
-
-    Returns:
-        PlacementStartResponse with session info and first word.
-
-    Raises:
-        HTTPException: If word selection fails.
     """
-    # Create or get existing session
-    session = await SortingHatService.create_session(db, placement_data.user_id)
+    session = await SortingHatService.create_session(db, current_user.id)
 
-    # Get the first word
     word = await SortingHatService.get_next_word(db, session)
 
     if not word:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unable to find suitable word for placement test. Please ensure words exist in the database.",
+            detail="Unable to find suitable word for placement test.",
         )
 
-    # Get distractors for multiple choice
     distractors = await SortingHatService.get_distractors(db, word, count=3)
 
-    # Convert to response schemas
     session_info = PlacementSessionInfo.model_validate(session)
     word_response = WordResponse.model_validate(word)
     distractor_responses = [WordResponse.model_validate(d) for d in distractors]
@@ -73,28 +56,11 @@ async def start_placement_test(
 @router.post("/answer", response_model=PlacementResponse)
 async def submit_placement_answer(
     answer_data: PlacementUpdate,
-    user_id: int,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> PlacementResponse:
-    """
-    Submit an answer to the current placement question.
-
-    Updates the placement session based on the answer and returns either
-    the next word or the completion status with final level.
-
-    Args:
-        answer_data: Contains is_known boolean for the answer.
-        user_id: User ID (should match the active session).
-        db: Database session.
-
-    Returns:
-        PlacementResponse with updated session, next word (if continuing), or completion status.
-
-    Raises:
-        HTTPException: If no active session found or word selection fails.
-    """
-    # Get active session
-    session = await SortingHatService.get_active_session(db, user_id)
+    """Submit an answer to the current placement question."""
+    session = await SortingHatService.get_active_session(db, current_user.id)
 
     if not session:
         raise HTTPException(
@@ -102,16 +68,13 @@ async def submit_placement_answer(
             detail="No active placement session found. Please start a new placement test.",
         )
 
-    # Submit answer and update session
     updated_session, is_complete = await SortingHatService.submit_answer(
         db, session, answer_data.is_known
     )
 
-    # Prepare response
     session_info = PlacementSessionInfo.model_validate(updated_session)
 
     if is_complete:
-        # Test complete
         return PlacementResponse(
             session=session_info,
             word=None,
@@ -123,11 +86,9 @@ async def submit_placement_answer(
             ),
         )
 
-    # Get next word
     next_word = await SortingHatService.get_next_word(db, updated_session)
 
     if not next_word:
-        # No more suitable words, end the test
         updated_session.is_active = False
         updated_session.final_level = (updated_session.current_min + updated_session.current_max) // 2
         db.add(updated_session)
@@ -146,12 +107,10 @@ async def submit_placement_answer(
             ),
         )
 
-    # Test continues - get distractors for the next word
     distractors = await SortingHatService.get_distractors(db, next_word, count=3)
     word_response = WordResponse.model_validate(next_word)
     distractor_responses = [WordResponse.model_validate(d) for d in distractors]
 
-    # Check if this is a regression question
     is_regression = updated_session.question_count % SortingHatService.REGRESSION_INTERVAL == 0
     regression_hint = " (Regression check)" if is_regression else ""
 
@@ -167,25 +126,13 @@ async def submit_placement_answer(
     )
 
 
-@router.get("/session/{user_id}", response_model=PlacementSessionInfo)
+@router.get("/session", response_model=PlacementSessionInfo)
 async def get_placement_session(
-    user_id: int,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> PlacementSessionInfo:
-    """
-    Get the active placement session for a user.
-
-    Args:
-        user_id: User ID.
-        db: Database session.
-
-    Returns:
-        PlacementSessionInfo for the active session.
-
-    Raises:
-        HTTPException: If no active session found.
-    """
-    session = await SortingHatService.get_active_session(db, user_id)
+    """Get the active placement session for the current user."""
+    session = await SortingHatService.get_active_session(db, current_user.id)
 
     if not session:
         raise HTTPException(

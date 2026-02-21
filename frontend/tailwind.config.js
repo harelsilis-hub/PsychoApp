@@ -22,5 +22,23 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }) {
+      const newUtilities = {
+        '.backface-hidden': {
+          'backface-visibility': 'hidden',
+        },
+        '.preserve-3d': {
+          'transform-style': 'preserve-3d',
+        },
+        '.rotateY-180': {
+          transform: 'rotateY(180deg)',
+        },
+        '.perspective-1000': {
+          perspective: '1000px',
+        },
+      };
+      addUtilities(newUtilities);
+    },
+  ],
 }

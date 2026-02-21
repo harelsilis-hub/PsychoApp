@@ -1,41 +1,41 @@
 import axios from 'axios';
 
-// Create axios instance with base configuration
 const apiClient = axios.create({
-  baseURL: '/api', // This will be proxied to http://localhost:8000/api by Vite
+  baseURL: '/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds
+  timeout: 10000,
 });
 
-// Request interceptor for adding auth tokens if needed
+// Attach JWT token to every request
 apiClient.interceptors.request.use(
   (config) => {
-    // You can add auth tokens here later
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Handle 401 — clear session and redirect to login
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response) {
-      // Server responded with error status
+    if (error.response?.status === 401) {
+      // Only redirect if we're not already on the login page
+      if (!window.location.pathname.startsWith('/login')) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+        window.location.href = '/login';
+      }
+    } else if (error.response) {
       console.error('API Error:', error.response.data);
     } else if (error.request) {
-      // Request made but no response received
       console.error('Network Error:', error.message);
     } else {
-      // Something else happened
       console.error('Error:', error.message);
     }
     return Promise.reject(error);

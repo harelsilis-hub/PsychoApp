@@ -137,7 +137,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
             className="grid md:grid-cols-2 gap-4"
           >
             <button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <span>Continue to Dashboard</span>

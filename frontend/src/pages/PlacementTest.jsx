@@ -14,17 +14,39 @@ const PlacementTest = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [feedback, setFeedback] = useState(null); // 'correct' or 'incorrect'
+  const [countdown, setCountdown] = useState(3);
 
-  // For demo purposes - in production, get from auth context
-  const userId = 1;
+
+  // Helper function to calculate level from difficulty_rank (1-100 → 1-20)
+  const calculateLevel = (difficultyRank) => {
+    return Math.ceil(difficultyRank / 5);
+  };
 
   useEffect(() => {
     startTest();
   }, []);
 
+  // Auto-redirect to dashboard after test completion
+  useEffect(() => {
+    if (stage === 'complete') {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            navigate('/dashboard');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [stage, navigate]);
+
   const startTest = async () => {
     try {
-      const data = await sortingAPI.startPlacementTest(userId);
+      const data = await sortingAPI.startPlacementTest();
       setSession(data.session);
       setCurrentWord(data.word);
 
@@ -56,7 +78,38 @@ const PlacementTest = () => {
 
     try {
       // Submit answer to backend (is_known = isCorrect)
-      const data = await sortingAPI.submitAnswer(userId, isCorrect);
+      const data = await sortingAPI.submitAnswer(isCorrect);
+      setSession(data.session);
+
+      if (data.is_complete) {
+        setStage('complete');
+      } else {
+        // Prepare next question
+        setCurrentWord(data.word);
+        const allOptions = [data.word, ...data.distractors];
+        const shuffled = allOptions.sort(() => Math.random() - 0.5);
+        setOptions(shuffled);
+
+        // Reset for next question
+        setSelectedAnswer(null);
+        setFeedback(null);
+        setIsSubmitting(false);
+      }
+    } catch (err) {
+      console.error('Failed to submit answer:', err);
+      setError('Failed to submit answer. Please try again.');
+      setStage('error');
+    }
+  };
+
+  const handleDontKnow = async () => {
+    if (isSubmitting) return; // Prevent double clicks
+
+    setIsSubmitting(true);
+
+    try {
+      // Submit as "don't know" (is_known = false)
+      const data = await sortingAPI.submitAnswer(false);
       setSession(data.session);
 
       if (data.is_complete) {
@@ -81,10 +134,10 @@ const PlacementTest = () => {
   };
 
   const getAchievement = (level) => {
-    if (level >= 80) return { title: 'Master', color: 'from-yellow-400 to-orange-500', emoji: '🏆' };
-    if (level >= 60) return { title: 'Advanced', color: 'from-purple-400 to-pink-500', emoji: '⭐' };
-    if (level >= 40) return { title: 'Intermediate', color: 'from-blue-400 to-cyan-500', emoji: '💫' };
-    if (level >= 20) return { title: 'Beginner', color: 'from-green-400 to-emerald-500', emoji: '🌱' };
+    if (level >= 17) return { title: 'Master', color: 'from-yellow-400 to-orange-500', emoji: '🏆' };
+    if (level >= 13) return { title: 'Advanced', color: 'from-purple-400 to-pink-500', emoji: '⭐' };
+    if (level >= 9) return { title: 'Intermediate', color: 'from-blue-400 to-cyan-500', emoji: '💫' };
+    if (level >= 5) return { title: 'Beginner', color: 'from-green-400 to-emerald-500', emoji: '🌱' };
     return { title: 'Starter', color: 'from-gray-400 to-gray-500', emoji: '🎯' };
   };
 
@@ -179,7 +232,7 @@ const PlacementTest = () => {
                       {currentWord.english}
                     </h2>
                     <div className="text-sm text-gray-400">
-                      Difficulty Level: {currentWord.difficulty_rank}
+                      Level {calculateLevel(currentWord.difficulty_rank)} of 20
                     </div>
                   </motion.div>
                 </div>
@@ -224,6 +277,23 @@ const PlacementTest = () => {
                       </motion.button>
                     );
                   })}
+                </motion.div>
+
+                {/* I Don't Know Button */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  className="mt-6"
+                >
+                  <button
+                    onClick={handleDontKnow}
+                    disabled={isSubmitting || selectedAnswer}
+                    className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-4 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <span>I Don't Know</span>
+                    <span className="text-sm opacity-75">(Skip)</span>
+                  </button>
                 </motion.div>
 
                 {/* Loading Indicator */}
@@ -304,6 +374,9 @@ const PlacementTest = () => {
                 <div className="text-xl font-semibold opacity-90">
                   {achievement.title}
                 </div>
+                <div className="text-sm opacity-75 mt-2">
+                  of 20 levels
+                </div>
               </div>
             </motion.div>
 
@@ -324,17 +397,18 @@ const PlacementTest = () => {
               </div>
             </motion.div>
 
-            {/* Action Button */}
+            {/* Action Button with Countdown */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
             >
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/dashboard')}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
               >
                 <span>Continue to Dashboard</span>
+                {countdown > 0 && <span className="text-sm opacity-75">({countdown}s)</span>}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </motion.div>
