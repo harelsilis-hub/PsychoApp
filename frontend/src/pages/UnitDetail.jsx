@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, BookOpen, Brain } from 'lucide-react';
+import { ArrowLeft, Zap, BookOpen, Brain, List } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 
@@ -74,6 +74,19 @@ const UnitDetail = () => {
       btnGrad:    'from-emerald-400 to-teal-500',
       btnShadow:  'shadow-emerald-200/60',
       onClick:    () => navigate(`/unit/${unitNum}/quiz`),
+    },
+    {
+      icon:       <List className="w-6 h-6 text-white" />,
+      iconBg:     'bg-gradient-to-br from-sky-500 to-blue-600',
+      iconShadow: 'shadow-blue-300/60',
+      topBar:     'from-sky-500 to-blue-600',
+      title:      'Word List',
+      subtitle:   'Browse all words & translations',
+      detail:     `All ${total} words in Unit ${unitNum} in one scrollable list with English and Hebrew side by side. Use the search bar to instantly find any word.`,
+      cta:        'View All Words',
+      btnGrad:    'from-sky-500 to-blue-600',
+      btnShadow:  'shadow-blue-200/60',
+      onClick:    () => navigate(`/unit/${unitNum}/words`),
     },
   ];
 
@@ -185,7 +198,7 @@ const UnitDetail = () => {
         <div className="max-w-5xl mx-auto w-full">
 
           {/* 3-column card grid — h-auto, no forced stretching */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {actions.map((action, i) => (
               <motion.button
                 key={action.title}

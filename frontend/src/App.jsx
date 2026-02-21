@@ -12,6 +12,7 @@ import FilterMode from './pages/FilterMode';
 import TriageMode from './pages/TriageMode';
 import ReviewSession from './pages/ReviewSession';
 import Quiz from './pages/Quiz';
+import WordList from './pages/WordList';
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
           <Route path="/unit/:id/filter" element={<ProtectedRoute><FilterMode /></ProtectedRoute>} />
           <Route path="/unit/:id/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
           <Route path="/unit/:id/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
+          <Route path="/unit/:id/words" element={<ProtectedRoute><WordList /></ProtectedRoute>} />
 
           {/* Legacy review route */}
           <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
