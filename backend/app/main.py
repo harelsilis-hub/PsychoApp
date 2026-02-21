@@ -3,7 +3,9 @@ Main FastAPI application entry point.
 Initializes the database and sets up routes.
 """
 import os
+import json
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -50,6 +52,36 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 pass  # column already present
 
     print("[OK] Database tables ready.")
+
+    # ── Auto-seed words if the table is empty ─────────────────────────────────
+    async with engine.begin() as conn:
+        result = await conn.execute(text("SELECT COUNT(*) FROM words"))
+        word_count = result.scalar()
+
+    if word_count == 0:
+        json_path = Path(__file__).resolve().parent.parent.parent / "database_english.json"
+        if json_path.exists():
+            print("[SEED] Words table is empty — seeding from database_english.json …")
+            with open(json_path, encoding="utf-8") as f:
+                data = json.load(f)
+
+            rows = []
+            units = sorted(data.keys(), key=lambda u: int(u.split()[-1]))
+            for unit_idx, unit_name in enumerate(units):
+                unit_number = unit_idx + 1
+                for english, hebrew in data[unit_name].items():
+                    rows.append({"english": english, "hebrew": hebrew, "unit": unit_number})
+
+            async with engine.begin() as conn:
+                await conn.execute(
+                    text("INSERT INTO words (english, hebrew, unit) VALUES (:english, :hebrew, :unit)"),
+                    rows,
+                )
+            print(f"[SEED] Inserted {len(rows)} words. Done.")
+        else:
+            print(f"[WARN] database_english.json not found at {json_path} — words table remains empty.")
+    else:
+        print(f"[OK] Words table has {word_count} words.")
 
     yield
 
