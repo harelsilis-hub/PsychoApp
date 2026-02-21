@@ -215,6 +215,57 @@ const Dashboard = () => {
             <LogOut className="w-5 h-5" />
           </motion.button>
         </div>
+
+        {/* Mobile-only stats row */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.12 }}
+          className="sm:hidden max-w-6xl mx-auto mt-2 flex gap-2"
+        >
+          {/* Streak chip */}
+          <div className="flex-1 flex items-center gap-2
+                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/20">
+            <span className="text-2xl leading-none">🔥</span>
+            <div className="leading-none">
+              <p className="text-lg font-black text-gray-900 tabular-nums">{streak}</p>
+              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wide mt-0.5">Streak</p>
+            </div>
+          </div>
+
+          {/* Daily chip */}
+          <div className="flex-1 flex items-center gap-2
+                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/10">
+            <div className="relative shrink-0">
+              <Ring pct={goalPct} size={34} stroke={3} gradient={['#fb923c', '#fbbf24']} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[8px] font-black text-gray-700 tabular-nums leading-none">{reviewed}</span>
+              </div>
+            </div>
+            <div className="leading-none">
+              <p className="text-sm font-black text-gray-900 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
+              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">Daily</p>
+            </div>
+          </div>
+
+          {/* Mastery chip */}
+          <div className="flex-1 flex items-center gap-2
+                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          rounded-2xl px-3 py-2.5 shadow-md shadow-violet-200/20">
+            <div className="relative shrink-0">
+              <Ring pct={overallPercent} size={34} stroke={3} gradient={['#7c3aed', '#6366f1']} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[8px] font-black text-violet-700 tabular-nums leading-none">{overallPercent}%</span>
+              </div>
+            </div>
+            <div className="leading-none">
+              <p className="text-sm font-black text-gray-900 tabular-nums">{overallPercent}%</p>
+              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">Mastery</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
@@ -234,7 +285,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ג”€ג”€ Unit grid ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
             const started   = learned > 0;
@@ -263,7 +314,7 @@ const Dashboard = () => {
               >
                 <button
                   onClick={() => navigate(`/unit/${unit}`)}
-                  className="w-full md:h-full text-left flex flex-col gap-2 p-4
+                  className="w-full md:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
                              bg-white/90 backdrop-blur-xl
                              border border-gray-200/70
                              rounded-[22px]
@@ -278,7 +329,7 @@ const Dashboard = () => {
                   {/* Gradient unit number */}
                   <div className="flex items-start justify-between leading-none">
                     <span
-                      className={`text-[40px] md:text-[52px] font-black leading-[1] tracking-tighter
+                      className={`text-[32px] sm:text-[40px] md:text-[52px] font-black leading-[1] tracking-tighter
                                   bg-gradient-to-br ${numGrad} bg-clip-text text-transparent`}
                     >
                       {unit}
