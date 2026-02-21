@@ -159,7 +159,7 @@ async def submit_review_result(
 @router.get("/unit/{unit_number}", response_model=ReviewSessionResponse)
 async def get_unit_words(
     unit_number: int,
-    limit: int = Query(default=50, ge=1, le=200, description="Max words to return"),
+    limit: int = Query(default=500, ge=1, le=500, description="Max words to return"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewSessionResponse:
