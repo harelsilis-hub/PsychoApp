@@ -37,7 +37,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # SQLite raises OperationalError when a column already exists — safe to ignore.
         migrations = [
             "ALTER TABLE words ADD COLUMN global_difficulty_level INTEGER DEFAULT NULL",
-            "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0",
+            "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 1",
+            "UPDATE users SET current_streak = 1 WHERE current_streak = 0",
             "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
         ]

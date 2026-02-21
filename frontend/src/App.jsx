@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import FloatingWordsBackground from './components/FloatingWordsBackground';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import SortingHatPage from './pages/SortingHatPage';
@@ -16,6 +17,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
+        <FloatingWordsBackground />
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />

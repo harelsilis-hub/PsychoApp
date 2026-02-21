@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, ArrowRight, LogOut } from 'lucide-react';
+import { Brain, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
@@ -12,6 +12,36 @@ const UNIT_TOTALS = {
 
 const DAILY_GOAL = 15;
 
+/* ─── Circular progress ring ────────────────────────────────────────── */
+const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] }) => {
+  const r   = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  const id = `grad-${gradient[0].replace('#', '')}`;
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <defs>
+        <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={gradient[0]} />
+          <stop offset="100%" stopColor={gradient[1]} />
+        </linearGradient>
+      </defs>
+      <circle cx={size / 2} cy={size / 2} r={r}
+        fill="none" stroke="#e5e7eb" strokeWidth={stroke} />
+      <motion.circle
+        cx={size / 2} cy={size / 2} r={r}
+        fill="none" stroke={`url(#${id})`} strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        initial={{ strokeDashoffset: circ }}
+        animate={{ strokeDashoffset: offset }}
+        transition={{ duration: 1.2, ease: 'easeOut' }}
+      />
+    </svg>
+  );
+};
+
+/* ─── Dashboard ─────────────────────────────────────────────────────── */
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -35,134 +65,254 @@ const Dashboard = () => {
   };
 
   const overallPercent = unitStats?.overall_percent ?? 0;
-  const totalLearned  = unitStats?.total_learned ?? 0;
-  const totalWords    = unitStats?.total_words ?? 3742;
+  const totalLearned   = unitStats?.total_learned  ?? 0;
+  const totalWords     = unitStats?.total_words    ?? 3742;
+  const streak         = Math.max(1, userStats?.current_streak ?? 1);
+  const reviewed       = userStats?.daily_words_reviewed ?? 0;
+  const goalPct        = Math.min(100, (reviewed / DAILY_GOAL) * 100);
+  const username       = user?.email?.split('@')[0] ?? 'there';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Brain className="w-8 h-8 text-purple-600" />
-            <div>
-              <p className="text-sm text-gray-500 font-medium">Hello {user?.email?.split('@')[0]} 👋</p>
-              <h1 className="text-xl font-bold text-gray-900">Psychometric Vocabulary</h1>
-            </div>
-          </div>
+    <div className="min-h-[100dvh] md:h-[100dvh] md:overflow-hidden flex flex-col relative"
+         style={{ background: 'transparent' }}>
 
-          <div className="flex items-center gap-4">
-            {/* Streak counter */}
-            <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl">
-              <span className="text-lg">🔥</span>
-              <div>
-                <div className="text-sm font-bold text-orange-600">{userStats?.current_streak ?? 0}</div>
-                <div className="text-xs text-orange-400">day streak</div>
-              </div>
-            </div>
+      {/* ══════════════════════ HEADER ══════════════════════════ */}
+      <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
-            {/* Daily goal progress */}
-            <div className="min-w-[130px]">
-              <div className="flex justify-between text-xs text-gray-500 mb-1">
-                <span>Daily goal</span>
-                <span className="font-semibold">{userStats?.daily_words_reviewed ?? 0}/{DAILY_GOAL}</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  animate={{ width: `${Math.min(100, ((userStats?.daily_words_reviewed ?? 0) / DAILY_GOAL) * 100)}%` }}
-                  className="h-full bg-gradient-to-r from-orange-400 to-amber-400 rounded-full"
-                />
-              </div>
-            </div>
-
-            {/* Overall progress badge */}
-            <div className="text-right">
-              <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                {overallPercent}%
-              </div>
-              <div className="text-xs text-gray-500">
-                {totalLearned.toLocaleString()} / {totalWords.toLocaleString()} learned
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              title="Log out"
-              className="p-2 text-gray-400 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Thin overall progress bar */}
-        <div className="h-1.5 bg-gray-100">
+          {/* ── Module 1: Greeting ── */}
           <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${overallPercent}%` }}
-            transition={{ duration: 1, ease: 'easeOut' }}
-            className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
-          />
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="flex-1 min-w-0 flex items-center gap-3 sm:gap-4
+                       bg-white/55 backdrop-blur-2xl
+                       border border-gray-200/70
+                       rounded-[20px] sm:rounded-[24px] px-4 sm:px-5 py-3 sm:py-4
+                       shadow-xl shadow-violet-200/30"
+          >
+            <div className="w-12 h-12 shrink-0 rounded-2xl
+                            bg-gradient-to-br from-violet-500 to-indigo-600
+                            flex items-center justify-center
+                            shadow-lg shadow-indigo-400/50">
+              <Brain className="w-6 h-6 text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
+                Psychometric Vocab
+              </p>
+              <p className="text-xl font-black text-gray-900 leading-tight truncate">
+                Hello,{' '}
+                <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
+                  {username}
+                </span>{' '}
+                👋
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── Module 2: Streak ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden sm:flex items-center gap-3.5
+                       bg-white/55 backdrop-blur-2xl
+                       border border-gray-200/70
+                       rounded-[24px] px-6 py-4
+                       shadow-xl shadow-orange-200/30"
+          >
+            {/* Glowing fire */}
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 bg-orange-400/40 rounded-full blur-2xl scale-[2]" />
+              <span className="relative text-[42px] leading-none drop-shadow-[0_0_12px_rgba(251,146,60,0.7)]">
+                🔥
+              </span>
+            </div>
+            <div className="leading-none">
+              <p className="text-5xl font-black text-gray-900 tabular-nums">{streak}</p>
+              <p className="text-[10px] font-bold text-orange-400 uppercase tracking-[0.14em] mt-1">
+                Day streak
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── Module 3: Goal + Mastery ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden sm:flex items-center gap-4
+                       bg-white/55 backdrop-blur-2xl
+                       border border-gray-200/70
+                       rounded-[24px] px-6 py-4
+                       shadow-xl shadow-violet-200/30"
+          >
+            {/* Daily goal ring */}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <Ring pct={goalPct} size={60} stroke={6} gradient={['#fb923c', '#fbbf24']} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] font-black text-gray-700 tabular-nums leading-none">
+                  {reviewed}
+                </span>
+              </div>
+            </div>
+            <div className="leading-tight">
+              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">Daily</p>
+              <p className="text-sm font-black text-gray-800 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
+            </div>
+
+            <div className="w-px h-8 bg-gray-200 mx-1 shrink-0" />
+
+            {/* Overall mastery ring */}
+            <div className="relative shrink-0 flex items-center justify-center">
+              <Ring pct={overallPercent} size={60} stroke={6} gradient={['#7c3aed', '#6366f1']} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] font-black text-violet-700 tabular-nums leading-none">
+                  {overallPercent}%
+                </span>
+              </div>
+            </div>
+            <div className="leading-tight">
+              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">Mastery</p>
+              <p className="text-sm font-black text-gray-800 tabular-nums">
+                {totalLearned.toLocaleString()}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* ── Logout ── */}
+          <motion.button
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            onClick={logout}
+            title="Log out"
+            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
+                       flex items-center justify-center
+                       text-gray-400 hover:text-gray-800
+                       hover:bg-white/75 transition-all duration-200"
+          >
+            <LogOut className="w-5 h-5" />
+          </motion.button>
         </div>
       </div>
 
-      {/* ── Unit Grid ───────────────────────────────────────────── */}
-      <div className="container mx-auto px-4 py-10 max-w-5xl">
-        <p className="text-sm text-gray-500 font-medium uppercase tracking-wider mb-6">
-          Choose a unit to study
-        </p>
+      {/* ══════════════════════ BODY ════════════════════════════ */}
+      <main className="relative z-10 md:flex-1 md:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {/* Section title */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.25 }}
+          className="mb-3 shrink-0"
+        >
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">Your Units</h1>
+          <p className="text-sm text-gray-600 mt-0.5 font-medium">
+            {totalLearned.toLocaleString()} &thinsp;/&thinsp; {totalWords.toLocaleString()} words learned
+          </p>
+        </motion.div>
+
+        {/* ── Unit grid ─────────────────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-3">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
+            const started   = learned > 0;
+            const completed = percent >= 100;
+
+            const btnLabel  = completed ? `Review ${unit}` : started ? `Continue ${unit}` : `Start ${unit}`;
+            const numGrad   = completed
+              ? 'from-emerald-400 to-teal-500'
+              : 'from-violet-600 to-indigo-500';
+            const barGrad   = completed
+              ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
+              : 'bg-gradient-to-r from-violet-500 to-indigo-600';
+            const btnGrad   = completed
+              ? 'from-emerald-400 to-teal-500 shadow-emerald-300/50'
+              : started
+              ? 'from-violet-500 to-indigo-600 shadow-indigo-300/50'
+              : 'from-gray-300 to-gray-400 shadow-gray-200/50';
+
             return (
               <motion.div
                 key={unit}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04 }}
-                className="bg-white rounded-2xl shadow-md p-5 flex flex-col cursor-pointer
-                           hover:shadow-xl hover:-translate-y-1 transition-all group"
-                onClick={() => navigate(`/unit/${unit}`)}
+                transition={{ delay: idx * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                className="group md:h-full"
               >
-                {/* Unit number circle */}
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl
-                               flex items-center justify-center mb-3 shadow
-                               group-hover:scale-110 transition-transform">
-                  <span className="text-white text-lg font-bold">{unit}</span>
-                </div>
-
-                <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
-                  Unit {unit}
-                </div>
-                <div className="text-xs text-gray-400 mb-3">
-                  {total} words
-                </div>
-
-                {/* Per-unit progress bar */}
-                <div className="mt-auto">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-xs text-gray-500">{learned} learned</span>
-                    <span className="text-xs font-semibold text-purple-600">{percent}%</span>
+                <button
+                  onClick={() => navigate(`/unit/${unit}`)}
+                  className="w-full md:h-full text-left flex flex-col gap-2 p-4
+                             bg-white/90 backdrop-blur-xl
+                             border border-gray-200/70
+                             rounded-[22px]
+                             shadow-md shadow-gray-200/40
+                             hover:shadow-xl hover:shadow-violet-200/50
+                             hover:-translate-y-1
+                             hover:bg-white
+                             hover:ring-2 hover:ring-violet-400/25
+                             active:scale-[0.97]
+                             transition-all duration-300"
+                >
+                  {/* Gradient unit number */}
+                  <div className="flex items-start justify-between leading-none">
+                    <span
+                      className={`text-[40px] md:text-[52px] font-black leading-[1] tracking-tighter
+                                  bg-gradient-to-br ${numGrad} bg-clip-text text-transparent`}
+                    >
+                      {unit}
+                    </span>
+                    {completed && (
+                      <span className="text-lg mt-1">✅</span>
+                    )}
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${percent}%` }}
-                      transition={{ duration: 0.8, delay: idx * 0.04 + 0.3, ease: 'easeOut' }}
-                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full"
-                    />
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-1 text-xs font-semibold text-purple-600
-                               group-hover:text-purple-800 transition-colors mt-3">
-                  Open <ArrowRight className="w-3 h-3" />
-                </div>
+                  {/* Unit label */}
+                  <div className="-mt-1">
+                    <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.14em]">
+                      Unit {unit}
+                    </p>
+                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">{total} words</p>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="space-y-1 mt-auto">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold text-gray-600">{learned} learned</span>
+                      <span className={`text-[10px] font-black tabular-nums
+                        ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
+                        {percent}%
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percent}%` }}
+                        transition={{ duration: 0.9, delay: idx * 0.04 + 0.2, ease: 'easeOut' }}
+                        className={`h-full rounded-full ${barGrad}`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CTA button */}
+                  <div
+                    className={`w-full py-2 rounded-xl text-center
+                                text-[10px] font-black text-white uppercase tracking-[0.12em]
+                                bg-gradient-to-r ${btnGrad}
+                                shadow-sm
+                                group-hover:shadow-md transition-shadow duration-300`}
+                  >
+                    {btnLabel}
+                  </div>
+                </button>
               </motion.div>
             );
           })}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

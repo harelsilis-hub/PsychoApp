@@ -43,6 +43,15 @@ const FilterMode = () => {
   const currentWord = words[index];
   const remaining = words.length - index;
 
+  const handleDragEnd = (_, info) => {
+    if (isSubmitting || !currentWord) return;
+    if (info.offset.x < -80 || info.velocity.x < -500) {
+      handleChoice(false); // swiped left → Don't Know
+    } else if (info.offset.x > 80 || info.velocity.x > 500) {
+      handleChoice(true);  // swiped right → Know It
+    }
+  };
+
   const handleChoice = async (isKnown) => {
     if (isSubmitting || !currentWord) return;
     setIsSubmitting(true);
@@ -77,7 +86,7 @@ const FilterMode = () => {
   // ── Loading ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-500">Loading words…</p>
@@ -89,7 +98,7 @@ const FilterMode = () => {
   // ── No words / all mastered ────────────────────────────────
   if (!loading && words.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -115,7 +124,7 @@ const FilterMode = () => {
   if (done || (!currentWord && !loading)) {
     const count = unknowns.length;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -155,7 +164,7 @@ const FilterMode = () => {
 
   // ── Main filter UI ─────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-orange-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -193,6 +202,10 @@ const FilterMode = () => {
             {currentWord && (
               <motion.div
                 key={currentWord.word_id}
+                drag={!isSubmitting ? 'x' : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.8}
+                onDragEnd={handleDragEnd}
                 initial={{ opacity: 0, scale: 0.85, y: 20 }}
                 animate={{
                   opacity: slideDir ? 0 : 1,
@@ -202,7 +215,7 @@ const FilterMode = () => {
                 }}
                 exit={{ opacity: 0, scale: 0.85 }}
                 transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
-                className="text-center"
+                className="text-center touch-none"
               >
                 {/* ── Flip card ── */}
                 <div
@@ -223,7 +236,7 @@ const FilterMode = () => {
                       <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-5">
                         Do you know this word?
                       </div>
-                      <div className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                      <div className="text-3xl sm:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                         {currentWord.english}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-gray-400">
@@ -240,7 +253,7 @@ const FilterMode = () => {
                       <div className="text-xs font-semibold uppercase tracking-widest text-white/60 mb-5">
                         עברית
                       </div>
-                      <div className="text-5xl font-bold text-white mb-6 leading-tight" dir="rtl">
+                      <div className="text-3xl sm:text-5xl font-bold text-white mb-6 leading-tight" dir="rtl">
                         {currentWord.hebrew}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-white/60">
@@ -262,7 +275,7 @@ const FilterMode = () => {
                   <button
                     onClick={() => handleChoice(false)}
                     disabled={isSubmitting}
-                    className="bg-gradient-to-br from-red-500 to-rose-600 text-white py-5 rounded-2xl
+                    className="bg-gradient-to-br from-red-500 to-rose-600 text-white py-3.5 sm:py-5 rounded-2xl
                                font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
                                transform transition-all disabled:opacity-50 active:scale-95"
                   >
@@ -272,7 +285,7 @@ const FilterMode = () => {
                   <button
                     onClick={() => handleChoice(true)}
                     disabled={isSubmitting}
-                    className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-5 rounded-2xl
+                    className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-3.5 sm:py-5 rounded-2xl
                                font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
                                transform transition-all disabled:opacity-50 active:scale-95"
                   >

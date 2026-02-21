@@ -16,14 +16,13 @@ function shuffle(arr) {
 }
 
 /**
- * Build quiz questions.
- * primaryWords  = LEARNING words (shown first — just studied)
- * secondaryWords = REVIEW/MASTERED words (fill remaining slots)
- * distractorPool = all available words for wrong-answer options
+ * Build quiz questions exclusively from Learning words.
+ * learningWords  = words the user is currently studying (status = 'Learning')
+ * distractorPool = ALL available words used only as wrong-answer options
  * Each question stores word_id so SM-2 can be updated on answer.
  */
-function buildQuestions(primaryWords, secondaryWords, distractorPool) {
-  const ordered = [...primaryWords, ...shuffle([...secondaryWords])];
+function buildQuestions(learningWords, distractorPool) {
+  const ordered = shuffle([...learningWords]);
   if (ordered.length === 0) return [];
 
   const pool = distractorPool.length >= 4 ? distractorPool : [...distractorPool, ...ordered];
@@ -60,7 +59,7 @@ const QuizResult = ({ score, total, onRetry, onBack }) => {
   const msg   = pct >= 90 ? 'Outstanding!' : pct >= 70 ? 'Great work!' : pct >= 50 ? 'Good effort!' : 'Keep practising!';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -126,25 +125,22 @@ const Quiz = () => {
     setSelected(null);
 
     try {
-      // Fetch both pools in parallel
-      const [filterRes, learnedRes] = await Promise.all([
-        reviewAPI.getFilterWords(unitNum),   // NEW + LEARNING words
-        reviewAPI.getLearnedWords(unitNum),  // REVIEW + MASTERED words
-      ]);
+      // Fetch all units in parallel using the existing filter endpoint
+      const units = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+      const results = await Promise.all(units.map((u) => reviewAPI.getFilterWords(u)));
+      const learningWords = results.flatMap((res) =>
+        (res.words || []).filter((w) => w.status === 'Learning')
+      );
 
-      const allFilterWords  = filterRes.words  || [];
-      const learningWords   = allFilterWords.filter((w) => w.status === 'Learning');
-      const reviewedWords   = learnedRes.words || [];
-
-      if (learningWords.length === 0 && reviewedWords.length === 0) {
+      // Quiz only tests words currently being learned
+      if (learningWords.length === 0) {
         setNoWords(true);
         setLoading(false);
         return;
       }
 
-      // LEARNING words come first, then REVIEW/MASTERED fill the remaining slots
-      const distractorPool = [...allFilterWords, ...reviewedWords];
-      setQuestions(buildQuestions(learningWords, reviewedWords, distractorPool));
+      // Learning words themselves are the distractor pool (diverse across all units)
+      setQuestions(buildQuestions(learningWords, learningWords));
     } catch (err) {
       console.error(err);
     } finally {
@@ -181,7 +177,7 @@ const Quiz = () => {
   // ── Loading ─────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-500">Building your quiz…</p>
@@ -193,7 +189,7 @@ const Quiz = () => {
   // ── Not enough learned words ────────────────────────────
   if (noWords || questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -202,8 +198,7 @@ const Quiz = () => {
           <Brain className="w-12 h-12 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">No Words to Quiz Yet</h2>
           <p className="text-gray-500 mb-6">
-            Use Filter Words to mark words you don't know — they'll appear here first.
-            Words you progress through SM-2 reviews will also be added automatically.
+            The quiz tests all words you're currently learning across every unit. Use <strong>Filter Words</strong> in any unit to mark words you don't know — they'll appear here.
           </p>
           <button
             onClick={() => navigate(`/unit/${unitNum}`)}
@@ -232,7 +227,7 @@ const Quiz = () => {
 
   // ── Question UI ─────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -242,7 +237,7 @@ const Quiz = () => {
           <Brain className="w-4 h-4 text-green-600" />
           <span className="font-semibold text-gray-800 flex-1">Practice Quiz — Unit {unitNum}</span>
           <span className="text-sm text-gray-500 font-medium">
-            {qIndex + 1} / {questions.length}
+            {qIndex} / {questions.length}
           </span>
         </div>
         <div className="h-1.5 bg-gray-100">

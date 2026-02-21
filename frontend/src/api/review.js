@@ -33,4 +33,9 @@ export const reviewAPI = {
     const response = await apiClient.get(`/v1/review/unit/${unit}/learned`);
     return response.data;
   },
+
+  getAllLearningWords: async () => {
+    const response = await apiClient.get('/v1/review/learning/all');
+    return response.data;
+  },
 };

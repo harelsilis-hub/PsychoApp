@@ -144,7 +144,7 @@ const PlacementTest = () => {
   // Loading Screen
   if (stage === 'loading') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-xl text-gray-600">Loading your test...</p>
@@ -156,7 +156,7 @@ const PlacementTest = () => {
   // Error Screen
   if (stage === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -181,7 +181,7 @@ const PlacementTest = () => {
   // Testing Screen
   if (stage === 'testing' && currentWord && session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex flex-col">
+      <div className="min-h-screen flex flex-col">
         {/* Progress Header */}
         <div className="bg-white shadow-sm">
           <div className="container mx-auto px-4 py-4">
@@ -319,7 +319,7 @@ const PlacementTest = () => {
     const achievement = getAchievement(session.final_level);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}

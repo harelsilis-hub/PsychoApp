@@ -110,7 +110,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {/* Logo / Brand */}
       <div className="flex items-center gap-2 mb-8">
         <Brain className="w-8 h-8 text-purple-600" />

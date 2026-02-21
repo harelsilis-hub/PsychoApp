@@ -222,7 +222,7 @@ const ReviewSession = () => {
   // ── Loading ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-lg text-gray-500">Loading your session…</p>
@@ -234,7 +234,7 @@ const ReviewSession = () => {
   // ── Error ──────────────────────────────────────────────────
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-8 text-center">
           <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-7 h-7 text-red-600" />
@@ -253,7 +253,7 @@ const ReviewSession = () => {
   // ── No unknown words ──────────────────────────────────────
   if (noUnknowns) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -301,7 +301,7 @@ const ReviewSession = () => {
 
   // ── Main UI ────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/40 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       {/* Daily goal celebration toast */}
       <AnimatePresence>
         {goalReached && (
@@ -332,7 +332,7 @@ const ReviewSession = () => {
               <span className="font-semibold text-gray-800">{sessionTitle}</span>
             </div>
             <div className="text-sm text-gray-500 font-medium">
-              {sessionStats.reviewed + 1} <span className="text-gray-300">/</span> {sessionStats.total}
+              {sessionStats.reviewed} <span className="text-gray-300">/</span> {sessionStats.total}
             </div>
           </div>
           <div className="mt-2.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -373,7 +373,7 @@ const ReviewSession = () => {
         </div>
 
         {/* Associations sidebar — always on RIGHT, scrollable */}
-        <div className={`flex-col flex-shrink-0 w-72 xl:w-80 ${unitId ? 'flex' : 'hidden lg:flex'}`}>
+        <div className="hidden lg:flex flex-col flex-shrink-0 w-72 xl:w-80">
           <div className="bg-white/70 backdrop-blur border border-gray-100 rounded-2xl shadow-sm p-4 sticky top-24 flex flex-col" style={{ maxHeight: 'calc(100vh - 120px)' }}>
             <CommunitySidebar
               wordId={currentWord?.word_id}

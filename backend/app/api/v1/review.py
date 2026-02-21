@@ -3,7 +3,7 @@ Review API endpoints - Spaced repetition review sessions.
 """
 from datetime import date as date_type, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -210,6 +210,40 @@ async def get_unit_words(
         )
 
 
+@router.get("/learning/all")
+async def get_all_learning_words(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return all words with LEARNING status across every unit for the current user."""
+    try:
+        stmt = (
+            select(Word, UserWordProgress)
+            .join(UserWordProgress, UserWordProgress.word_id == Word.id)
+            .where(UserWordProgress.user_id == current_user.id)
+            .where(UserWordProgress.status == WordStatus.LEARNING)
+            .order_by(Word.unit, Word.id)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        words = [
+            {
+                "word_id": word.id,
+                "english": word.english,
+                "hebrew": word.hebrew,
+                "unit": word.unit,
+                "status": progress.status.value,
+                "global_difficulty_level": word.global_difficulty_level,
+            }
+            for word, progress in rows
+        ]
+        return {"words": words, "total": len(words)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load learning words: {str(e)}")
+
+
 @router.get("/unit/{unit_number}/filter")
 async def get_filter_words(
     unit_number: int,
@@ -322,3 +356,16 @@ async def get_review_statistics(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get review stats: {str(e)}"
         )
+
+
+@router.get("/sample")
+async def get_word_sample(
+    limit: int = Query(default=40, ge=10, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return a random sample of word pairs for decorative background display."""
+    stmt = select(Word.english, Word.hebrew).order_by(func.random()).limit(limit)
+    result = await db.execute(stmt)
+    rows = result.all()
+    return {"words": [{"english": r.english, "hebrew": r.hebrew} for r in rows]}

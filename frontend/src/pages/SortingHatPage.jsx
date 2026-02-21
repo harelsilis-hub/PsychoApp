@@ -64,7 +64,7 @@ const SortingHatPage = () => {
   // Start Screen
   if (stage === 'start') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -156,7 +156,7 @@ const SortingHatPage = () => {
   // Error Screen
   if (stage === 'error') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-4">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -181,7 +181,7 @@ const SortingHatPage = () => {
   // Testing Screen
   if (stage === 'testing' && currentWord && session) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex flex-col">
+      <div className="min-h-screen flex flex-col">
         {/* Header with Progress */}
         <div className="bg-white shadow-sm">
           <div className="container mx-auto px-4 py-4">

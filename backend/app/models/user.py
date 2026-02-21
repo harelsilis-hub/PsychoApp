@@ -33,7 +33,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    current_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    current_streak: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     daily_words_reviewed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 

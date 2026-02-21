@@ -108,7 +108,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
         >
           {/* Front — English */}
           <div
-            className={`absolute inset-0 backface-hidden bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl shadow-2xl p-10 flex flex-col items-center justify-center ${
+            className={`absolute inset-0 backface-hidden bg-gradient-to-br from-purple-600 to-blue-600 rounded-3xl shadow-2xl p-6 sm:p-10 flex flex-col items-center justify-center ${
               isFlipped ? 'invisible' : ''
             }`}
           >
@@ -118,21 +118,22 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                 New Word
               </div>
             )}
+            {/* Audio button — icon only, right edge */}
+            <button
+              onClick={speakWord}
+              title="Hear pronunciation"
+              className="absolute right-5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded-full transition-colors"
+            >
+              <Volume2 className="w-5 h-5" />
+            </button>
+
             <div className="text-center">
               <div className="text-white text-xs uppercase tracking-widest mb-4 opacity-80">
                 Try to Recall
               </div>
-              <div className="text-white text-5xl md:text-6xl font-bold mb-4">
+              <div className="text-white text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
                 {word.english}
               </div>
-              <button
-                onClick={speakWord}
-                title="Hear pronunciation"
-                className="mb-4 flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded-full text-sm font-medium transition-colors"
-              >
-                <Volume2 className="w-4 h-4" />
-                Hear it
-              </button>
               <div className="text-white text-xs opacity-60 mb-8">
                 Unit {word.unit}
               </div>
@@ -145,7 +146,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
 
           {/* Back — Hebrew + memory aid */}
           <div
-            className={`absolute inset-0 backface-hidden bg-white rounded-3xl shadow-2xl p-8 flex flex-col ${
+            className={`absolute inset-0 backface-hidden bg-white rounded-3xl shadow-2xl p-5 sm:p-8 flex flex-col ${
               !isFlipped ? 'invisible' : ''
             }`}
             style={{ transform: 'rotateY(180deg)' }}
@@ -154,7 +155,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
               <div className="text-gray-400 text-xs uppercase tracking-widest mb-2">
                 עברית (Hebrew)
               </div>
-              <div className="text-gray-900 text-5xl font-bold mb-6" dir="rtl">
+              <div className="text-gray-900 text-3xl sm:text-5xl font-bold mb-6" dir="rtl">
                 {word.hebrew}
               </div>
 
@@ -266,7 +267,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
           <button
             onClick={() => handleRate(1)}
             disabled={!hasFlipped}
-            className="bg-gradient-to-br from-red-500 to-red-600 text-white py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+            className="bg-gradient-to-br from-red-500 to-red-600 text-white py-3 sm:py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
           >
             <div className="flex flex-col items-center gap-1">
               <span className="text-2xl">✗</span>
@@ -277,7 +278,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
           <button
             onClick={() => handleRate(4)}
             disabled={!hasFlipped}
-            className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+            className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-3 sm:py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
           >
             <div className="flex flex-col items-center gap-1">
               <span className="text-2xl">✓</span>
