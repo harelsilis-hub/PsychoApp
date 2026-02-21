@@ -1,28 +1,28 @@
-/**
+﻿/**
  * FloatingWordsBackground
  *
  * Fixed full-screen dark gradient layer with floating word pairs.
  *
  * KEY DESIGN DECISIONS
- * ─────────────────────
- * • CSS @keyframe on the OUTER wrapper handles diagonal drift.
- * • Framer Motion on the INNER span handles the scaleX flip.
- * → These MUST live on separate elements; both use `transform`,
+ * ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€
+ * ג€¢ CSS @keyframe on the OUTER wrapper handles diagonal drift.
+ * ג€¢ Framer Motion on the INNER span handles the scaleX flip.
+ * ג†’ These MUST live on separate elements; both use `transform`,
  *   and FM's inline-style transform would override the CSS keyframe
  *   if applied to the same node.
  *
- * • FALLBACK_WORDS is a hardcoded list so animation plays
- *   immediately — even before the API responds or when the user
+ * ג€¢ FALLBACK_WORDS is a hardcoded list so animation plays
+ *   immediately ג€” even before the API responds or when the user
  *   is not yet authenticated (e.g. login page).
  *
- * • Mounted once in App.jsx (outside <Routes>).
+ * ג€¢ Mounted once in App.jsx (outside <Routes>).
  *   Single fetch, animation never resets on navigation.
  */
 import { useState, useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import apiClient from '../api/client';
 
-/* ─── Inject CSS keyframe once at module load ───────────────────────── */
+/* ג”€ג”€ג”€ Inject CSS keyframe once at module load ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const KF_ID = 'fw-bg-drift';
 if (typeof document !== 'undefined' && !document.getElementById(KF_ID)) {
   const s = document.createElement('style');
@@ -37,70 +37,70 @@ if (typeof document !== 'undefined' && !document.getElementById(KF_ID)) {
   document.head.appendChild(s);
 }
 
-/* ─── Hardcoded fallback — shown immediately, no API needed ────────── */
+/* ג”€ג”€ג”€ Hardcoded fallback ג€” shown immediately, no API needed ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const FALLBACK_WORDS = [
-  { english: 'knowledge',    hebrew: 'ידע'          },
-  { english: 'memory',       hebrew: 'זיכרון'        },
-  { english: 'language',     hebrew: 'שפה'           },
-  { english: 'understand',   hebrew: 'להבין'          },
-  { english: 'practice',     hebrew: 'תרגול'          },
-  { english: 'progress',     hebrew: 'התקדמות'        },
-  { english: 'vocabulary',   hebrew: 'אוצר מילים'     },
-  { english: 'achievement',  hebrew: 'הישג'           },
-  { english: 'intelligence', hebrew: 'אינטליגנציה'     },
-  { english: 'challenge',    hebrew: 'אתגר'           },
-  { english: 'success',      hebrew: 'הצלחה'          },
-  { english: 'ability',      hebrew: 'יכולת'          },
-  { english: 'concept',      hebrew: 'מושג'           },
-  { english: 'analysis',     hebrew: 'ניתוח'          },
-  { english: 'strategy',     hebrew: 'אסטרטגיה'       },
-  { english: 'fluency',      hebrew: 'שטף'            },
-  { english: 'abstract',     hebrew: 'מופשט'          },
-  { english: 'complex',      hebrew: 'מורכב'          },
-  { english: 'evidence',     hebrew: 'ראיה'           },
-  { english: 'theory',       hebrew: 'תיאוריה'        },
-  { english: 'logical',      hebrew: 'לוגי'           },
-  { english: 'structure',    hebrew: 'מבנה'           },
-  { english: 'pattern',      hebrew: 'תבנית'          },
-  { english: 'purpose',      hebrew: 'מטרה'           },
-  { english: 'context',      hebrew: 'הקשר'           },
-  { english: 'sequence',     hebrew: 'רצף'            },
-  { english: 'significant',  hebrew: 'משמעותי'        },
-  { english: 'essential',    hebrew: 'חיוני'          },
-  { english: 'category',     hebrew: 'קטגוריה'        },
-  { english: 'precise',      hebrew: 'מדויק'          },
-  { english: 'resource',     hebrew: 'משאב'           },
-  { english: 'method',       hebrew: 'שיטה'           },
-  { english: 'relative',     hebrew: 'יחסי'           },
-  { english: 'system',       hebrew: 'מערכת'          },
-  { english: 'variety',      hebrew: 'מגוון'          },
-  { english: 'primary',      hebrew: 'ראשוני'         },
-  { english: 'define',       hebrew: 'להגדיר'          },
-  { english: 'thought',      hebrew: 'מחשבה'          },
+  { english: 'knowledge',    hebrew: '׳™׳“׳¢'          },
+  { english: 'memory',       hebrew: '׳–׳™׳›׳¨׳•׳'        },
+  { english: 'language',     hebrew: '׳©׳₪׳”'           },
+  { english: 'understand',   hebrew: '׳׳”׳‘׳™׳'          },
+  { english: 'practice',     hebrew: '׳×׳¨׳’׳•׳'          },
+  { english: 'progress',     hebrew: '׳”׳×׳§׳“׳׳•׳×'        },
+  { english: 'vocabulary',   hebrew: '׳׳•׳¦׳¨ ׳׳™׳׳™׳'     },
+  { english: 'achievement',  hebrew: '׳”׳™׳©׳’'           },
+  { english: 'intelligence', hebrew: '׳׳™׳ ׳˜׳׳™׳’׳ ׳¦׳™׳”'     },
+  { english: 'challenge',    hebrew: '׳׳×׳’׳¨'           },
+  { english: 'success',      hebrew: '׳”׳¦׳׳—׳”'          },
+  { english: 'ability',      hebrew: '׳™׳›׳•׳׳×'          },
+  { english: 'concept',      hebrew: '׳׳•׳©׳’'           },
+  { english: 'analysis',     hebrew: '׳ ׳™׳×׳•׳—'          },
+  { english: 'strategy',     hebrew: '׳׳¡׳˜׳¨׳˜׳’׳™׳”'       },
+  { english: 'fluency',      hebrew: '׳©׳˜׳£'            },
+  { english: 'abstract',     hebrew: '׳׳•׳₪׳©׳˜'          },
+  { english: 'complex',      hebrew: '׳׳•׳¨׳›׳‘'          },
+  { english: 'evidence',     hebrew: '׳¨׳׳™׳”'           },
+  { english: 'theory',       hebrew: '׳×׳™׳׳•׳¨׳™׳”'        },
+  { english: 'logical',      hebrew: '׳׳•׳’׳™'           },
+  { english: 'structure',    hebrew: '׳׳‘׳ ׳”'           },
+  { english: 'pattern',      hebrew: '׳×׳‘׳ ׳™׳×'          },
+  { english: 'purpose',      hebrew: '׳׳˜׳¨׳”'           },
+  { english: 'context',      hebrew: '׳”׳§׳©׳¨'           },
+  { english: 'sequence',     hebrew: '׳¨׳¦׳£'            },
+  { english: 'significant',  hebrew: '׳׳©׳׳¢׳•׳×׳™'        },
+  { english: 'essential',    hebrew: '׳—׳™׳•׳ ׳™'          },
+  { english: 'category',     hebrew: '׳§׳˜׳’׳•׳¨׳™׳”'        },
+  { english: 'precise',      hebrew: '׳׳“׳•׳™׳§'          },
+  { english: 'resource',     hebrew: '׳׳©׳׳‘'           },
+  { english: 'method',       hebrew: '׳©׳™׳˜׳”'           },
+  { english: 'relative',     hebrew: '׳™׳—׳¡׳™'           },
+  { english: 'system',       hebrew: '׳׳¢׳¨׳›׳×'          },
+  { english: 'variety',      hebrew: '׳׳’׳•׳•׳'          },
+  { english: 'primary',      hebrew: '׳¨׳׳©׳•׳ ׳™'         },
+  { english: 'define',       hebrew: '׳׳”׳’׳“׳™׳¨'          },
+  { english: 'thought',      hebrew: '׳׳—׳©׳‘׳”'          },
 ];
 
-/* ─── Seeded pseudo-random (stable across re-renders) ──────────────── */
+/* ג”€ג”€ג”€ Seeded pseudo-random (stable across re-renders) ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const sr = (seed) => {
   const x = Math.sin(seed + 1) * 10000;
   return x - Math.floor(x);
 };
 
-/* ─── Build particle config list from a word array ─────────────────── */
+/* ג”€ג”€ג”€ Build particle config list from a word array ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const buildParticles = (words) =>
   Array.from({ length: Math.min(38, words.length) }, (_, i) => ({
     id:           i,
     wordPair:     words[i % words.length],
-    startX:       15 + sr(i * 13 + 0) * 120,  // 15–135 vw
-    startY:      -20 + sr(i * 13 + 1) * 95,   // -20–75 vh
-    duration:     30 + sr(i * 13 + 2) * 35,   // 30–65 s
+    startX:       15 + sr(i * 13 + 0) * 120,  // 15ג€“135 vw
+    startY:      -20 + sr(i * 13 + 1) * 95,   // -20ג€“75 vh
+    duration:     30 + sr(i * 13 + 2) * 35,   // 30ג€“65 s
     delay:       -(sr(i * 13 + 3) * 60),       // 0 to -60 s
-    fontSize:     10 + sr(i * 13 + 4) * 14,   // 10–24 px
-    opacity:      0.12 + sr(i * 13 + 5) * 0.13, // 0.12–0.25
+    fontSize:     10 + sr(i * 13 + 4) * 14,   // 10ג€“24 px
+    opacity:      0.12 + sr(i * 13 + 5) * 0.13, // 0.12ג€“0.25
     initialFace:  sr(i * 13 + 6) > 0.5 ? 'en' : 'he',
-    firstFlipMs:  sr(i * 13 + 7) * 6000,      // 0–6 s before first flip
+    firstFlipMs:  sr(i * 13 + 7) * 6000,      // 0ג€“6 s before first flip
   }));
 
-/* ─── Single word particle ──────────────────────────────────────────── */
+/* ג”€ג”€ג”€ Single word particle ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const WordParticle = ({ wordPair, config }) => {
   const [face, setFace]  = useState(config.initialFace);
   const controls         = useAnimation();
@@ -139,8 +139,8 @@ const WordParticle = ({ wordPair, config }) => {
 
   /*
    * CRITICAL: Two separate DOM nodes.
-   * - Outer div  → CSS `fw-drift` animation  (transform: translate)
-   * - Inner motion.span → FM scaleX animation (transform: scaleX)
+   * - Outer div  ג†’ CSS `fw-drift` animation  (transform: translate)
+   * - Inner motion.span ג†’ FM scaleX animation (transform: scaleX)
    * Framer Motion sets transform via inline style which would override
    * the CSS keyframe if placed on the same element.
    */
@@ -161,7 +161,7 @@ const WordParticle = ({ wordPair, config }) => {
           display:       'inline-block',
           fontSize:      `${config.fontSize}px`,
           opacity:       config.opacity,
-          color:         '#2563eb',       // blue-600
+          color:         'var(--fw-word-color)',
           fontWeight:    config.fontSize > 17 ? 600 : 400,
           letterSpacing: '0.03em',
           whiteSpace:    'nowrap',
@@ -174,7 +174,7 @@ const WordParticle = ({ wordPair, config }) => {
   );
 };
 
-/* ─── Root component ─────────────────────────────────────────────────── */
+/* ג”€ג”€ג”€ Root component ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const FloatingWordsBackground = () => {
   // Initialise with fallback immediately so words appear on first render.
   const [particles, setParticles] = useState(() => buildParticles(FALLBACK_WORDS));
@@ -205,10 +205,10 @@ const FloatingWordsBackground = () => {
       <div style={{
         position:   'absolute',
         inset:      0,
-        background: 'white',
+        background: 'var(--fw-bg)',
       }} />
 
-      {/* Ambient glow orbs — boosted opacity for more vibrancy */}
+      {/* Ambient glow orbs ג€” boosted opacity for more vibrancy */}
       <div style={{
         position: 'absolute', top: '-10%', left: '-10%',
         width: '60vw', height: '60vw', borderRadius: '50%',
@@ -243,3 +243,4 @@ const FloatingWordsBackground = () => {
 };
 
 export default FloatingWordsBackground;
+

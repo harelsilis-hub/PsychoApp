@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, XCircle, Zap, RotateCcw } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Zap, RotateCcw, BookOpen } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
@@ -21,6 +21,11 @@ const FilterMode = () => {
   const [done, setDone] = useState(false);         // all words exhausted without 10 unknowns
   const [isFlipped, setIsFlipped] = useState(false); // show Hebrew translation
   const [isResetting, setIsResetting] = useState(false);
+  const [autoRedirecting, setAutoRedirecting] = useState(false);
+
+  // Keep a ref so the setTimeout closure always reads the latest unknowns array
+  const unknownsRef = useRef([]);
+  useEffect(() => { unknownsRef.current = unknowns; }, [unknowns]);
 
   useEffect(() => {
     reviewAPI.getFilterWords(unitNum)
@@ -34,18 +39,22 @@ const FilterMode = () => {
       });
   }, [unitNum]);
 
-  // Once 10 unknowns are collected, auto-redirect
+  // Once 10 unknowns are collected, show toast then auto-redirect
   useEffect(() => {
-    if (unknowns.length >= UNKNOWNS_TARGET) {
-      navigate(`/unit/${unitNum}/review`, { state: { words: unknowns } });
+    if (unknowns.length >= UNKNOWNS_TARGET && !autoRedirecting) {
+      setAutoRedirecting(true);
+      const timer = setTimeout(() => {
+        navigate(`/unit/${unitNum}/review`, { state: { words: unknownsRef.current } });
+      }, 1800);
+      return () => clearTimeout(timer);
     }
-  }, [unknowns, navigate, unitNum]);
+  }, [unknowns.length, autoRedirecting, navigate, unitNum]);
 
   const currentWord = words[index];
   const remaining = words.length - index;
 
   const handleDragEnd = (_, info) => {
-    if (isSubmitting || !currentWord) return;
+    if (isSubmitting || !currentWord || autoRedirecting) return;
     if (info.offset.x < -80 || info.velocity.x < -500) {
       handleChoice(false); // swiped left → Don't Know
     } else if (info.offset.x > 80 || info.velocity.x > 500) {
@@ -54,7 +63,7 @@ const FilterMode = () => {
   };
 
   const handleChoice = async (isKnown) => {
-    if (isSubmitting || !currentWord) return;
+    if (isSubmitting || !currentWord || autoRedirecting) return;
     setIsSubmitting(true);
     setSlideDir(isKnown ? 'right' : 'left');
 
@@ -191,6 +200,55 @@ const FilterMode = () => {
   // ── Main filter UI ─────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col">
+
+      {/* ── Auto-redirect toast overlay ─────────────────────── */}
+      <AnimatePresence>
+        {autoRedirecting && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.75, opacity: 0, y: 24 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 mx-4 max-w-xs w-full text-center"
+            >
+              {/* Icon */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.12, type: 'spring', stiffness: 300, damping: 18 }}
+                className="w-16 h-16 bg-gradient-to-br from-violet-500 to-indigo-600
+                           rounded-full flex items-center justify-center mx-auto mb-5
+                           shadow-lg shadow-indigo-300/60"
+              >
+                <BookOpen className="w-8 h-8 text-white" />
+              </motion.div>
+
+              {/* Text */}
+              <h2 className="text-xl font-black text-gray-900 mb-1.5">
+                10 words collected!
+              </h2>
+              <p className="text-sm text-gray-500 mb-6">
+                Moving to your Review Session…
+              </p>
+
+              {/* Progress bar countdown */}
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 1.6, ease: 'linear' }}
+                  className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 rounded-full"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -228,7 +286,7 @@ const FilterMode = () => {
             {currentWord && (
               <motion.div
                 key={currentWord.word_id}
-                drag={!isSubmitting ? 'x' : false}
+                drag={!isSubmitting && !autoRedirecting ? 'x' : false}
                 dragConstraints={{ left: 0, right: 0 }}
                 dragElastic={0.8}
                 onDragEnd={handleDragEnd}

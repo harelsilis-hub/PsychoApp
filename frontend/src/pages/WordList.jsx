@@ -1,12 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, List, Search, X } from 'lucide-react';
+import { ArrowLeft, List, Search, X, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 
-const UNIT_TOTALS = {
-  1: 283, 2: 376, 3: 359, 4: 379, 5: 384,
-  6: 386, 7: 387, 8: 404, 9: 388, 10: 396,
+const MARKS_KEY = 'psychoapp_word_marks';
+
+const loadMarks = () => {
+  try { return JSON.parse(localStorage.getItem(MARKS_KEY)) || {}; }
+  catch { return {}; }
+};
+
+const saveMarks = (marks) => {
+  localStorage.setItem(MARKS_KEY, JSON.stringify(marks));
 };
 
 const WordList = () => {
@@ -17,6 +23,8 @@ const WordList = () => {
   const [words,   setWords]   = useState([]);
   const [loading, setLoading] = useState(true);
   const [query,   setQuery]   = useState('');
+  const [filter,  setFilter]  = useState('all'); // 'all' | 'know' | 'dontknow'
+  const [marks,   setMarks]   = useState(loadMarks);
 
   useEffect(() => {
     reviewAPI.getUnitWords(unitNum, 500)
@@ -27,15 +35,45 @@ const WordList = () => {
       .catch(() => setLoading(false));
   }, [unitNum]);
 
+  const toggleMark = (wordId, value) => {
+    setMarks((prev) => {
+      const next = { ...prev };
+      if (next[wordId] === value) {
+        delete next[wordId]; // clicking the active button un-marks it
+      } else {
+        next[wordId] = value;
+      }
+      saveMarks(next);
+      return next;
+    });
+  };
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return words;
-    const q = query.trim().toLowerCase();
-    return words.filter(
-      (w) =>
-        w.english.toLowerCase().includes(q) ||
-        w.hebrew.includes(query.trim()),
-    );
-  }, [words, query]);
+    let result = words;
+
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      result = result.filter(
+        (w) =>
+          w.english.toLowerCase().includes(q) ||
+          w.hebrew.includes(query.trim()),
+      );
+    }
+
+    if (filter === 'know')     result = result.filter((w) => marks[w.word_id] === 'know');
+    if (filter === 'dontknow') result = result.filter((w) => marks[w.word_id] === 'dontknow');
+
+    return result;
+  }, [words, query, filter, marks]);
+
+  const knownCount    = useMemo(() => words.filter((w) => marks[w.word_id] === 'know').length,     [words, marks]);
+  const unknownCount  = useMemo(() => words.filter((w) => marks[w.word_id] === 'dontknow').length, [words, marks]);
+
+  const filterTabs = [
+    { key: 'all',      label: 'All',     count: words.length },
+    { key: 'know',     label: '✓ Know',  count: knownCount   },
+    { key: 'dontknow', label: '✗ Don\'t know', count: unknownCount },
+  ];
 
   return (
     <div className="min-h-[100dvh] flex flex-col relative" style={{ background: 'transparent' }}>
@@ -111,11 +149,6 @@ const WordList = () => {
             <div className="flex items-center justify-center py-20">
               <div className="w-12 h-12 border-4 border-blue-400 border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-lg font-semibold">No words found</p>
-              <p className="text-sm mt-1">Try a different search term</p>
-            </div>
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -124,44 +157,115 @@ const WordList = () => {
               className="bg-white/90 backdrop-blur-xl border border-gray-200/70
                          rounded-2xl shadow-xl shadow-gray-200/60 overflow-hidden"
             >
-              {/* Count bar */}
-              <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">
-                  {query ? `${filtered.length} results` : `All ${filtered.length} words`}
-                </span>
+              {/* Count bar + filter tabs */}
+              <div className="px-5 py-3 border-b border-gray-100 flex flex-wrap items-center gap-3">
+                {/* Filter tabs */}
+                <div className="flex gap-1.5">
+                  {filterTabs.map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setFilter(tab.key)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        filter === tab.key
+                          ? tab.key === 'know'
+                            ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+                            : tab.key === 'dontknow'
+                            ? 'bg-red-500 text-white shadow-sm shadow-red-200'
+                            : 'bg-gray-900 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      }`}
+                    >
+                      {tab.label}
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
+                        filter === tab.key ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-500'
+                      }`}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex-1" />
+
                 <div className="flex gap-6 text-xs font-bold text-gray-400 uppercase tracking-wide">
-                  <span className="w-1/2">English</span>
-                  <span className="w-1/2 text-right" dir="rtl">עברית</span>
+                  <span>English</span>
+                  <span dir="rtl">עברית</span>
                 </div>
               </div>
 
               {/* Word rows */}
-              <div className="divide-y divide-gray-50">
-                {filtered.map((word, i) => (
-                  <div
-                    key={word.word_id}
-                    className="flex items-center px-5 py-3 hover:bg-blue-50/40 transition-colors"
-                  >
-                    {/* Index */}
-                    <span className="text-xs text-gray-300 tabular-nums w-8 shrink-0 font-medium">
-                      {i + 1}
-                    </span>
+              {filtered.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <p className="text-lg font-semibold">No words found</p>
+                  <p className="text-sm mt-1">
+                    {filter !== 'all'
+                      ? 'No words marked in this category yet.'
+                      : 'Try a different search term.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {filtered.map((word, i) => {
+                    const mark = marks[word.word_id];
+                    return (
+                      <div
+                        key={word.word_id}
+                        className={`flex items-center px-5 py-3 transition-colors ${
+                          mark === 'know'
+                            ? 'hover:bg-emerald-50/60'
+                            : mark === 'dontknow'
+                            ? 'hover:bg-red-50/60'
+                            : 'hover:bg-blue-50/40'
+                        }`}
+                      >
+                        {/* Index */}
+                        <span className="text-xs text-gray-300 tabular-nums w-8 shrink-0 font-medium">
+                          {i + 1}
+                        </span>
 
-                    {/* English */}
-                    <span className="flex-1 text-sm font-semibold text-gray-800">
-                      {word.english}
-                    </span>
+                        {/* English */}
+                        <span className="flex-1 text-sm font-semibold text-gray-800">
+                          {word.english}
+                        </span>
 
-                    {/* Hebrew */}
-                    <span
-                      className="flex-1 text-sm font-semibold text-gray-700 text-right"
-                      dir="rtl"
-                    >
-                      {word.hebrew}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                        {/* Hebrew */}
+                        <span
+                          className="flex-1 text-sm font-semibold text-gray-700 text-right"
+                          dir="rtl"
+                        >
+                          {word.hebrew}
+                        </span>
+
+                        {/* ✓ / ✗ buttons */}
+                        <div className="flex items-center gap-1.5 ml-4 shrink-0">
+                          <button
+                            onClick={() => toggleMark(word.word_id, 'know')}
+                            title="I know this"
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                              mark === 'know'
+                                ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+                                : 'bg-gray-100 text-gray-400 hover:bg-emerald-100 hover:text-emerald-600'
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5" strokeWidth={3} />
+                          </button>
+                          <button
+                            onClick={() => toggleMark(word.word_id, 'dontknow')}
+                            title="I don't know this"
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
+                              mark === 'dontknow'
+                                ? 'bg-red-500 text-white shadow-sm shadow-red-200'
+                                : 'bg-gray-100 text-gray-400 hover:bg-red-100 hover:text-red-500'
+                            }`}
+                          >
+                            <X className="w-3.5 h-3.5" strokeWidth={3} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
           )}
         </div>

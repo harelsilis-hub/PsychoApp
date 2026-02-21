@@ -20,3 +20,52 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* ── Dark mode CSS variables ─────────────────────────────── */
+:root {
+  --fw-bg: white;
+  --fw-word-color: #2563eb;
+}
+
+.dark {
+  color-scheme: dark;
+  --fw-bg: #070b1a;
+  --fw-word-color: #818cf8;
+}
+
+/* ── Glass panels (backdrop-blur + bg-white/*) ───────────── */
+.dark [class*="backdrop-blur"][class*="bg-white"] {
+  background-color: rgba(14, 16, 38, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ── Solid white cards (no backdrop-blur) ────────────────── */
+.dark .bg-white {
+  background-color: rgb(18 20 45) !important;
+}
+
+/* ── Hover on solid white cards ──────────────────────────── */
+.dark .hover\:bg-white:hover {
+  background-color: rgb(22 25 55) !important;
+}
+
+/* ── Text ────────────────────────────────────────────────── */
+.dark .text-gray-900 { color: rgb(241 245 249) !important; }
+.dark .text-gray-800 { color: rgb(226 232 240) !important; }
+.dark .text-gray-700 { color: rgb(203 213 225) !important; }
+.dark .text-gray-600 { color: rgb(148 163 184) !important; }
+.dark .text-gray-500 { color: rgb(100 116 139)  !important; }
+.dark .text-gray-400 { color: rgb(71 85 105)    !important; }
+.dark .text-gray-300 { color: rgb(51 65 85)     !important; }
+
+/* ── Backgrounds ─────────────────────────────────────────── */
+.dark .bg-gray-100  { background-color: rgb(28 32 65)  !important; }
+.dark .bg-gray-50   { background-color: rgb(18 20 45)  !important; }
+.dark .bg-white\/80 { background-color: rgba(14,16,38,0.85) !important; }
+
+/* ── Borders ─────────────────────────────────────────────── */
+.dark .border-gray-200 { border-color: rgba(255,255,255,0.08) !important; }
+.dark .border-gray-100 { border-color: rgba(255,255,255,0.05) !important; }
+
+/* ── Dividers ────────────────────────────────────────────── */
+.dark .divide-gray-50 > * + * { border-color: rgba(255,255,255,0.04) !important; }

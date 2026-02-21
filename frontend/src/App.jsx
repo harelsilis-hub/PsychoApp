@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingWordsBackground from './components/FloatingWordsBackground';
 import LoginPage from './pages/LoginPage';
@@ -16,33 +17,35 @@ import WordList from './pages/WordList';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <FloatingWordsBackground />
-        <Routes>
-          {/* Public routes */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/home" element={<HomePage />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <Router>
+          <FloatingWordsBackground />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/home" element={<HomePage />} />
 
-          {/* Protected routes */}
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/sorting-hat" element={<ProtectedRoute><SortingHatPage /></ProtectedRoute>} />
-          <Route path="/placement-test" element={<ProtectedRoute><PlacementTest /></ProtectedRoute>} />
-          <Route path="/triage" element={<ProtectedRoute><TriageMode /></ProtectedRoute>} />
+            {/* Protected routes */}
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/sorting-hat" element={<ProtectedRoute><SortingHatPage /></ProtectedRoute>} />
+            <Route path="/placement-test" element={<ProtectedRoute><PlacementTest /></ProtectedRoute>} />
+            <Route path="/triage" element={<ProtectedRoute><TriageMode /></ProtectedRoute>} />
 
-          {/* Unit learning flow — all protected */}
-          <Route path="/unit/:id" element={<ProtectedRoute><UnitDetail /></ProtectedRoute>} />
-          <Route path="/unit/:id/filter" element={<ProtectedRoute><FilterMode /></ProtectedRoute>} />
-          <Route path="/unit/:id/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
-          <Route path="/unit/:id/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
-          <Route path="/unit/:id/words" element={<ProtectedRoute><WordList /></ProtectedRoute>} />
+            {/* Unit learning flow — all protected */}
+            <Route path="/unit/:id" element={<ProtectedRoute><UnitDetail /></ProtectedRoute>} />
+            <Route path="/unit/:id/filter" element={<ProtectedRoute><FilterMode /></ProtectedRoute>} />
+            <Route path="/unit/:id/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
+            <Route path="/unit/:id/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
+            <Route path="/unit/:id/words" element={<ProtectedRoute><WordList /></ProtectedRoute>} />
 
-          {/* Legacy review route */}
-          <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+            {/* Legacy review route */}
+            <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

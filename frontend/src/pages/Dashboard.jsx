@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, LogOut } from 'lucide-react';
+import { Brain, LogOut, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const UNIT_TOTALS = {
   1: 283, 2: 376, 3: 359, 4: 379, 5: 384,
@@ -12,7 +13,7 @@ const UNIT_TOTALS = {
 
 const DAILY_GOAL = 15;
 
-/* ─── Circular progress ring ────────────────────────────────────────── */
+/* ג”€ג”€ג”€ Circular progress ring ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] }) => {
   const r   = (size - stroke * 2) / 2;
   const circ = 2 * Math.PI * r;
@@ -41,10 +42,11 @@ const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] })
   );
 };
 
-/* ─── Dashboard ─────────────────────────────────────────────────────── */
+/* ג”€ג”€ג”€ Dashboard ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { isDark, toggle } = useTheme();
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
 
@@ -76,11 +78,11 @@ const Dashboard = () => {
     <div className="min-h-[100dvh] md:h-[100dvh] md:overflow-hidden flex flex-col relative"
          style={{ background: 'transparent' }}>
 
-      {/* ══════════════════════ HEADER ══════════════════════════ */}
+      {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
       <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3">
         <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
-          {/* ── Module 1: Greeting ── */}
+          {/* ג”€ג”€ Module 1: Greeting ג”€ג”€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -111,7 +113,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ── Module 2: Streak ── */}
+          {/* ג”€ג”€ Module 2: Streak ג”€ג”€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -137,7 +139,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ── Module 3: Goal + Mastery ── */}
+          {/* ג”€ג”€ Module 3: Goal + Mastery ג”€ג”€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -181,7 +183,23 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ── Logout ── */}
+          {/* ג”€ג”€ Dark mode toggle ג”€ג”€ */}
+          <motion.button
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
+            onClick={toggle}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
+                       flex items-center justify-center
+                       text-gray-400 hover:text-gray-800
+                       hover:bg-white/75 transition-all duration-200"
+          >
+            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+          </motion.button>
+
+         {/* ג”€ג”€ Logout ג”€ג”€ */}
           <motion.button
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -199,7 +217,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* ══════════════════════ BODY ════════════════════════════ */}
+      {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
       <main className="relative z-10 md:flex-1 md:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
         {/* Section title */}
@@ -215,7 +233,7 @@ const Dashboard = () => {
           </p>
         </motion.div>
 
-        {/* ── Unit grid ─────────────────────────────────────────── */}
+        {/* ג”€ג”€ Unit grid ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-3">
           {Array.from({ length: 10 }, (_, i) => i + 1).map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
@@ -272,17 +290,17 @@ const Dashboard = () => {
 
                   {/* Unit label */}
                   <div className="-mt-1">
-                    <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.14em]">
+                    <p className="text-sm font-bold text-gray-600 uppercase tracking-[0.14em]">
                       Unit {unit}
                     </p>
-                    <p className="text-[10px] text-gray-500 font-medium mt-0.5">{total} words</p>
+                    <p className="text-sm text-gray-500 font-medium mt-0.5">{total} words</p>
                   </div>
 
                   {/* Progress bar */}
                   <div className="space-y-1 mt-auto">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-semibold text-gray-600">{learned} learned</span>
-                      <span className={`text-[10px] font-black tabular-nums
+                      <span className="text-sm font-semibold text-gray-600">{learned} learned</span>
+                      <span className={`text-sm font-black tabular-nums
                         ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
                         {percent}%
                       </span>
@@ -300,7 +318,7 @@ const Dashboard = () => {
                   {/* CTA button */}
                   <div
                     className={`w-full py-2 rounded-xl text-center
-                                text-[10px] font-black text-white uppercase tracking-[0.12em]
+                                text-sm font-black text-white uppercase tracking-[0.12em]
                                 bg-gradient-to-r ${btnGrad}
                                 shadow-sm
                                 group-hover:shadow-md transition-shadow duration-300`}
