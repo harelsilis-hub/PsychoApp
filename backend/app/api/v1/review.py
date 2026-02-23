@@ -3,7 +3,7 @@ Review API endpoints - Spaced repetition review sessions.
 """
 from datetime import date as date_type, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import select, and_, or_, func
+from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -252,14 +252,15 @@ async def get_filter_words(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
-    Get words for tinder-style filtering — excludes already MASTERED words.
+    Get words for tinder-style filtering — only completely unseen words.
+    Any word the user has already interacted with (known OR unknown) is excluded.
     """
     if unit_number < 1 or unit_number > 10:
         raise HTTPException(status_code=400, detail="Unit must be 1-10")
 
     try:
         stmt = (
-            select(Word, UserWordProgress)
+            select(Word)
             .select_from(Word)
             .outerjoin(
                 UserWordProgress,
@@ -269,17 +270,12 @@ async def get_filter_words(
                 ),
             )
             .where(Word.unit == unit_number)
-            .where(
-                or_(
-                    UserWordProgress.id.is_(None),
-                    UserWordProgress.status != WordStatus.MASTERED,
-                )
-            )
+            .where(UserWordProgress.id.is_(None))   # no prior interaction at all
             .order_by(Word.id)
             .limit(limit)
         )
         result = await db.execute(stmt)
-        rows = result.all()
+        words_rows = result.scalars().all()
 
         words = [
             {
@@ -287,10 +283,10 @@ async def get_filter_words(
                 "english": word.english,
                 "hebrew": word.hebrew,
                 "unit": word.unit,
-                "status": progress.status.value if progress else "New",
+                "status": "New",
                 "global_difficulty_level": word.global_difficulty_level,
             }
-            for word, progress in rows
+            for word in words_rows
         ]
         return {"words": words, "total": len(words)}
 

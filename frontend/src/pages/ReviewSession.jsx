@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ArrowLeft, XCircle, Heart, Users, MessageSquare, BookOpen, Crown } from 'lucide-react';
+import { Brain, ArrowLeft, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown } from 'lucide-react';
 import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
@@ -125,6 +125,7 @@ const ReviewSession = () => {
   const [sessionStats, setSessionStats]   = useState({ total: 0, reviewed: 0, perfect: 0, good: 0, failed: 0 });
   const [noUnknowns, setNoUnknowns]       = useState(false);
   const [goalReached, setGoalReached]     = useState(false);
+  const [mobileAssocOpen, setMobileAssocOpen] = useState(false);
 
 
   // Words can be passed directly from FilterMode via router state
@@ -349,7 +350,7 @@ const ReviewSession = () => {
       {/* Body — two-column layout for both unit and regular review */}
       <div className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex gap-6">
         {/* Main card area */}
-        <div className="flex-1 min-w-0 flex items-start justify-center">
+        <div className="flex-1 min-w-0 flex flex-col items-center">
           <div className="w-full max-w-xl">
             <AnimatePresence mode="wait">
               {currentWord && (
@@ -369,6 +370,38 @@ const ReviewSession = () => {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Mobile-only associations panel — below the card buttons */}
+            <div className="lg:hidden mt-4">
+              <button
+                onClick={() => setMobileAssocOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-white/70 backdrop-blur border border-gray-100 rounded-2xl shadow-sm text-sm font-semibold text-gray-700"
+              >
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-purple-500" />
+                  Community Memory Aids
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${mobileAssocOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <AnimatePresence>
+                {mobileAssocOpen && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="bg-white/70 backdrop-blur border border-gray-100 border-t-0 rounded-b-2xl shadow-sm p-4 max-h-72 overflow-y-auto">
+                      <CommunitySidebar
+                        wordId={currentWord?.word_id}
+                        refreshTrigger={associationRefresh}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 

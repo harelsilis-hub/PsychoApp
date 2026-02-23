@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.models.word import Word
 from app.models.user_word_progress import UserWordProgress, WordStatus
+from app.models.word_interaction_event import WordInteractionEvent
 
 
 class ReviewService:
@@ -250,9 +251,22 @@ class ReviewService:
         if new_repetition >= 8 and new_interval >= 180:
             progress.status = WordStatus.MASTERED
 
-        # Commit changes
+        # Commit the core progress update first — this MUST succeed
         await db.commit()
         await db.refresh(progress)
+
+        # Log the raw interaction event (best-effort, non-fatal)
+        try:
+            db.add(WordInteractionEvent(
+                user_id=user_id,
+                word_id=word_id,
+                interaction_type="review",
+                outcome=str(quality),
+            ))
+            await db.commit()
+        except Exception as exc:
+            await db.rollback()
+            print(f"[WARN] interaction event not saved: {exc}")
 
         # Prepare result info
         status_change = progress.status != old_status

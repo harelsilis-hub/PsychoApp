@@ -12,25 +12,29 @@ const FilterMode = () => {
   const { id } = useParams();
   const unitNum = parseInt(id, 10);
 
-  const [words, setWords] = useState([]);
-  const [index, setIndex] = useState(0);
-  const [unknowns, setUnknowns] = useState([]);   // collected "don't know" words
+  // Words stored as a queue — we shift from the front
+  const [queue, setQueue] = useState([]);
+  const [unknowns, setUnknowns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [slideDir, setSlideDir] = useState(null); // 'left' | 'right'
-  const [done, setDone] = useState(false);         // all words exhausted without 10 unknowns
-  const [isFlipped, setIsFlipped] = useState(false); // show Hebrew translation
+  const [exitDir, setExitDir] = useState(null);       // 'left' | 'right' — drives fly-off anim
+  const [isFlipped, setIsFlipped] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [autoRedirecting, setAutoRedirecting] = useState(false);
 
-  // Keep a ref so the setTimeout closure always reads the latest unknowns array
+  // Ref-based gate: prevents double-fire without causing re-renders that lock the UI
+  const swipingRef = useRef(false);
+
+  // Latest unknowns for the redirect closure
   const unknownsRef = useRef([]);
   useEffect(() => { unknownsRef.current = unknowns; }, [unknowns]);
+
+  // Gate the redirect so it fires exactly once
+  const redirectFiredRef = useRef(false);
 
   useEffect(() => {
     reviewAPI.getFilterWords(unitNum)
       .then((data) => {
-        setWords(data.words || []);
+        setQueue(data.words || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -39,58 +43,52 @@ const FilterMode = () => {
       });
   }, [unitNum]);
 
-  // Once 10 unknowns are collected, show toast then auto-redirect
+  // Once 10 unknowns are collected, show toast then navigate
   useEffect(() => {
-    if (unknowns.length >= UNKNOWNS_TARGET && !autoRedirecting) {
+    if (unknowns.length >= UNKNOWNS_TARGET && !redirectFiredRef.current) {
+      redirectFiredRef.current = true;
       setAutoRedirecting(true);
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         navigate(`/unit/${unitNum}/review`, { state: { words: unknownsRef.current } });
       }, 1800);
-      return () => clearTimeout(timer);
     }
-  }, [unknowns.length, autoRedirecting, navigate, unitNum]);
+  }, [unknowns.length, navigate, unitNum]);
 
-  const currentWord = words[index];
-  const remaining = words.length - index;
+  const currentWord = queue[0] ?? null;
+  const remaining   = queue.length;
 
   const handleDragEnd = (_, info) => {
-    if (isSubmitting || !currentWord || autoRedirecting) return;
+    if (swipingRef.current || !currentWord || autoRedirecting) return;
     if (info.offset.x < -80 || info.velocity.x < -500) {
-      handleChoice(false); // swiped left → Don't Know
+      handleChoice(false);
     } else if (info.offset.x > 80 || info.velocity.x > 500) {
-      handleChoice(true);  // swiped right → Know It
+      handleChoice(true);
     }
   };
 
-  const handleChoice = async (isKnown) => {
-    if (isSubmitting || !currentWord || autoRedirecting) return;
-    setIsSubmitting(true);
-    setSlideDir(isKnown ? 'right' : 'left');
+  const handleChoice = (isKnown) => {
+    if (swipingRef.current || !currentWord || autoRedirecting) return;
+    swipingRef.current = true;
 
-    try {
-      // Save to backend: Known → MASTERED, Unknown → LEARNING
-      await progressAPI.triageWord(currentWord.word_id, isKnown);
-
-      await new Promise((r) => setTimeout(r, 320));
-
-      setIsFlipped(false);
-
-      if (!isKnown) {
-        setUnknowns((prev) => [...prev, { ...currentWord, is_new: true }]);
-      }
-
-      const nextIndex = index + 1;
-      if (nextIndex >= words.length) {
-        setDone(true);
-      } else {
-        setIndex(nextIndex);
-      }
-    } catch (err) {
-      console.error('Failed to save choice:', err);
-    } finally {
-      setIsSubmitting(false);
-      setSlideDir(null);
+    // 1. Optimistic update — collect unknowns before the server responds
+    if (!isKnown) {
+      setUnknowns((prev) => [...prev, { ...currentWord, is_new: true }]);
     }
+
+    // 2. Start the fly-off animation immediately
+    setExitDir(isKnown ? 'right' : 'left');
+
+    // 3. Fire API in the background — no await, never blocks the UI
+    progressAPI.triageWord(currentWord.word_id, isKnown)
+      .catch((err) => console.error('Background triage failed:', err));
+
+    // 4. After the card animation completes (~180ms), pop it and reset
+    setTimeout(() => {
+      setQueue((prev) => prev.slice(1));
+      setExitDir(null);
+      setIsFlipped(false);
+      swipingRef.current = false;
+    }, 180);
   };
 
   // ── Loading ────────────────────────────────────────────────
@@ -110,10 +108,9 @@ const FilterMode = () => {
     try {
       await progressAPI.resetUnitProgress(unitNum);
       const data = await reviewAPI.getFilterWords(unitNum);
-      setWords(data.words || []);
-      setIndex(0);
+      setQueue(data.words || []);
       setUnknowns([]);
-      setDone(false);
+      redirectFiredRef.current = false;
     } catch (err) {
       console.error('Reset failed:', err);
     } finally {
@@ -122,7 +119,7 @@ const FilterMode = () => {
   };
 
   // ── No words / all mastered ────────────────────────────────
-  if (!loading && words.length === 0) {
+  if (!loading && queue.length === 0 && unknowns.length === 0 && !autoRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
@@ -155,8 +152,8 @@ const FilterMode = () => {
     );
   }
 
-  // ── All words exhausted, fewer than 10 unknowns ────────────
-  if (done || (!currentWord && !loading)) {
+  // ── All words exhausted with some unknowns (< 10) ──────────
+  if (!loading && queue.length === 0 && !autoRedirecting) {
     const count = unknowns.length;
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -216,7 +213,6 @@ const FilterMode = () => {
               transition={{ type: 'spring', stiffness: 220, damping: 22 }}
               className="bg-white rounded-3xl shadow-2xl p-8 mx-4 max-w-xs w-full text-center"
             >
-              {/* Icon */}
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -227,16 +223,12 @@ const FilterMode = () => {
               >
                 <BookOpen className="w-8 h-8 text-white" />
               </motion.div>
-
-              {/* Text */}
               <h2 className="text-xl font-black text-gray-900 mb-1.5">
                 10 words collected!
               </h2>
               <p className="text-sm text-gray-500 mb-6">
                 Moving to your Review Session…
               </p>
-
-              {/* Progress bar countdown */}
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: '0%' }}
@@ -249,6 +241,7 @@ const FilterMode = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -286,30 +279,30 @@ const FilterMode = () => {
             {currentWord && (
               <motion.div
                 key={currentWord.word_id}
-                drag={!isSubmitting && !autoRedirecting ? 'x' : false}
+                drag={!autoRedirecting ? 'x' : false}
                 dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.8}
+                dragElastic={0.7}
                 onDragEnd={handleDragEnd}
-                initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                initial={{ opacity: 0, scale: 0.9, y: 12 }}
                 animate={{
-                  opacity: slideDir ? 0 : 1,
-                  scale: slideDir ? 0.8 : 1,
-                  x: slideDir === 'left' ? -300 : slideDir === 'right' ? 300 : 0,
-                  rotate: slideDir === 'left' ? -15 : slideDir === 'right' ? 15 : 0,
+                  opacity: exitDir ? 0 : 1,
+                  scale:   exitDir ? 0.85 : 1,
+                  x:       exitDir === 'left' ? -320 : exitDir === 'right' ? 320 : 0,
+                  rotate:  exitDir === 'left' ? -12   : exitDir === 'right' ? 12  : 0,
                 }}
-                exit={{ opacity: 0, scale: 0.85 }}
-                transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
                 className="text-center touch-none"
               >
                 {/* ── Flip card ── */}
                 <div
                   className="relative cursor-pointer mb-4"
                   style={{ perspective: '1000px', minHeight: '220px' }}
-                  onClick={() => !isSubmitting && setIsFlipped((f) => !f)}
+                  onClick={() => !exitDir && setIsFlipped((f) => !f)}
                 >
                   <motion.div
                     animate={{ rotateY: isFlipped ? 180 : 0 }}
-                    transition={{ duration: 0.5, type: 'spring', stiffness: 120 }}
+                    transition={{ duration: 0.45, type: 'spring', stiffness: 130 }}
                     style={{ transformStyle: 'preserve-3d', position: 'relative', minHeight: '220px' }}
                   >
                     {/* Front — English */}
@@ -358,20 +351,18 @@ const FilterMode = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleChoice(false)}
-                    disabled={isSubmitting}
                     className="bg-gradient-to-br from-red-500 to-rose-600 text-white py-3.5 sm:py-5 rounded-2xl
                                font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
-                               transform transition-all disabled:opacity-50 active:scale-95"
+                               transform transition-all active:scale-95"
                   >
                     <XCircle className="w-6 h-6 mx-auto mb-1" />
                     I Don't Know
                   </button>
                   <button
                     onClick={() => handleChoice(true)}
-                    disabled={isSubmitting}
                     className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-3.5 sm:py-5 rounded-2xl
                                font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
-                               transform transition-all disabled:opacity-50 active:scale-95"
+                               transform transition-all active:scale-95"
                   >
                     <CheckCircle className="w-6 h-6 mx-auto mb-1" />
                     I Know It

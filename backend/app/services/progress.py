@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.models.word import Word
 from app.models.user_word_progress import UserWordProgress, WordStatus
+from app.models.word_interaction_event import WordInteractionEvent
 
 UNIT_WORD_TOTALS = {1: 283, 2: 376, 3: 359, 4: 379, 5: 384, 6: 386, 7: 387, 8: 404, 9: 388, 10: 396}
 
@@ -68,8 +69,22 @@ class ProgressService:
             db.add(progress)
             message = f"Word marked as {'Mastered' if is_known else 'Learning'}!"
 
+        # Commit the core progress update first — this MUST succeed
         await db.commit()
         await db.refresh(progress)
+
+        # Log the raw interaction event (best-effort, non-fatal)
+        try:
+            db.add(WordInteractionEvent(
+                user_id=user_id,
+                word_id=word_id,
+                interaction_type="triage",
+                outcome="known" if is_known else "unknown",
+            ))
+            await db.commit()
+        except Exception as exc:
+            await db.rollback()
+            print(f"[WARN] interaction event not saved: {exc}")
 
         return progress, message
 
