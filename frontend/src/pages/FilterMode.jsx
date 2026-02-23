@@ -275,7 +275,7 @@ const FilterMode = () => {
       {/* Card area */}
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="max-w-sm w-full">
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {currentWord && (
               <motion.div
                 key={currentWord.word_id}

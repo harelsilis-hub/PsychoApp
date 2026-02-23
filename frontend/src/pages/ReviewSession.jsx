@@ -180,39 +180,39 @@ const ReviewSession = () => {
   };
 
   // Shared submit: quality 4 = Known, quality 1 = Unknown
-  const handleSubmit = async (quality) => {
+  const handleSubmit = (quality) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     const currentWord = sessionWords[currentIndex];
 
-    try {
-      const result = await reviewAPI.submitReview(currentWord.word_id, quality);
-      if (result.goal_reached) {
-        setGoalReached(true);
-        setTimeout(() => setGoalReached(false), 3000);
-      }
+    // Advance immediately (optimistic UI)
+    setSessionStats((prev) => {
+      const updated = { ...prev, reviewed: prev.reviewed + 1 };
+      if (quality === 5)               updated.perfect += 1;
+      else if (quality >= 3)           updated.good    += 1;
+      else                             updated.failed  += 1;
+      return updated;
+    });
 
-      setSessionStats((prev) => {
-        const updated = { ...prev, reviewed: prev.reviewed + 1 };
-        if (quality === 5)               updated.perfect += 1;
-        else if (quality >= 3)           updated.good    += 1;
-        else                             updated.failed  += 1;
-        return updated;
-      });
-
-      await new Promise((r) => setTimeout(r, 280));
-
-      if (currentIndex < sessionWords.length - 1) {
-        setCurrentIndex(currentIndex + 1);
-      } else {
-        setSessionComplete(true);
-      }
-    } catch (err) {
-      console.error('Submit failed:', err);
-      setError('Failed to save your review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    if (currentIndex < sessionWords.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    } else {
+      setSessionComplete(true);
     }
+
+    setIsSubmitting(false);
+
+    // Fire-and-forget API call in background
+    reviewAPI.submitReview(currentWord.word_id, quality)
+      .then((result) => {
+        if (result.goal_reached) {
+          setGoalReached(true);
+          setTimeout(() => setGoalReached(false), 3000);
+        }
+      })
+      .catch((err) => {
+        console.error('Submit failed:', err);
+      });
   };
 
   const handleRate       = (q) => handleSubmit(q);
@@ -352,7 +352,7 @@ const ReviewSession = () => {
         {/* Main card area */}
         <div className="flex-1 min-w-0 flex flex-col items-center">
           <div className="w-full max-w-xl">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {currentWord && (
                 <motion.div
                   key={currentWord.word_id}
