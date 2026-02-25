@@ -43,20 +43,37 @@ const TriageMode = () => {
   const handleChoice = (isKnown) => {
     if (isSubmitting || !currentWord) return;
 
-    // 1. INSTANT UI UPDATE (no awaiting!)
+    // 1. INSTANT UI UPDATE
     setSlideDirection(isKnown ? 'right' : 'left');
     setIsSubmitting(true);
     if (!isKnown) setShowMemoryAid(true);
 
-    // 2. BACKGROUND SYNC — fire and forget
-    progressAPI.triageWord(currentWord.id, isKnown).catch(console.error);
+    // 2. Chain triage → next-word fetch, running IN PARALLEL with the animation.
+    //    By the time the 500 ms animation ends the fetch is already in flight (or done).
+    const nextWordPromise = progressAPI
+      .triageWord(currentWord.id, isKnown)
+      .then(() => progressAPI.getNextTriageWord());
 
-    // 3. After animation completes, load next word
-    setTimeout(() => {
-      setCurrentWord(null);   // clears old card so loading spinner shows during fetch
+    // 3. After animation, apply the result (may already be resolved)
+    setTimeout(async () => {
+      setCurrentWord(null);
       setSlideDirection(null);
-      setIsSubmitting(false);
-      loadNextWord();
+      try {
+        const data = await nextWordPromise;
+        setCurrentWord(data.word);
+        setRemaining(data.remaining);
+        setShowMemoryAid(false);
+        setError(null);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setError('complete');
+        } else {
+          setError('Failed to load next word. Please try again.');
+        }
+      } finally {
+        setIsSubmitting(false);
+        setLoading(false);
+      }
     }, 500);
   };
 
