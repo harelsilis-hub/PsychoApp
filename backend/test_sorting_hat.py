@@ -60,19 +60,20 @@ async def test_sorting_hat() -> None:
             await session.flush()
             print(f"  [OK] Created user: ID={user.id}")
 
-            # Create words with difficulty ranks 1-100
+            # Create words across all 10 units (10 words per unit)
             words = []
-            for rank in range(1, 101):
-                word = Word(
-                    english=f"Word_{rank}",
-                    hebrew=f"מילה_{rank}",
-                    difficulty_rank=rank,
-                )
-                words.append(word)
+            for unit in range(1, 11):
+                for i in range(1, 11):
+                    word = Word(
+                        english=f"Word_u{unit}_{i}",
+                        hebrew=f"מילה_{unit}_{i}",
+                        unit=unit,
+                    )
+                    words.append(word)
 
             session.add_all(words)
             await session.commit()
-            print(f"  [OK] Created {len(words)} words (difficulty 1-100)")
+            print(f"  [OK] Created {len(words)} words (10 per unit, units 1-10)")
 
         # Step 3: Create placement session
         print("\n[4/8] Creating placement session...")
@@ -93,7 +94,7 @@ async def test_sorting_hat() -> None:
             word = await SortingHatService.get_next_word(session, session_obj)
             expected_mid = (session_obj.current_min + session_obj.current_max) // 2
             print(f"  [OK] Expected midpoint: {expected_mid}")
-            print(f"  [OK] Selected word difficulty: {word.difficulty_rank}")
+            print(f"  [OK] Selected word unit: {word.unit}")
             print(f"  [OK] Word: {word.english} = {word.hebrew}")
             assert word is not None, "Should return a word"
 
@@ -102,8 +103,8 @@ async def test_sorting_hat() -> None:
         async with AsyncSessionLocal() as session:
             from sqlalchemy import select
 
-            # Simulate user knowing words up to level 60
-            target_level = 60
+            # Simulate user knowing words up to unit 6
+            target_level = 6
             question_log = []
 
             for i in range(15):  # Limit to 15 questions for test
@@ -124,12 +125,12 @@ async def test_sorting_hat() -> None:
                 # Check if this is a regression check
                 is_regression = (session_obj.question_count + 1) % 5 == 0
 
-                # Simulate answer: user knows words below target_level
-                is_known = word.difficulty_rank <= target_level
+                # Simulate answer: user knows words at/below target unit
+                is_known = word.unit <= target_level
 
                 question_log.append({
                     "question": session_obj.question_count + 1,
-                    "word_difficulty": word.difficulty_rank,
+                    "word_unit": word.unit,
                     "is_regression": is_regression,
                     "is_known": is_known,
                     "range_before": f"[{session_obj.current_min}, {session_obj.current_max}]",
@@ -153,13 +154,13 @@ async def test_sorting_hat() -> None:
         # Step 6: Display question log
         print("\n[7/8] Question log:")
         print("  " + "-" * 66)
-        print(f"  {'Q#':<4} {'Diff':<5} {'Regr':<5} {'Known':<6} {'Range Before':<15} {'Range After':<15}")
+        print(f"  {'Q#':<4} {'Unit':<5} {'Regr':<5} {'Known':<6} {'Range Before':<15} {'Range After':<15}")
         print("  " + "-" * 66)
         for q in question_log:
             reg_marker = "[OK]" if q["is_regression"] else ""
             known_marker = "[OK]" if q["is_known"] else "[X]"
             print(
-                f"  {q['question']:<4} {q['word_difficulty']:<5} {reg_marker:<5} "
+                f"  {q['question']:<4} {q['word_unit']:<5} {reg_marker:<5} "
                 f"{known_marker:<6} {q['range_before']:<15} {q['range_after']:<15}"
             )
         print("  " + "-" * 66)
@@ -171,7 +172,7 @@ async def test_sorting_hat() -> None:
         print(f"  [OK] Expected: every 5th question")
 
         for rq in regression_questions:
-            print(f"    - Question {rq['question']}: Difficulty {rq['word_difficulty']} (regression)")
+            print(f"    - Question {rq['question']}: Unit {rq['word_unit']} (regression)")
 
         # Success
         print("\n" + "=" * 70)

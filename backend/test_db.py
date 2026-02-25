@@ -77,13 +77,13 @@ async def test_database_setup() -> None:
                 word1 = Word(
                     english="Hello",
                     hebrew="שלום",
-                    difficulty_rank=10,
+                    unit=1,
                     audio_url="https://example.com/audio/hello.mp3",
                 )
                 word2 = Word(
                     english="Goodbye",
                     hebrew="להתראות",
-                    difficulty_rank=15,
+                    unit=1,
                 )
                 session.add_all([word1, word2])
                 await session.flush()

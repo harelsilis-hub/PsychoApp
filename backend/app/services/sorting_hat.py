@@ -18,28 +18,14 @@ class SortingHatService:
 
     REGRESSION_INTERVAL = 5  # Check regression every 5th question
     REGRESSION_PERCENTAGE = 0.20  # 20% lower than current_min
-    MIN_RANGE_THRESHOLD = 5  # Stop when range is smaller than this
+    MIN_RANGE_THRESHOLD = 1  # Stop when range is smaller than this
     MAX_QUESTIONS = 20  # Maximum number of questions
-    MAX_LEVEL = 20  # Maximum level (1-20 scale)
+    MAX_LEVEL = 10  # Maximum level (matches unit range 1-10)
 
     @staticmethod
-    def difficulty_rank_to_level(difficulty_rank: int) -> int:
-        """
-        Convert difficulty_rank (1-100) to level (1-20).
-
-        Formula: ceil(difficulty_rank / 5)
-        - difficulty_rank 1-5 → Level 1
-        - difficulty_rank 6-10 → Level 2
-        - difficulty_rank 96-100 → Level 20
-
-        Args:
-            difficulty_rank: The difficulty rank (1-100).
-
-        Returns:
-            Level (1-20).
-        """
-        import math
-        return min(SortingHatService.MAX_LEVEL, max(1, math.ceil(difficulty_rank / 5)))
+    def unit_to_level(unit: int) -> int:
+        """Convert unit (1-10) directly to level (1-10)."""
+        return min(SortingHatService.MAX_LEVEL, max(1, unit))
 
     @staticmethod
     async def get_next_word(
@@ -63,17 +49,17 @@ class SortingHatService:
 
         if is_regression and session.current_min > 1:
             # Regression check: Get word 20% below current_min
-            regression_tier = max(1, int(session.current_min * (1 - SortingHatService.REGRESSION_PERCENTAGE)))
+            regression_unit = max(1, int(session.current_min * (1 - SortingHatService.REGRESSION_PERCENTAGE)))
 
-            # Define regression tier range (±5 from the target)
-            tier_min = max(1, regression_tier - 5)
-            tier_max = min(regression_tier + 5, session.current_min - 1)
+            # Define regression range (±1 from the target, below current_min)
+            unit_min = max(1, regression_unit - 1)
+            unit_max = min(regression_unit + 1, session.current_min - 1)
 
-            # Get random word from regression tier
+            # Get random word from regression range
             stmt = (
                 select(Word)
-                .where(Word.difficulty_rank >= tier_min)
-                .where(Word.difficulty_rank <= tier_max)
+                .where(Word.unit >= unit_min)
+                .where(Word.unit <= unit_max)
                 .order_by(func.random())
                 .limit(1)
             )
@@ -83,11 +69,11 @@ class SortingHatService:
             if word:
                 return word
 
-        # Normal binary search: Get word closest to midpoint
+        # Normal binary search: Get word closest to midpoint unit
         mid = (session.current_min + session.current_max) // 2
 
-        # Try to find word at exact midpoint first
-        stmt = select(Word).where(Word.difficulty_rank == mid).limit(1)
+        # Try to find word at exact midpoint unit first
+        stmt = select(Word).where(Word.unit == mid).order_by(func.random()).limit(1)
         result = await db.execute(stmt)
         word = result.scalar_one_or_none()
 
@@ -97,9 +83,9 @@ class SortingHatService:
         # If no word at exact midpoint, find closest word in range
         stmt = (
             select(Word)
-            .where(Word.difficulty_rank >= session.current_min)
-            .where(Word.difficulty_rank <= session.current_max)
-            .order_by(func.abs(Word.difficulty_rank - mid))
+            .where(Word.unit >= session.current_min)
+            .where(Word.unit <= session.current_max)
+            .order_by(func.abs(Word.unit - mid))
             .limit(1)
         )
         result = await db.execute(stmt)
@@ -144,10 +130,9 @@ class SortingHatService:
         if is_complete:
             # Placement test is complete
             session.is_active = False
-            # Final difficulty_rank is the midpoint of the final range
-            final_difficulty_rank = (session.current_min + session.current_max) // 2
-            # Convert difficulty_rank (1-100) to level (1-20)
-            session.final_level = SortingHatService.difficulty_rank_to_level(final_difficulty_rank)
+            # Final level is the midpoint unit of the final range
+            final_unit = (session.current_min + session.current_max) // 2
+            session.final_level = SortingHatService.unit_to_level(final_unit)
 
             # Update the user's level in the database
             from app.models.user import User
@@ -196,7 +181,7 @@ class SortingHatService:
         new_session = PlacementSession(
             user_id=user_id,
             current_min=1,
-            current_max=100,
+            current_max=10,
             question_count=0,
             is_active=True,
         )
@@ -246,14 +231,11 @@ class SortingHatService:
             List of distractor Word instances.
         """
         # Get random words excluding the correct word
-        # Try to get words from a similar difficulty range for better distractors
-        difficulty_range = 20  # ±20 levels from the correct word
-
+        # Try to get words from the same unit for better distractors
         stmt = (
             select(Word)
             .where(Word.id != correct_word.id)
-            .where(Word.difficulty_rank >= max(1, correct_word.difficulty_rank - difficulty_range))
-            .where(Word.difficulty_rank <= min(100, correct_word.difficulty_rank + difficulty_range))
+            .where(Word.unit == correct_word.unit)
             .order_by(func.random())
             .limit(count * 2)  # Get more to ensure we have enough
         )
