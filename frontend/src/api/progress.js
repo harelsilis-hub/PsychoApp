@@ -14,11 +14,6 @@ export const progressAPI = {
     return response.data;
   },
 
-  getNextTriageWord: async () => {
-    const response = await apiClient.get('/v1/progress/triage/next');
-    return response.data;
-  },
-
   getBatchTriageWords: async (limit = 50) => {
     const response = await apiClient.get(`/v1/progress/triage/batch?limit=${limit}`);
     return response.data;
