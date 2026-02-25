@@ -277,3 +277,32 @@ class ProgressService:
         remaining = result.scalar() or 0
 
         return word, remaining
+
+    @staticmethod
+    async def get_batch_triage_words(
+        db: AsyncSession,
+        user_id: int,
+        user_level: int,
+        count: int = 50,
+    ) -> tuple[list[Word], int]:
+        """Return up to `count` random untriaged words + total remaining count."""
+        unit_number = max(1, min(10, user_level))
+
+        stmt = select(UserWordProgress.word_id).where(UserWordProgress.user_id == user_id)
+        result = await db.execute(stmt)
+        triaged_word_ids = [row[0] for row in result.all()]
+
+        stmt = select(Word).where(Word.unit == unit_number)
+        if triaged_word_ids:
+            stmt = stmt.where(Word.id.not_in(triaged_word_ids))
+        stmt = stmt.order_by(func.random()).limit(count)
+        result = await db.execute(stmt)
+        words = list(result.scalars().all())
+
+        count_stmt = select(func.count(Word.id)).where(Word.unit == unit_number)
+        if triaged_word_ids:
+            count_stmt = count_stmt.where(Word.id.not_in(triaged_word_ids))
+        result = await db.execute(count_stmt)
+        remaining = result.scalar() or 0
+
+        return words, remaining

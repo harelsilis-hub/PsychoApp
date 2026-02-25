@@ -1,7 +1,7 @@
 """
 Progress API endpoints - User progress tracking and triage mode.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -100,6 +100,32 @@ async def reset_unit_progress(
         return {"success": True, "reset_count": len(word_ids)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to reset unit: {str(e)}")
+
+
+@router.get("/triage/batch", response_model=dict)
+async def get_batch_triage_words(
+    limit: int = Query(default=50, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get a batch of words for triage mode (one API call covers many swipes)."""
+    stats = await ProgressService.get_user_stats(db, current_user.id)
+    user_level = stats["level"]
+
+    words, remaining = await ProgressService.get_batch_triage_words(
+        db, current_user.id, user_level, limit
+    )
+
+    if not words:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No more words to triage at your level. Triage complete!"
+        )
+
+    return {
+        "words": [WordResponse.model_validate(w).model_dump() for w in words],
+        "remaining": remaining,
+    }
 
 
 @router.get("/triage/next", response_model=dict)

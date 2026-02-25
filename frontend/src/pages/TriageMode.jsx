@@ -6,34 +6,37 @@ import { progressAPI } from '../api/progress';
 
 const TriageMode = () => {
   const navigate = useNavigate();
-  const [currentWord, setCurrentWord] = useState(null);
-  const [remaining, setRemaining] = useState(0);
+  const [wordQueue, setWordQueue] = useState([]);
+  const [totalRemaining, setTotalRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null); // 'left' or 'right'
   const [showMemoryAid, setShowMemoryAid] = useState(false);
 
-
   useEffect(() => {
-    loadNextWord();
+    loadBatch();
   }, []);
 
-  const loadNextWord = async () => {
+  // Auto-refetch when batch is exhausted
+  useEffect(() => {
+    if (!loading && wordQueue.length === 0 && error !== 'complete') {
+      loadBatch();
+    }
+  }, [wordQueue.length]);
+
+  const loadBatch = async () => {
     try {
       setLoading(true);
       setError(null);
-      setShowMemoryAid(false);
-      const data = await progressAPI.getNextTriageWord();
-      setCurrentWord(data.word);
-      setRemaining(data.remaining);
+      const data = await progressAPI.getBatchTriageWords(50);
+      setWordQueue(data.words);
+      setTotalRemaining(data.remaining);
     } catch (err) {
-      console.error('Failed to load word:', err);
       if (err.response?.status === 404) {
-        // No more words - triage complete
         setError('complete');
       } else {
-        setError('Failed to load next word. Please try again.');
+        setError('Failed to load words. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -41,44 +44,25 @@ const TriageMode = () => {
   };
 
   const handleChoice = (isKnown) => {
-    if (isSubmitting || !currentWord) return;
+    if (isSubmitting || wordQueue.length === 0) return;
 
-    // 1. INSTANT UI UPDATE
     setSlideDirection(isKnown ? 'right' : 'left');
     setIsSubmitting(true);
     if (!isKnown) setShowMemoryAid(true);
 
-    // 2. Chain triage → next-word fetch, running IN PARALLEL with the animation.
-    //    By the time the 500 ms animation ends the fetch is already in flight (or done).
-    const nextWordPromise = progressAPI
-      .triageWord(currentWord.id, isKnown)
-      .then(() => progressAPI.getNextTriageWord());
+    // Fire and forget — never blocks the animation
+    progressAPI.triageWord(wordQueue[0].id, isKnown).catch(console.error);
 
-    // 3. After animation, apply the result (may already be resolved)
-    setTimeout(async () => {
-      setCurrentWord(null);
+    setTimeout(() => {
+      setWordQueue(q => q.slice(1));
       setSlideDirection(null);
-      try {
-        const data = await nextWordPromise;
-        setCurrentWord(data.word);
-        setRemaining(data.remaining);
-        setShowMemoryAid(false);
-        setError(null);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          setError('complete');
-        } else {
-          setError('Failed to load next word. Please try again.');
-        }
-      } finally {
-        setIsSubmitting(false);
-        setLoading(false);
-      }
+      setIsSubmitting(false);
+      setShowMemoryAid(false);
     }, 500);
   };
 
   // Loading Screen
-  if (loading && !currentWord) {
+  if (loading && wordQueue.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -129,7 +113,7 @@ const TriageMode = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={loadNextWord}
+            onClick={loadBatch}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
           >
             Try Again
@@ -158,7 +142,7 @@ const TriageMode = () => {
               <span className="font-semibold text-gray-900">Triage Mode</span>
             </div>
             <div className="text-sm text-gray-600">
-              {remaining} remaining
+              {wordQueue.length} remaining
             </div>
           </div>
         </div>
@@ -168,9 +152,9 @@ const TriageMode = () => {
       <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
         <div className="max-w-2xl w-full">
           <AnimatePresence mode="wait">
-            {currentWord && (
+            {wordQueue[0] && (
               <motion.div
-                key={currentWord.id}
+                key={wordQueue[0].id}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{
                   opacity: slideDirection ? 0 : 1,
@@ -188,10 +172,10 @@ const TriageMode = () => {
                     Do you know this word?
                   </div>
                   <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-4">
-                    {currentWord.english}
+                    {wordQueue[0].english}
                   </h2>
                   <div className="text-sm text-gray-400">
-                    Unit {currentWord.unit}
+                    Unit {wordQueue[0].unit}
                   </div>
                 </div>
 
@@ -201,7 +185,7 @@ const TriageMode = () => {
                     עברית
                   </div>
                   <div className="text-4xl font-bold text-gray-700" dir="rtl">
-                    {currentWord.hebrew}
+                    {wordQueue[0].hebrew}
                   </div>
                 </div>
 
