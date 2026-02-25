@@ -40,32 +40,24 @@ const TriageMode = () => {
     }
   };
 
-  const handleChoice = async (isKnown) => {
+  const handleChoice = (isKnown) => {
     if (isSubmitting || !currentWord) return;
 
-    setIsSubmitting(true);
+    // 1. INSTANT UI UPDATE (no awaiting!)
     setSlideDirection(isKnown ? 'right' : 'left');
+    setIsSubmitting(true);
+    if (!isKnown) setShowMemoryAid(true);
 
-    // If user doesn't know, show memory aid placeholder briefly
-    if (!isKnown) {
-      setShowMemoryAid(true);
-    }
+    // 2. BACKGROUND SYNC — fire and forget
+    progressAPI.triageWord(currentWord.id, isKnown).catch(console.error);
 
-    try {
-      await progressAPI.triageWord(currentWord.id, isKnown);
-
-      // Wait for animation
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Load next word
-      await loadNextWord();
-    } catch (err) {
-      console.error('Failed to submit choice:', err);
-      setError('Failed to save your choice. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+    // 3. After animation completes, load next word
+    setTimeout(() => {
+      setCurrentWord(null);   // clears old card so loading spinner shows during fetch
       setSlideDirection(null);
-    }
+      setIsSubmitting(false);
+      loadNextWord();
+    }, 500);
   };
 
   // Loading Screen
