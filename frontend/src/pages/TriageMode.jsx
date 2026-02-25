@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Brain, ArrowLeft, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -10,9 +10,8 @@ const TriageMode = () => {
   const [totalRemaining, setTotalRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [slideDirection, setSlideDirection] = useState(null); // 'left' or 'right'
   const [showMemoryAid, setShowMemoryAid] = useState(false);
+  const exitDirectionRef = useRef(null);
 
   useEffect(() => {
     loadBatch();
@@ -44,21 +43,12 @@ const TriageMode = () => {
   };
 
   const handleChoice = (isKnown) => {
-    if (isSubmitting || wordQueue.length === 0) return;
+    if (wordQueue.length === 0) return;
 
-    setSlideDirection(isKnown ? 'right' : 'left');
-    setIsSubmitting(true);
-    if (!isKnown) setShowMemoryAid(true);
-
-    // Fire and forget — never blocks the animation
+    exitDirectionRef.current = isKnown ? 'right' : 'left';
     progressAPI.triageWord(wordQueue[0].id, isKnown).catch(console.error);
-
-    setTimeout(() => {
-      setWordQueue(q => q.slice(1));
-      setSlideDirection(null);
-      setIsSubmitting(false);
-      setShowMemoryAid(false);
-    }, 500);
+    setWordQueue(q => q.slice(1));
+    setShowMemoryAid(false);
   };
 
   // Loading Screen
@@ -156,14 +146,14 @@ const TriageMode = () => {
               <motion.div
                 key={wordQueue[0].id}
                 initial={{ opacity: 0, scale: 0.8 }}
-                animate={{
-                  opacity: slideDirection ? 0 : 1,
-                  scale: slideDirection ? 0.8 : 1,
-                  x: slideDirection === 'left' ? -1000 : slideDirection === 'right' ? 1000 : 0,
-                  rotate: slideDirection === 'left' ? -30 : slideDirection === 'right' ? 30 : 0,
+                animate={{ opacity: 1, scale: 1, x: 0, rotate: 0 }}
+                exit={{
+                  opacity: 0,
+                  scale: 0.8,
+                  x: exitDirectionRef.current === 'left' ? -1000 : exitDirectionRef.current === 'right' ? 1000 : 0,
+                  rotate: exitDirectionRef.current === 'left' ? -30 : exitDirectionRef.current === 'right' ? 30 : 0,
                 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.5, type: 'spring' }}
+                transition={{ duration: 0.3, type: 'spring' }}
                 className="bg-white rounded-3xl shadow-2xl p-8 md:p-12"
               >
                 {/* Word Display */}
@@ -218,8 +208,7 @@ const TriageMode = () => {
                   {/* I Don't Know */}
                   <button
                     onClick={() => handleChoice(false)}
-                    disabled={isSubmitting}
-                    className="group relative bg-gradient-to-br from-red-500 to-rose-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative bg-gradient-to-br from-red-500 to-rose-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
                   >
                     <div className="relative flex items-center justify-center gap-2">
                       <XCircle className="w-6 h-6" />
@@ -230,8 +219,7 @@ const TriageMode = () => {
                   {/* I Know This */}
                   <button
                     onClick={() => handleChoice(true)}
-                    disabled={isSubmitting}
-                    className="group relative bg-gradient-to-br from-green-500 to-emerald-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group relative bg-gradient-to-br from-green-500 to-emerald-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
                   >
                     <div className="relative flex items-center justify-center gap-2">
                       <CheckCircle className="w-6 h-6" />

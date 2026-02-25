@@ -1,7 +1,7 @@
 """
 Progress service for managing user word progress and triage mode.
 """
-from datetime import datetime, date as date_type
+from datetime import date as date_type
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -50,7 +50,7 @@ class ProgressService:
                 message = "Word marked as Mastered!"
             else:
                 progress.status = WordStatus.LEARNING
-                progress.next_review = datetime.utcnow()
+                progress.next_review = func.now()
                 message = "Word added to Learning queue!"
         else:
             # Create new record
@@ -59,7 +59,7 @@ class ProgressService:
                 user_id=user_id,
                 word_id=word_id,
                 status=status,
-                next_review=datetime.utcnow() if not is_known else None,
+                next_review=func.now() if not is_known else None,
                 srs_data={
                     "repetition_number": 0,
                     "easiness_factor": 2.5,

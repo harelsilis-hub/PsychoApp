@@ -95,8 +95,6 @@ class ReviewService:
         Returns:
             List of (UserWordProgress, Word) tuples ordered by priority
         """
-        now = datetime.utcnow()
-
         # Query for due words and new learning words
         stmt = (
             select(UserWordProgress, Word)
@@ -105,7 +103,7 @@ class ReviewService:
             .where(
                 or_(
                     # Due words: REVIEW or LEARNING with next_review in past
-                    (UserWordProgress.next_review <= now),
+                    (UserWordProgress.next_review <= func.now()),
                     # New words: LEARNING with no next_review set
                     (UserWordProgress.status == WordStatus.LEARNING) &
                     (UserWordProgress.next_review.is_(None))
@@ -310,12 +308,10 @@ class ReviewService:
                 'next_review_time': datetime | None  # Earliest next review
             }
         """
-        now = datetime.utcnow()
-
         # Count due words (next_review in past)
         due_stmt = select(func.count(UserWordProgress.id)).where(
             UserWordProgress.user_id == user_id,
-            UserWordProgress.next_review <= now,
+            UserWordProgress.next_review <= func.now(),
             UserWordProgress.next_review.is_not(None)
         )
         due_result = await db.execute(due_stmt)
@@ -335,7 +331,7 @@ class ReviewService:
             select(func.min(UserWordProgress.next_review))
             .where(
                 UserWordProgress.user_id == user_id,
-                UserWordProgress.next_review > now
+                UserWordProgress.next_review > func.now()
             )
         )
         next_result = await db.execute(next_stmt)
