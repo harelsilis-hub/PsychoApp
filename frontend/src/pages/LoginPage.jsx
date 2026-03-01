@@ -70,7 +70,7 @@ const LoginPage = () => {
           <Brain className="w-6 h-6 text-white" />
         </div>
         <div>
-          <p className="text-xl font-black text-gray-900 tracking-tight leading-none">PsychoApp</p>
+          <p className="text-xl font-black text-gray-900 tracking-tight leading-none">Mila</p>
           <p className="text-xs text-gray-400 font-medium mt-0.5">אוצר מילים פסיכומטרי</p>
         </div>
       </div>
