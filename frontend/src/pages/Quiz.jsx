@@ -16,13 +16,13 @@ function shuffle(arr) {
 }
 
 /**
- * Build quiz questions exclusively from Learning words.
- * learningWords  = words the user is currently studying (status = 'Learning')
- * distractorPool = ALL available words used only as wrong-answer options
+ * Build quiz questions from learned words (status = REVIEW or MASTERED).
+ * learnedWords   = words the user has already learned, used as question targets
+ * distractorPool = same pool used as wrong-answer options
  * Each question stores word_id so SM-2 can be updated on answer.
  */
-function buildQuestions(learningWords, distractorPool) {
-  const ordered = shuffle([...learningWords]);
+function buildQuestions(learnedWords, distractorPool) {
+  const ordered = shuffle([...learnedWords]);
   if (ordered.length === 0) return [];
 
   const pool = distractorPool.length >= 4 ? distractorPool : [...distractorPool, ...ordered];
@@ -116,6 +116,7 @@ const Quiz = () => {
   const [loading, setLoading]         = useState(true);
   const [quizDone, setQuizDone]       = useState(false);
   const [noWords, setNoWords]         = useState(false);
+  const [error, setError]             = useState(null);
 
   const loadQuiz = async () => {
     setLoading(true);
@@ -123,22 +124,24 @@ const Quiz = () => {
     setQIndex(0);
     setScore(0);
     setSelected(null);
+    setNoWords(false);
+    setError(null);
 
     try {
       const res = await reviewAPI.getAllLearnedWords();
-      const learningWords = res.words || [];
+      const learnedWords = res.words || [];
 
-      // Quiz only tests words currently being learned
-      if (learningWords.length === 0) {
+      if (learnedWords.length === 0) {
         setNoWords(true);
         setLoading(false);
         return;
       }
 
-      // Learning words themselves are the distractor pool (diverse across all units)
-      setQuestions(buildQuestions(learningWords, learningWords));
+      // Learned words are also the distractor pool (diverse across all units)
+      setQuestions(buildQuestions(learnedWords, learnedWords));
     } catch (err) {
       console.error(err);
+      setError('Failed to load quiz. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -178,6 +181,29 @@ const Quiz = () => {
           <div className="w-14 h-14 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-gray-500">Building your quiz…</p>
         </div>
+      </div>
+    );
+  }
+
+  // ── Error state ─────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
+        >
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-500 mb-6">{error}</p>
+          <button
+            onClick={loadQuiz}
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
+          >
+            Try Again
+          </button>
+        </motion.div>
       </div>
     );
   }

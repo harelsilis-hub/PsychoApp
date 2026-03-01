@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Brain, LogOut, Moon, Sun } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -45,6 +45,7 @@ const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] })
 /* ג”€ג”€ג”€ Dashboard ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const Dashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const [unitStats, setUnitStats] = useState(null);
@@ -57,7 +58,7 @@ const Dashboard = () => {
     progressAPI.getUserStats()
       .then(setUserStats)
       .catch((err) => console.error('Failed to load user stats:', err));
-  }, []);
+  }, [location.key]);
 
   const getUnitData = (unitNum) => {
     const total = UNIT_TOTALS[unitNum];
@@ -69,7 +70,7 @@ const Dashboard = () => {
   const overallPercent = unitStats?.overall_percent ?? 0;
   const totalLearned   = unitStats?.total_learned  ?? 0;
   const totalWords     = unitStats?.total_words    ?? 3742;
-  const streak         = Math.max(1, userStats?.current_streak ?? 1);
+  const streak         = userStats?.current_streak ?? 0;
   const reviewed       = userStats?.daily_words_reviewed ?? 0;
   const goalPct        = Math.min(100, (reviewed / DAILY_GOAL) * 100);
   const username       = user?.email?.split('@')[0] ?? 'there';
