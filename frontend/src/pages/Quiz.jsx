@@ -125,12 +125,8 @@ const Quiz = () => {
     setSelected(null);
 
     try {
-      // Fetch all units in parallel using the existing filter endpoint
-      const units = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-      const results = await Promise.all(units.map((u) => reviewAPI.getFilterWords(u)));
-      const learningWords = results.flatMap((res) =>
-        (res.words || []).filter((w) => w.status === 'Learning')
-      );
+      const res = await reviewAPI.getAllLearningWords();
+      const learningWords = res.words || [];
 
       // Quiz only tests words currently being learned
       if (learningWords.length === 0) {
