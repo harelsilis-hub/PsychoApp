@@ -111,21 +111,24 @@ async def submit_review_result(
         today = date_type.today()
         goal_reached = False
 
+        # Capture old date before any writes so streak comparison is correct
+        old_active_date = current_user.last_active_date
+
         # Midnight reset: if last_active_date is stale, reset the daily counter
-        if current_user.last_active_date != today:
+        if old_active_date != today:
             current_user.daily_words_reviewed = 0
 
         current_user.daily_words_reviewed += 1
+        current_user.last_active_date = today  # always keep this fresh
 
         # Check if the user just hit the daily goal for the first time today
         if current_user.daily_words_reviewed == DAILY_GOAL:
             goal_reached = True
             yesterday = today - timedelta(days=1)
-            if current_user.last_active_date == yesterday:
+            if old_active_date == yesterday:
                 current_user.current_streak += 1          # extend streak
             else:
                 current_user.current_streak = 1           # restart streak
-            current_user.last_active_date = today
 
         await db.commit()
         await db.refresh(current_user)
@@ -242,6 +245,40 @@ async def get_all_learning_words(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load learning words: {str(e)}")
+
+
+@router.get("/learned/all")
+async def get_all_learned_words(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return all REVIEW or MASTERED words across every unit for the current user."""
+    try:
+        stmt = (
+            select(Word, UserWordProgress)
+            .join(UserWordProgress, UserWordProgress.word_id == Word.id)
+            .where(UserWordProgress.user_id == current_user.id)
+            .where(UserWordProgress.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]))
+            .order_by(Word.unit, Word.id)
+        )
+        result = await db.execute(stmt)
+        rows = result.all()
+
+        words = [
+            {
+                "word_id": word.id,
+                "english": word.english,
+                "hebrew": word.hebrew,
+                "unit": word.unit,
+                "status": progress.status.value,
+                "global_difficulty_level": word.global_difficulty_level,
+            }
+            for word, progress in rows
+        ]
+        return {"words": words, "total": len(words)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load learned words: {str(e)}")
 
 
 @router.get("/unit/{unit_number}/filter")

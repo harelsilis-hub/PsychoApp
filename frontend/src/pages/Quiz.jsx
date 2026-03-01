@@ -125,7 +125,7 @@ const Quiz = () => {
     setSelected(null);
 
     try {
-      const res = await reviewAPI.getAllLearningWords();
+      const res = await reviewAPI.getAllLearnedWords();
       const learningWords = res.words || [];
 
       // Quiz only tests words currently being learned
@@ -194,7 +194,7 @@ const Quiz = () => {
           <Brain className="w-12 h-12 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">No Words to Quiz Yet</h2>
           <p className="text-gray-500 mb-6">
-            The quiz tests all words you're currently learning across every unit. Use <strong>Filter Words</strong> in any unit to mark words you don't know — they'll appear here.
+            The quiz tests words you've marked as <strong>Known</strong> in a Review Session. Go through Filter Words → Review Session and mark words as "Known" — they'll appear here.
           </p>
           <button
             onClick={() => navigate(`/unit/${unitNum}`)}
