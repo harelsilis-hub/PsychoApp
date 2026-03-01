@@ -151,9 +151,9 @@ const ReviewSession = () => {
       // ② Unit route mode: /unit/:id/review with no state → show only LEARNING (unknown) words
       const unit = unitId ? parseInt(unitId, 10) : parseInt(searchParams.get('unit') || '0', 10);
       if (unit > 0) {
-        const data = await reviewAPI.getFilterWords(unit);
+        const data = await reviewAPI.getAllLearningWords();
         const unknownWords = (data.words || [])
-          .filter((w) => w.status === 'Learning')
+          .filter((w) => w.unit === unit)
           .map((w) => ({ ...w, is_new: false }));
 
         if (unknownWords.length === 0) {
