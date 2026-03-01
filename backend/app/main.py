@@ -13,7 +13,7 @@ from sqlalchemy import text
 
 from app.db.session import engine, Base
 from app.models import User, Word, Association, UserWordProgress, PlacementSession
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router
 
 
 @asynccontextmanager
@@ -39,9 +39,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # ── Column migrations (idempotent ALTER TABLE for existing DBs) ───────
         # SQLite raises OperationalError when a column already exists — safe to ignore.
         migrations = [
+            "ALTER TABLE words ADD COLUMN is_flagged INTEGER DEFAULT 0 NOT NULL",
             "ALTER TABLE words ADD COLUMN global_difficulty_level INTEGER DEFAULT NULL",
-            "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 1",
-            "UPDATE users SET current_streak = 1 WHERE current_streak = 0",
+            "ALTER TABLE users ADD COLUMN created_at DATETIME NULL",
+            "UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL",
+            "ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0 NOT NULL",
+            "UPDATE users SET is_admin = 1 WHERE email = 'harel.silis@gmail.com'",
+            "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
             "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
             # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
@@ -177,6 +181,12 @@ app.include_router(
     words_router,
     prefix="/api/v1/words",
     tags=["Words - Admin & Utilities"],
+)
+
+app.include_router(
+    admin_router,
+    prefix="/api/v1/admin",
+    tags=["Admin Panel"],
 )
 
 # TODO: Add additional route modules here

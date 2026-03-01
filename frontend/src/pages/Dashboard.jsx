@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, LogOut, Moon, Sun } from 'lucide-react';
+import { Brain, LogOut, Moon, Sun, ShieldCheck } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
@@ -215,6 +215,25 @@ const Dashboard = () => {
           >
             <LogOut className="w-5 h-5" />
           </motion.button>
+
+          {/* Admin link — only visible to admin users */}
+          {user?.is_admin && (
+            <motion.button
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
+              onClick={() => navigate('/admin')}
+              title="Admin panel"
+              className="bg-violet-600 backdrop-blur-2xl border border-violet-500/50
+                         rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-violet-300/40
+                         flex items-center justify-center gap-1.5
+                         text-white hover:bg-violet-700
+                         transition-all duration-200"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Admin</span>
+            </motion.button>
+          )}
         </div>
 
         {/* Mobile-only stats row */}

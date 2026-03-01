@@ -28,6 +28,7 @@ class AuthResponse(BaseModel):
     token_type: str = "bearer"
     user_id: int
     email: str
+    is_admin: bool = False
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -46,7 +47,7 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.refresh(user)
 
     token = create_access_token(user.id, user.email)
-    return AuthResponse(access_token=token, user_id=user.id, email=user.email)
+    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin)
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -62,4 +63,4 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
 
     token = create_access_token(user.id, user.email)
-    return AuthResponse(access_token=token, user_id=user.id, email=user.email)
+    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin)

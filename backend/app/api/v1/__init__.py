@@ -5,6 +5,7 @@ from app.api.v1.progress import router as progress_router
 from app.api.v1.review import router as review_router
 from app.api.v1.associations import router as associations_router
 from app.api.v1.words import router as words_router
+from app.api.v1.admin import router as admin_router
 
 __all__ = [
     "auth_router",
@@ -13,4 +14,5 @@ __all__ = [
     "review_router",
     "associations_router",
     "words_router",
+    "admin_router",
 ]

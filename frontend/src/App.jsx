@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingWordsBackground from './components/FloatingWordsBackground';
@@ -14,6 +14,14 @@ import TriageMode from './pages/TriageMode';
 import ReviewSession from './pages/ReviewSession';
 import Quiz from './pages/Quiz';
 import WordList from './pages/WordList';
+import Admin from './pages/Admin';
+
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user || !user.is_admin) return <Navigate to="/dashboard" replace />;
+  return children;
+};
 
 function App() {
   return (
@@ -42,6 +50,9 @@ function App() {
 
             {/* Legacy review route */}
             <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
+
+            {/* Admin panel — requires is_admin */}
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
           </Routes>
         </Router>
       </AuthProvider>

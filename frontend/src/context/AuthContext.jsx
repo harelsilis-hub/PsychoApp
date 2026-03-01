@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authAPI.login(email, password);
-    const userObj = { id: data.user_id, email: data.email };
+    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));
     setUser(userObj);
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password) => {
     const data = await authAPI.register(email, password);
-    const userObj = { id: data.user_id, email: data.email };
+    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));
     setUser(userObj);

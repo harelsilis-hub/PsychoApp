@@ -1,6 +1,6 @@
 """Word model definition."""
 from typing import List, TYPE_CHECKING, Optional
-from sqlalchemy import String, Integer
+from sqlalchemy import Boolean, String, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -38,6 +38,9 @@ class Word(Base):
 
     # Crowd-sourced difficulty (1 = easiest, 20 = hardest). NULL until first recalculation.
     global_difficulty_level: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+
+    # Crowdsourced error reporting — users can flag words with mistakes
+    is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
 
     # Relationships
     associations: Mapped[List["Association"]] = relationship(

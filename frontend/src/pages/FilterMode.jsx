@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, XCircle, Zap, RotateCcw, BookOpen } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
@@ -20,6 +20,7 @@ const FilterMode = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [autoRedirecting, setAutoRedirecting] = useState(false);
+  const [flagToast, setFlagToast] = useState(false);
 
   // Ref-based gate: prevents double-fire without causing re-renders that lock the UI
   const swipingRef = useRef(false);
@@ -66,6 +67,18 @@ const FilterMode = () => {
     }
   };
 
+  const handleFlag = async (e) => {
+    e.stopPropagation();
+    if (!currentWord || flagToast) return;
+    try {
+      await reviewAPI.flagWord(currentWord.word_id);
+      setFlagToast(true);
+      setTimeout(() => setFlagToast(false), 2500);
+    } catch (err) {
+      console.error('Flag failed:', err);
+    }
+  };
+
   const handleChoice = (isKnown) => {
     if (swipingRef.current || !currentWord || autoRedirecting) return;
     swipingRef.current = true;
@@ -87,6 +100,7 @@ const FilterMode = () => {
       setQueue((prev) => prev.slice(1));
       setExitDir(null);
       setIsFlipped(false);
+      setFlagToast(false);
       swipingRef.current = false;
     }, 180);
   };
@@ -366,6 +380,21 @@ const FilterMode = () => {
                   >
                     <CheckCircle className="w-6 h-6 mx-auto mb-1" />
                     I Know It
+                  </button>
+                </div>
+
+                {/* Report mistake */}
+                <div className="flex justify-center pt-1">
+                  <button
+                    onClick={handleFlag}
+                    className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
+                      flagToast
+                        ? 'bg-red-50 text-red-500 font-medium'
+                        : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
+                    }`}
+                  >
+                    <Flag className="w-3 h-3" />
+                    {flagToast ? 'Reported — thanks!' : 'Report mistake'}
                   </button>
                 </div>
               </motion.div>

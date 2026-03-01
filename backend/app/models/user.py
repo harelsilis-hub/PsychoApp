@@ -1,7 +1,7 @@
 """User model definition."""
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import String, Integer, Date
+from sqlalchemy import Boolean, DateTime, String, Integer, Date, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -31,9 +31,11 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[Optional[datetime]] = mapped_column(DateTime, server_default=func.now(), nullable=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
     xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
-    current_streak: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    current_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     daily_words_reviewed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
 

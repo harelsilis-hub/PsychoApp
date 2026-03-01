@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { RotateCcw, Star, BookOpen, Save, Check, Volume2, Pencil, X } from 'lucide-react';
+import { RotateCcw, Star, BookOpen, Save, Check, Volume2, Pencil, X, Flag } from 'lucide-react';
 import apiClient from '../api/client';
+import { reviewAPI } from '../api/review';
 
 const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -14,6 +15,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
   const [sentenceInput, setSentenceInput] = useState('');
   const [isSavingSentence, setIsSavingSentence] = useState(false);
   const [sentenceSaved, setSentenceSaved] = useState(false);
+  const [flagToast, setFlagToast] = useState(false);
 
   const wordId = word?.word_id;
 
@@ -35,6 +37,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
       setHasFlipped(false);
       setIsEditingSentence(false);
       setSentenceSaved(false);
+      setFlagToast(false);
     }
   }, [wordId]);
 
@@ -84,6 +87,18 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     onRate(quality);
     setIsFlipped(false);
     setHasFlipped(false);
+  };
+
+  const handleFlag = async (e) => {
+    e.stopPropagation();
+    if (flagToast) return;
+    try {
+      await reviewAPI.flagWord(wordId);
+      setFlagToast(true);
+      setTimeout(() => setFlagToast(false), 2500);
+    } catch (err) {
+      console.error('Flag failed:', err);
+    }
   };
 
   const speakWord = (e) => {
@@ -290,6 +305,21 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
         <p className="text-center text-xs text-gray-400">
           Don't know → Review tomorrow · Know it → Longer interval
         </p>
+
+        {/* Report mistake */}
+        <div className="flex justify-center pt-1">
+          <button
+            onClick={handleFlag}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
+              flagToast
+                ? 'bg-red-50 text-red-500 font-medium'
+                : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
+            }`}
+          >
+            <Flag className="w-3 h-3" />
+            {flagToast ? 'Reported — thanks!' : 'Report mistake'}
+          </button>
+        </div>
       </div>
     </div>
   );

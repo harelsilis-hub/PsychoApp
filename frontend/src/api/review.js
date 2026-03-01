@@ -43,4 +43,9 @@ export const reviewAPI = {
     const response = await apiClient.get('/v1/review/learned/all');
     return response.data;
   },
+
+  flagWord: async (wordId) => {
+    const response = await apiClient.post(`/v1/admin/flag/${wordId}`);
+    return response.data;
+  },
 };
