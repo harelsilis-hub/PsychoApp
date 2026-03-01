@@ -102,10 +102,10 @@ const Dashboard = () => {
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
-                Psychometric Vocab
+                אוצר מילים פסיכומטרי
               </p>
               <p className="text-xl font-black text-gray-900 leading-tight truncate">
-                Hello,{' '}
+                שלום,{' '}
                 <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
                   {username}
                 </span>{' '}
@@ -135,7 +135,7 @@ const Dashboard = () => {
             <div className="leading-none">
               <p className="text-5xl font-black text-gray-900 tabular-nums">{streak}</p>
               <p className="text-[10px] font-bold text-orange-400 uppercase tracking-[0.14em] mt-1">
-                Day streak
+                ימי רצף
               </p>
             </div>
           </motion.div>
@@ -161,7 +161,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="leading-tight">
-              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">Daily</p>
+              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">יומי</p>
               <p className="text-sm font-black text-gray-800 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
             </div>
 
@@ -177,7 +177,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="leading-tight">
-              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">Mastery</p>
+              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.12em]">שליטה</p>
               <p className="text-sm font-black text-gray-800 tabular-nums">
                 {totalLearned.toLocaleString()}
               </p>
@@ -231,7 +231,7 @@ const Dashboard = () => {
                          transition-all duration-200"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">Admin</span>
+              <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">ניהול</span>
             </motion.button>
           )}
         </div>
@@ -250,7 +250,7 @@ const Dashboard = () => {
             <span className="text-2xl leading-none">🔥</span>
             <div className="leading-none">
               <p className="text-lg font-black text-gray-900 tabular-nums">{streak}</p>
-              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wide mt-0.5">Streak</p>
+              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wide mt-0.5">רצף</p>
             </div>
           </div>
 
@@ -266,7 +266,7 @@ const Dashboard = () => {
             </div>
             <div className="leading-none">
               <p className="text-sm font-black text-gray-900 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
-              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">Daily</p>
+              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">יומי</p>
             </div>
           </div>
 
@@ -282,7 +282,7 @@ const Dashboard = () => {
             </div>
             <div className="leading-none">
               <p className="text-sm font-black text-gray-900 tabular-nums">{overallPercent}%</p>
-              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">Mastery</p>
+              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">שליטה</p>
             </div>
           </div>
         </motion.div>
@@ -298,9 +298,9 @@ const Dashboard = () => {
           transition={{ duration: 0.45, delay: 0.25 }}
           className="mb-3 shrink-0"
         >
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">Your Units</h1>
+          <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
           <p className="text-sm text-gray-600 mt-0.5 font-medium">
-            {totalLearned.toLocaleString()} &thinsp;/&thinsp; {totalWords.toLocaleString()} words learned
+            {totalLearned.toLocaleString()} &thinsp;/&thinsp; {totalWords.toLocaleString()} מילים נלמדו
           </p>
         </motion.div>
 
@@ -311,7 +311,7 @@ const Dashboard = () => {
             const started   = learned > 0;
             const completed = percent >= 100;
 
-            const btnLabel  = completed ? `Review ${unit}` : started ? `Continue ${unit}` : `Start ${unit}`;
+            const btnLabel  = completed ? `חזרה ${unit}` : started ? `המשך ${unit}` : `התחל ${unit}`;
             const numGrad   = completed
               ? 'from-emerald-400 to-teal-500'
               : 'from-violet-600 to-indigo-500';
@@ -362,15 +362,15 @@ const Dashboard = () => {
                   {/* Unit label */}
                   <div className="-mt-1">
                     <p className="text-sm font-bold text-gray-600 uppercase tracking-[0.14em]">
-                      Unit {unit}
+                      יחידה {unit}
                     </p>
-                    <p className="text-sm text-gray-500 font-medium mt-0.5">{total} words</p>
+                    <p className="text-sm text-gray-500 font-medium mt-0.5">{total} מילים</p>
                   </div>
 
                   {/* Progress bar */}
                   <div className="space-y-1 mt-auto">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-600">{learned} learned</span>
+                      <span className="text-sm font-semibold text-gray-600">{learned} נלמדו</span>
                       <span className={`text-sm font-black tabular-nums
                         ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
                         {percent}%

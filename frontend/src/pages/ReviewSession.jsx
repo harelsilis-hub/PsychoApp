@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ArrowLeft, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown } from 'lucide-react';
+import { Brain, ArrowRight, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown } from 'lucide-react';
 import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
@@ -48,11 +48,11 @@ const CommunitySidebar = ({ wordId, refreshTrigger }) => {
           <Users className="w-4 h-4 text-purple-600" />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-800 text-sm">Community Memory Aids</h3>
+          <h3 className="font-semibold text-gray-800 text-sm">עזרי זיכרון של הקהילה</h3>
           <p className="text-xs text-gray-400">
             {associations.length > 0
-              ? `${associations.length} tip${associations.length > 1 ? 's' : ''} — most liked first`
-              : 'Most liked first'}
+              ? `${associations.length} טיפ${associations.length > 1 ? 'ים' : ''} — הכי אהובים ראשונים`
+              : 'הכי אהובים ראשונים'}
           </p>
         </div>
       </div>
@@ -65,8 +65,8 @@ const CommunitySidebar = ({ wordId, refreshTrigger }) => {
         ) : associations.length === 0 ? (
           <div className="text-center py-10 px-4">
             <MessageSquare className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-sm text-gray-400 font-medium">No associations yet</p>
-            <p className="text-xs text-gray-300 mt-1">Be the first! Save yours on the card.</p>
+            <p className="text-sm text-gray-400 font-medium">אין עדיין אסוציאציות</p>
+            <p className="text-xs text-gray-300 mt-1">היה הראשון! שמור את שלך על הכרטיס.</p>
           </div>
         ) : (
           associations.map((assoc, i) => {
@@ -81,7 +81,7 @@ const CommunitySidebar = ({ wordId, refreshTrigger }) => {
                 {isTop && (
                   <div className="flex items-center gap-1 mb-2">
                     <Crown className="w-3.5 h-3.5 text-amber-500" />
-                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Most Liked</span>
+                    <span className="text-xs font-semibold text-amber-600 uppercase tracking-wide">הכי אהוב</span>
                   </div>
                 )}
                 <p className="text-sm text-gray-700 leading-relaxed mb-2">"{assoc.text}"</p>
@@ -226,7 +226,7 @@ const ReviewSession = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-lg text-gray-500">Loading your session…</p>
+          <p className="text-lg text-gray-500">טוען את הסשן שלך...</p>
         </div>
       </div>
     );
@@ -240,11 +240,11 @@ const ReviewSession = () => {
           <div className="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-7 h-7 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">שגיאה</h2>
           <p className="text-gray-500 mb-6">{error}</p>
           <div className="space-y-3">
-            <button onClick={loadSession} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold">Try Again</button>
-            <button onClick={() => navigate(backPath)} className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold">Back</button>
+            <button onClick={loadSession} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold">נסה שוב</button>
+            <button onClick={() => navigate(backPath)} className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold">חזרה</button>
           </div>
         </div>
       </div>
@@ -261,29 +261,29 @@ const ReviewSession = () => {
           className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
         >
           <div className="text-5xl mb-4">📭</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Unknown Words Yet</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">אין מילים לא ידועות עדיין</h2>
           <p className="text-gray-500 mb-7 text-sm leading-relaxed">
-            You haven't marked any words as "I Don't Know" in this unit yet.
-            Filter through the words first to build your review list.
+            עדיין לא סימנת מילים כ"לא יודע" ביחידה זו.
+            סנן את המילים תחילה כדי לבנות את רשימת החזרה שלך.
           </p>
           <div className="space-y-3">
             <button
               onClick={() => navigate(`/unit/${unitId}/filter`)}
               className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
             >
-              Filter Words →
+              ← סנן מילים
             </button>
             <button
               onClick={() => navigate(`/unit/${unitId}/quiz`)}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
             >
-              Practice Quiz →
+              ← בוחן תרגול
             </button>
             <button
               onClick={() => navigate(backPath)}
               className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all"
             >
-              Back to Unit
+              חזרה ליחידה
             </button>
           </div>
         </motion.div>
@@ -298,7 +298,7 @@ const ReviewSession = () => {
 
   const currentWord = sessionWords[currentIndex];
   const progressPct = (sessionStats.reviewed / sessionStats.total) * 100;
-  const sessionTitle = isStudyMode ? 'Review Session' : unitId ? `Unit ${unitId} Review` : 'Review Session';
+  const sessionTitle = isStudyMode ? 'סשן חזרה' : unitId ? `חזרה — יחידה ${unitId}` : 'סשן חזרה';
 
   // ── Main UI ────────────────────────────────────────────────
   return (
@@ -312,7 +312,7 @@ const ReviewSession = () => {
             exit={{ opacity: 0 }}
             className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-orange-500 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-2 font-semibold"
           >
-            🔥 Daily goal reached! Streak extended!
+            🔥 מטרה יומית הושגה! הרצף הוארך!
           </motion.div>
         )}
       </AnimatePresence>
@@ -325,8 +325,8 @@ const ReviewSession = () => {
               onClick={() => navigate(backPath)}
               className="flex items-center gap-1.5 text-gray-500 hover:text-gray-800 transition-colors text-sm font-medium"
             >
-              <ArrowLeft className="w-4 h-4" />
-              Back
+              <ArrowRight className="w-4 h-4" />
+              חזרה
             </button>
             <div className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-purple-600" />
@@ -379,7 +379,7 @@ const ReviewSession = () => {
               >
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-purple-500" />
-                  Community Memory Aids
+                  עזרי זיכרון של הקהילה
                 </div>
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${mobileAssocOpen ? 'rotate-180' : ''}`} />
               </button>

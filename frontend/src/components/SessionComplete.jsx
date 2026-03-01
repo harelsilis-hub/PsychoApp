@@ -10,10 +10,10 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
     : 0;
 
   const getEncouragement = () => {
-    if (accuracy >= 90) return "Outstanding work!";
-    if (accuracy >= 75) return "Great job!";
-    if (accuracy >= 60) return "Good progress!";
-    return "Keep practicing!";
+    if (accuracy >= 90) return "עבודה מצוינת!";
+    if (accuracy >= 75) return "כל הכבוד!";
+    if (accuracy >= 60) return "התקדמות טובה!";
+    return "המשך להתאמן!";
   };
 
   return (
@@ -35,7 +35,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
             <Trophy className="w-10 h-10 text-yellow-500" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900">
-            Session Complete!
+            הסשן הושלם!
           </h2>
           <p className="text-lg text-gray-600 mt-2">
             {getEncouragement()}
@@ -51,11 +51,11 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
         >
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-gray-600">Words Reviewed</span>
+              <span className="text-gray-600">מילים שנסקרו</span>
               <span className="text-2xl font-bold text-gray-900">{stats.total}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Accuracy</span>
+              <span className="text-gray-600">דיוק</span>
               <span className="text-2xl font-bold text-green-600">{accuracy}%</span>
             </div>
           </div>
@@ -72,7 +72,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
                 <CheckCircle className="w-6 h-6 text-green-600" />
               </div>
               <div className="text-2xl font-bold text-gray-900">{stats.perfect}</div>
-              <div className="text-xs text-gray-600">Perfect</div>
+              <div className="text-xs text-gray-600">מושלם</div>
             </motion.div>
 
             <motion.div
@@ -85,7 +85,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
                 <TrendingUp className="w-6 h-6 text-blue-600" />
               </div>
               <div className="text-2xl font-bold text-gray-900">{stats.good}</div>
-              <div className="text-xs text-gray-600">Good</div>
+              <div className="text-xs text-gray-600">טוב</div>
             </motion.div>
 
             <motion.div
@@ -98,7 +98,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
                 <XCircle className="w-6 h-6 text-red-600" />
               </div>
               <div className="text-2xl font-bold text-gray-900">{stats.failed}</div>
-              <div className="text-xs text-gray-600">Retry</div>
+              <div className="text-xs text-gray-600">לנסות שוב</div>
             </motion.div>
           </div>
         </motion.div>
@@ -114,14 +114,14 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
             onClick={() => navigate(backPath)}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
           >
-            <span>Done</span>
+            <span>סיום</span>
             <ArrowRight className="w-5 h-5" />
           </button>
 
           {stats.failed > 0 && (
             <div className="text-center text-sm text-gray-600">
               <Target className="w-4 h-4 inline-block mr-1" />
-              You'll see the {stats.failed} retry word{stats.failed > 1 ? 's' : ''} again tomorrow
+              תראה את {stats.failed} המילה{stats.failed > 1 ? 'ות' : ''} לחזרה שוב מחר
             </div>
           )}
         </motion.div>
@@ -133,7 +133,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
           transition={{ delay: 0.9 }}
           className="mt-6 text-center text-xs text-gray-500"
         >
-          <p>Consistency is key! Come back tomorrow to maintain your progress.</p>
+          <p>עקביות היא המפתח! חזור מחר לשמור על ההתקדמות שלך.</p>
         </motion.div>
       </motion.div>
     </div>

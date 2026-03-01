@@ -27,20 +27,20 @@ const LoginPage = () => {
     setError('');
 
     if (!email.trim() || !email.includes('@')) {
-      setError('Please enter a valid email address.');
+      setError('נא להזין כתובת אימייל תקינה.');
       return;
     }
     if (!password) {
-      setError('Please enter your password.');
+      setError('נא להזין סיסמה.');
       return;
     }
     if (mode === 'register') {
       if (password.length < 6) {
-        setError('Password must be at least 6 characters.');
+        setError('הסיסמה חייבת להכיל לפחות 6 תווים.');
         return;
       }
       if (password !== confirmPassword) {
-        setError('Passwords do not match.');
+        setError('הסיסמאות אינן תואמות.');
         return;
       }
     }
@@ -55,7 +55,7 @@ const LoginPage = () => {
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const detail = err.response?.data?.detail;
-      setError(detail || (mode === 'login' ? 'Invalid email or password.' : 'Registration failed. Please try again.'));
+      setError(detail || (mode === 'login' ? 'אימייל או סיסמה שגויים.' : 'ההרשמה נכשלה. נסה שוב.'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ const LoginPage = () => {
         </div>
         <div>
           <p className="text-xl font-black text-gray-900 tracking-tight leading-none">PsychoApp</p>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">Psychometric Vocabulary</p>
+          <p className="text-xs text-gray-400 font-medium mt-0.5">אוצר מילים פסיכומטרי</p>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ const LoginPage = () => {
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
             }`}
           >
-            Log In
+            כניסה
           </button>
           <button
             type="button"
@@ -100,7 +100,7 @@ const LoginPage = () => {
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
             }`}
           >
-            Sign Up
+            הרשמה
           </button>
         </div>
 
@@ -108,7 +108,7 @@ const LoginPage = () => {
         <form onSubmit={handleSubmit} className="p-7 space-y-3">
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Email
+              אימייל
             </label>
             <input
               type="email"
@@ -123,7 +123,7 @@ const LoginPage = () => {
 
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              Password
+              סיסמה
             </label>
             <div className="relative">
               <input
@@ -131,13 +131,13 @@ const LoginPage = () => {
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'At least 6 characters' : '••••••••'}
-                className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+                placeholder={mode === 'register' ? 'לפחות 6 תווים' : '••••••••'}
+                className="w-full px-4 py-3 pl-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -148,7 +148,7 @@ const LoginPage = () => {
           {mode === 'register' && (
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                Confirm Password
+                אימות סיסמה
               </label>
               <input
                 type="password"
@@ -174,13 +174,13 @@ const LoginPage = () => {
                        hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 transition-all
                        shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-200/60 mt-1"
           >
-            {loading ? 'Please wait…' : mode === 'login' ? 'Log In' : 'Create Account'}
+            {loading ? 'רגע...' : mode === 'login' ? 'כניסה' : 'יצירת חשבון'}
           </button>
         </form>
       </div>
 
       <p className="mt-5 text-xs text-gray-400 text-center">
-        Learn 3,742 psychometric words with spaced repetition.
+        למד 3,742 מילים פסיכומטריות בשיטת החזרות המרווחות.
       </p>
     </div>
   );

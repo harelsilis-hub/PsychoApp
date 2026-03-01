@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Brain, CheckCircle, XCircle, Trophy, ArrowRight } from 'lucide-react';
+import { ArrowRight, Brain, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 
@@ -56,7 +56,7 @@ function buildQuestions(learnedWords, distractorPool) {
 const QuizResult = ({ score, total, onRetry, onBack }) => {
   const pct = Math.round((score / total) * 100);
   const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '📚' : '💪';
-  const msg   = pct >= 90 ? 'Outstanding!' : pct >= 70 ? 'Great work!' : pct >= 50 ? 'Good effort!' : 'Keep practising!';
+  const msg   = pct >= 90 ? 'מצוין!' : pct >= 70 ? 'כל הכבוד!' : pct >= 50 ? 'מאמץ טוב!' : 'המשך להתאמן!';
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
@@ -74,11 +74,11 @@ const QuizResult = ({ score, total, onRetry, onBack }) => {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="bg-green-50 rounded-2xl p-4">
             <div className="text-2xl font-bold text-green-600">{score}</div>
-            <div className="text-xs text-gray-500">Correct</div>
+            <div className="text-xs text-gray-500">נכון</div>
           </div>
           <div className="bg-red-50 rounded-2xl p-4">
             <div className="text-2xl font-bold text-red-500">{total - score}</div>
-            <div className="text-xs text-gray-500">Incorrect</div>
+            <div className="text-xs text-gray-500">שגוי</div>
           </div>
         </div>
 
@@ -87,14 +87,13 @@ const QuizResult = ({ score, total, onRetry, onBack }) => {
             onClick={onRetry}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
           >
-            <ArrowRight className="w-4 h-4" />
-            Try Again
+            נסה שוב
           </button>
           <button
             onClick={onBack}
             className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold"
           >
-            Back to Unit
+            חזרה ליחידה
           </button>
         </div>
       </motion.div>
@@ -179,7 +178,7 @@ const Quiz = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-green-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Building your quiz…</p>
+          <p className="text-gray-500">בונה את הבוחן...</p>
         </div>
       </div>
     );
@@ -195,13 +194,13 @@ const Quiz = () => {
           className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
         >
           <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">משהו השתבש</h2>
           <p className="text-gray-500 mb-6">{error}</p>
           <button
             onClick={loadQuiz}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
           >
-            Try Again
+            נסה שוב
           </button>
         </motion.div>
       </div>
@@ -218,15 +217,15 @@ const Quiz = () => {
           className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
         >
           <Brain className="w-12 h-12 text-green-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Words to Quiz Yet</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">אין מילים לבחינה עדיין</h2>
           <p className="text-gray-500 mb-6">
-            The quiz tests words you've marked as <strong>Known</strong> in a Review Session. Go through Filter Words → Review Session and mark words as "Known" — they'll appear here.
+            הבוחן בוחן מילים שסימנת כ<strong>ידועות</strong> בסשן חזרה. עבור דרך סינון מילים → סשן חזרה וסמן מילים כ"ידועות" — הן יופיעו כאן.
           </p>
           <button
             onClick={() => navigate(`/unit/${unitNum}`)}
             className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold"
           >
-            Back to Unit
+            חזרה ליחידה
           </button>
         </motion.div>
       </div>
@@ -254,10 +253,10 @@ const Quiz = () => {
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
           <button onClick={() => navigate(`/unit/${unitNum}`)} className="text-gray-500 hover:text-gray-900 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" />
           </button>
           <Brain className="w-4 h-4 text-green-600" />
-          <span className="font-semibold text-gray-800 flex-1">Practice Quiz — Unit {unitNum}</span>
+          <span className="font-semibold text-gray-800 flex-1">בוחן תרגול — יחידה {unitNum}</span>
           <span className="text-sm text-gray-500 font-medium">
             {qIndex} / {questions.length}
           </span>
@@ -284,7 +283,7 @@ const Quiz = () => {
               {/* Question */}
               <div className="bg-white rounded-3xl shadow-xl p-7 mb-5 text-center">
                 <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">
-                  What is the Hebrew translation?
+                  מה התרגום לעברית?
                 </div>
                 <div className="text-4xl font-bold text-gray-900 mb-2">{currentQ.english}</div>
                 {isAnswered && (
@@ -295,7 +294,7 @@ const Quiz = () => {
                       selected === currentQ.correct ? 'text-green-600' : 'text-red-500'
                     }`}
                   >
-                    {selected === currentQ.correct ? '✓ Correct!' : `✗ Correct answer: ${currentQ.correct}`}
+                    {selected === currentQ.correct ? '✓ נכון!' : `✗ תשובה נכונה: ${currentQ.correct}`}
                   </motion.div>
                 )}
               </div>
@@ -336,9 +335,9 @@ const Quiz = () => {
                              flex items-center justify-center gap-2"
                 >
                   {qIndex + 1 >= questions.length ? (
-                    <><Trophy className="w-4 h-4" /> See Results</>
+                    <><Trophy className="w-4 h-4" /> ראה תוצאות</>
                   ) : (
-                    <>Next <ArrowRight className="w-4 h-4" /></>
+                    <>הבא</>
                   )}
                 </motion.button>
               )}

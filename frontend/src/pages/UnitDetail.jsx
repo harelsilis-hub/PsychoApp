@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Zap, BookOpen, Brain, Layers, Target } from 'lucide-react';
+import { ArrowRight, Zap, BookOpen, Brain, Layers, Target } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 
@@ -75,7 +75,7 @@ const ActionCard = ({ action, delay }) => (
                        bg-gradient-to-r ${action.btnGrad}
                        shadow-md ${action.btnShadow}
                        group-hover:shadow-xl transition-shadow duration-300`}>
-        {action.cta} →
+        {action.cta} ←
       </div>
     </div>
   </motion.button>
@@ -114,10 +114,10 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-amber-400 to-orange-500',
       iconShadow: 'shadow-orange-300/60',
       topBar:     'from-amber-400 to-orange-500',
-      title:      'Filter Words',
-      subtitle:   'Swipe through — mark what you know',
-      detail:     "Quickly sort vocabulary card-by-card. Mark each word as Known or Unknown. Stop once you've found 10 unknowns — they'll form your personalized review list.",
-      cta:        'Start Filtering',
+      title:      'סינון מילים',
+      subtitle:   'החלק — סמן מה שאתה יודע',
+      detail:     'מיין מהר את אוצר המילים כרטיס-כרטיס. סמן כל מילה כידועה או לא ידועה. עצור ברגע שמצאת 10 מילים לא ידועות — הן יהפכו לרשימת החזרה האישית שלך.',
+      cta:        'התחל סינון',
       btnGrad:    'from-amber-400 to-orange-500',
       btnShadow:  'shadow-orange-200/60',
       onClick:    () => navigate(`/unit/${unitNum}/filter`),
@@ -128,10 +128,10 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-violet-500 to-indigo-600',
       iconShadow: 'shadow-indigo-300/60',
       topBar:     'from-violet-500 to-indigo-600',
-      title:      'Review Session',
-      subtitle:   'Study your unknown words in depth',
-      detail:     'Study each word with its Hebrew translation, an AI memory tip, and your personal mnemonic. Rate recall quality to update your SM-2 spaced-repetition schedule.',
-      cta:        'Start Review',
+      title:      'סשן חזרה',
+      subtitle:   'למד את המילים הלא ידועות לעומק',
+      detail:     'למד כל מילה עם תרגומה לעברית, טיפ זיכרון מבוסס-AI ומנמוניקה אישית. דרג את איכות השליפה כדי לעדכן את לוח-הזמנים של SM-2.',
+      cta:        'התחל חזרה',
       btnGrad:    'from-violet-500 to-indigo-600',
       btnShadow:  'shadow-indigo-200/60',
       onClick:    () => navigate(`/unit/${unitNum}/review`),
@@ -142,10 +142,10 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-emerald-400 to-teal-500',
       iconShadow: 'shadow-emerald-300/60',
       topBar:     'from-emerald-400 to-teal-500',
-      title:      'Practice Quiz',
-      subtitle:   'Test yourself with multiple-choice',
-      detail:     "10 questions drawn from words you've already learned. Four options, one correct answer — the fastest way to convert short-term recall into long-term memory.",
-      cta:        'Start Quiz',
+      title:      'בוחן תרגול',
+      subtitle:   'בחן את עצמך עם שאלות רב-ברירה',
+      detail:     '10 שאלות מתוך מילים שכבר למדת. ארבע אפשרויות, תשובה אחת נכונה — הדרך המהירה ביותר להפוך זיכרון קצר-טווח לזיכרון ארוך-טווח.',
+      cta:        'התחל בוחן',
       btnGrad:    'from-emerald-400 to-teal-500',
       btnShadow:  'shadow-emerald-200/60',
       onClick:    () => navigate(`/unit/${unitNum}/quiz`),
@@ -174,8 +174,8 @@ const UnitDetail = () => {
             onClick={() => navigate('/')}
             className="flex items-center gap-1.5 shrink-0 text-gray-700 hover:text-gray-900 transition-colors duration-200"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-bold">Units</span>
+            <ArrowRight className="w-4 h-4" />
+            <span className="text-sm font-bold">יחידות</span>
           </button>
 
           <div className="w-px h-5 bg-gray-200 shrink-0" />
@@ -186,8 +186,8 @@ const UnitDetail = () => {
               <span className="text-white text-xs font-black">{unitNum}</span>
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-black text-gray-900">Unit {unitNum}</p>
-              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">{total} words</p>
+              <p className="text-sm font-black text-gray-900">יחידה {unitNum}</p>
+              <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">{total} מילים</p>
             </div>
           </div>
 
@@ -196,11 +196,11 @@ const UnitDetail = () => {
           <div className="hidden sm:flex items-center gap-5 shrink-0">
             <div className="text-center">
               <p className="text-sm font-black text-gray-900 tabular-nums leading-none">{learned}</p>
-              <p className="text-[9px] font-bold text-violet-500 uppercase tracking-wide mt-0.5">Learned</p>
+              <p className="text-[9px] font-bold text-violet-500 uppercase tracking-wide mt-0.5">נלמד</p>
             </div>
             <div className="text-center">
               <p className="text-sm font-black text-gray-900 tabular-nums leading-none">{remaining}</p>
-              <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wide mt-0.5">Remaining</p>
+              <p className="text-[9px] font-bold text-gray-600 uppercase tracking-wide mt-0.5">נותר</p>
             </div>
           </div>
 
@@ -208,7 +208,7 @@ const UnitDetail = () => {
 
           <div className="hidden sm:block shrink-0 w-36">
             <div className="flex justify-between text-[10px] font-bold mb-1.5">
-              <span className="text-gray-600 uppercase tracking-wide">Progress</span>
+              <span className="text-gray-600 uppercase tracking-wide">התקדמות</span>
               <span className={`tabular-nums ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
                 {percent}%
               </span>
@@ -243,9 +243,9 @@ const UnitDetail = () => {
               <StepHeader
                 gradient="from-amber-400 to-orange-500"
                 border="border-amber-300"
-                stepLabel="Step 1"
+                stepLabel="שלב 1"
                 icon={<Layers className="w-3 h-3" />}
-                title="Filtering & Introduction"
+                title="סינון ומבוא"
                 delay={0.1}
               />
             </div>
@@ -255,9 +255,9 @@ const UnitDetail = () => {
               <StepHeader
                 gradient="from-violet-500 to-indigo-600"
                 border="border-violet-300"
-                stepLabel="Step 2"
+                stepLabel="שלב 2"
                 icon={<BookOpen className="w-3 h-3" />}
-                title="Memorization & Learning"
+                title="שינון ולמידה"
                 delay={0.18}
               />
             </div>
@@ -267,9 +267,9 @@ const UnitDetail = () => {
               <StepHeader
                 gradient="from-emerald-400 to-teal-500"
                 border="border-emerald-300"
-                stepLabel="Step 3"
+                stepLabel="שלב 3"
                 icon={<Target className="w-3 h-3" />}
-                title="Practice & Testing"
+                title="תרגול ובחינה"
                 delay={0.26}
               />
             </div>

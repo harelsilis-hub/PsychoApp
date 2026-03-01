@@ -19,7 +19,7 @@ const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 px-4 py-2 rounded-full text-sm font-semibold"
         >
-          Question {questionNumber}
+          שאלה {questionNumber}
         </motion.div>
       </div>
 
@@ -31,12 +31,12 @@ const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
           transition={{ delay: 0.3 }}
           className="mb-6"
         >
-          <div className="text-sm text-gray-500 mb-2 uppercase tracking-wider">English</div>
+          <div className="text-sm text-gray-500 mb-2 uppercase tracking-wider">אנגלית</div>
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
             {word.english}
           </h2>
           <div className="text-sm text-gray-400">
-            Difficulty: {word.difficulty_rank}
+            רמת קושי: {word.difficulty_rank}
           </div>
         </motion.div>
 
@@ -61,18 +61,19 @@ const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
         className="text-center mb-8"
       >
         <p className="text-xl text-gray-600">
-          Do you know this word?
+          האם אתה מכיר מילה זו?
         </p>
       </motion.div>
 
       {/* Action Buttons */}
+      {/* Know This first — appears on the RIGHT in RTL grid */}
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.6 }}
         className="grid grid-cols-2 gap-4"
       >
-        {/* I Know This */}
+        {/* יודע */}
         <button
           onClick={onKnow}
           disabled={loading}
@@ -81,11 +82,11 @@ const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
           <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
           <div className="relative flex items-center justify-center gap-2">
             <CheckCircle2 className="w-6 h-6" />
-            <span>I Know This</span>
+            <span>יודע</span>
           </div>
         </button>
 
-        {/* I Don't Know */}
+        {/* לא יודע */}
         <button
           onClick={onDontKnow}
           disabled={loading}
@@ -94,7 +95,7 @@ const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
           <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity" />
           <div className="relative flex items-center justify-center gap-2">
             <XCircle className="w-6 h-6" />
-            <span>I Don't Know</span>
+            <span>לא יודע</span>
           </div>
         </button>
       </motion.div>

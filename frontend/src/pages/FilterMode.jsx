@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from 'lucide-react';
+import { ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
@@ -111,7 +111,7 @@ const FilterMode = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-14 h-14 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500">Loading words…</p>
+          <p className="text-gray-500">טוען מילים...</p>
         </div>
       </div>
     );
@@ -142,23 +142,23 @@ const FilterMode = () => {
           className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
         >
           <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Unit Complete!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">היחידה הושלמה!</h2>
           <p className="text-gray-500 mb-6">
-            You've already mastered all words in Unit {unitNum}. Try the quiz to consolidate your knowledge.
+            כבר שלטת בכל המילים ביחידה {unitNum}. נסה את הבוחן לביסוס הידע.
           </p>
           <div className="space-y-3">
             <button
               onClick={() => navigate(`/unit/${unitNum}`)}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
             >
-              Back to Unit
+              חזרה ליחידה
             </button>
             <button
               onClick={handleReset}
               disabled={isResetting}
               className="w-full bg-gray-100 text-gray-600 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50"
             >
-              {isResetting ? 'Resetting…' : 'Reset & Re-filter Unit'}
+              {isResetting ? 'מאפס...' : 'אפס וסנן מחדש'}
             </button>
           </div>
         </motion.div>
@@ -178,12 +178,12 @@ const FilterMode = () => {
         >
           <div className="text-5xl mb-4">{count > 0 ? '📚' : '🌟'}</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {count > 0 ? `${count} word${count > 1 ? 's' : ''} to review` : 'All words known!'}
+            {count > 0 ? `${count} מילים לחזרה` : 'כל המילים ידועות!'}
           </h2>
           <p className="text-gray-500 mb-6">
             {count > 0
-              ? `You flagged ${count} unknown word${count > 1 ? 's' : ''}. Head to Review Session to study them.`
-              : `You knew every word in Unit ${unitNum}. Amazing!`}
+              ? `סימנת ${count} מילה${count > 1 ? '' : ''} לא ידועה. עבור לסשן החזרה ללמוד אותן.`
+              : `ידעת כל מילה ביחידה ${unitNum}. מדהים!`}
           </p>
           <div className="space-y-3">
             {count > 0 && (
@@ -191,14 +191,14 @@ const FilterMode = () => {
                 onClick={() => navigate(`/unit/${unitNum}/review`, { state: { words: unknowns } })}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
               >
-                Go to Review Session
+                עבור לסשן החזרה
               </button>
             )}
             <button
               onClick={() => navigate(`/unit/${unitNum}`)}
               className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
             >
-              Back to Unit
+              חזרה ליחידה
             </button>
           </div>
         </motion.div>
@@ -238,10 +238,10 @@ const FilterMode = () => {
                 <BookOpen className="w-8 h-8 text-white" />
               </motion.div>
               <h2 className="text-xl font-black text-gray-900 mb-1.5">
-                10 words collected!
+                נאספו 10 מילים!
               </h2>
               <p className="text-sm text-gray-500 mb-6">
-                Moving to your Review Session…
+                עובר לסשן החזרה...
               </p>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <motion.div
@@ -263,17 +263,17 @@ const FilterMode = () => {
             onClick={() => navigate(`/unit/${unitNum}`)}
             className="text-gray-500 hover:text-gray-900 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5" />
           </button>
           <Zap className="w-4 h-4 text-yellow-500" />
-          <span className="font-semibold text-gray-800 flex-1">Filter Words — Unit {unitNum}</span>
-          <span className="text-sm text-gray-500">{remaining} left</span>
+          <span className="font-semibold text-gray-800 flex-1">סינון מילים — יחידה {unitNum}</span>
+          <span className="text-sm text-gray-500">{remaining} נותרו</span>
         </div>
 
         {/* "Unknowns collected" progress bar */}
         <div className="max-w-xl mx-auto px-4 pb-2">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Unknown words collected</span>
+            <span>מילים לא ידועות שנאספו</span>
             <span className="font-semibold text-red-500">{unknowns.length} / {UNKNOWNS_TARGET}</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -325,14 +325,14 @@ const FilterMode = () => {
                       style={{ backfaceVisibility: 'hidden' }}
                     >
                       <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-5">
-                        Do you know this word?
+                        האם אתה מכיר מילה זו?
                       </div>
                       <div className="text-3xl sm:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                         {currentWord.english}
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-gray-400">
                         <RotateCcw className="w-4 h-4" />
-                        Tap to reveal translation
+                        הקש לחשיפת התרגום
                       </div>
                     </div>
 
@@ -349,29 +349,20 @@ const FilterMode = () => {
                       </div>
                       <div className="flex items-center gap-1.5 text-sm text-white/60">
                         <RotateCcw className="w-4 h-4" />
-                        Tap to flip back
+                        הקש לחזרה
                       </div>
                     </div>
                   </motion.div>
                 </div>
 
                 {/* Swipe hint labels */}
-                <div className="flex justify-between text-xs text-gray-300 font-medium mb-4 px-2">
-                  <span className="text-red-300">← Don't Know</span>
-                  <span className="text-green-300">Know It →</span>
+                <div dir="ltr" className="flex justify-between text-xs text-gray-300 font-medium mb-4 px-2">
+                  <span className="text-red-300">← לא יודע</span>
+                  <span className="text-green-300">יודע →</span>
                 </div>
 
-                {/* Buttons */}
+                {/* Buttons — Know It first so it appears on the RIGHT in RTL */}
                 <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleChoice(false)}
-                    className="bg-gradient-to-br from-red-500 to-rose-600 text-white py-3.5 sm:py-5 rounded-2xl
-                               font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
-                               transform transition-all active:scale-95"
-                  >
-                    <XCircle className="w-6 h-6 mx-auto mb-1" />
-                    I Don't Know
-                  </button>
                   <button
                     onClick={() => handleChoice(true)}
                     className="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-3.5 sm:py-5 rounded-2xl
@@ -379,7 +370,16 @@ const FilterMode = () => {
                                transform transition-all active:scale-95"
                   >
                     <CheckCircle className="w-6 h-6 mx-auto mb-1" />
-                    I Know It
+                    יודע
+                  </button>
+                  <button
+                    onClick={() => handleChoice(false)}
+                    className="bg-gradient-to-br from-red-500 to-rose-600 text-white py-3.5 sm:py-5 rounded-2xl
+                               font-semibold text-base hover:shadow-lg hover:-translate-y-0.5
+                               transform transition-all active:scale-95"
+                  >
+                    <XCircle className="w-6 h-6 mx-auto mb-1" />
+                    לא יודע
                   </button>
                 </div>
 
@@ -394,7 +394,7 @@ const FilterMode = () => {
                     }`}
                   >
                     <Flag className="w-3 h-3" />
-                    {flagToast ? 'Reported — thanks!' : 'Report mistake'}
+                    {flagToast ? 'דווח — תודה!' : 'דיווח על שגיאה'}
                   </button>
                 </div>
               </motion.div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, Brain, ArrowLeft, Sparkles } from 'lucide-react';
+import { CheckCircle, XCircle, Brain, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 
@@ -57,7 +57,7 @@ const TriageMode = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-xl text-gray-600">Loading words...</p>
+          <p className="text-xl text-gray-600">טוען מילים...</p>
         </div>
       </div>
     );
@@ -76,16 +76,16 @@ const TriageMode = () => {
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-3">
-            Triage Complete!
+            הסיווג הושלם!
           </h2>
           <p className="text-gray-600 mb-8">
-            You've sorted all words at your level. Your learning queue is ready!
+            מיינת את כל המילים ברמתך. תור הלמידה שלך מוכן!
           </p>
           <button
             onClick={() => navigate('/dashboard')}
             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all"
           >
-            Back to Dashboard
+            חזרה ללוח הבקרה
           </button>
         </motion.div>
       </div>
@@ -100,13 +100,13 @@ const TriageMode = () => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">שגיאה</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={loadBatch}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
           >
-            Try Again
+            נסה שוב
           </button>
         </div>
       </div>
@@ -124,8 +124,8 @@ const TriageMode = () => {
               onClick={() => navigate('/dashboard')}
               className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Back</span>
+              <ArrowRight className="w-5 h-5" />
+              <span className="font-medium">חזרה</span>
             </button>
             <div className="flex items-center gap-2">
               <Brain className="w-5 h-5 text-purple-600" />
@@ -159,7 +159,7 @@ const TriageMode = () => {
                 {/* Word Display */}
                 <div className="text-center mb-8">
                   <div className="text-sm text-gray-500 mb-2 uppercase tracking-wider">
-                    Do you know this word?
+                    האם אתה מכיר מילה זו?
                   </div>
                   <h2 className="text-6xl md:text-7xl font-bold text-gray-900 mb-4">
                     {wordQueue[0].english}
@@ -203,19 +203,8 @@ const TriageMode = () => {
                   )}
                 </AnimatePresence>
 
-                {/* Action Buttons */}
+                {/* Action Buttons — Know This first so it appears on the RIGHT in RTL */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* I Don't Know */}
-                  <button
-                    onClick={() => handleChoice(false)}
-                    className="group relative bg-gradient-to-br from-red-500 to-rose-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
-                  >
-                    <div className="relative flex items-center justify-center gap-2">
-                      <XCircle className="w-6 h-6" />
-                      <span>I Don't Know</span>
-                    </div>
-                  </button>
-
                   {/* I Know This */}
                   <button
                     onClick={() => handleChoice(true)}
@@ -223,14 +212,25 @@ const TriageMode = () => {
                   >
                     <div className="relative flex items-center justify-center gap-2">
                       <CheckCircle className="w-6 h-6" />
-                      <span>I Know This</span>
+                      <span>יודע</span>
+                    </div>
+                  </button>
+
+                  {/* I Don't Know */}
+                  <button
+                    onClick={() => handleChoice(false)}
+                    className="group relative bg-gradient-to-br from-red-500 to-rose-600 text-white py-6 rounded-2xl font-semibold text-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
+                  >
+                    <div className="relative flex items-center justify-center gap-2">
+                      <XCircle className="w-6 h-6" />
+                      <span>לא יודע</span>
                     </div>
                   </button>
                 </div>
 
                 {/* Help Text */}
                 <div className="mt-6 text-center text-sm text-gray-500">
-                  <p>Left: Add to Learning Queue | Right: Mark as Mastered</p>
+                  <p>שמאל: הוסף לתור למידה | ימין: סמן כנשלט</p>
                 </div>
               </motion.div>
             )}

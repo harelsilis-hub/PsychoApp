@@ -130,7 +130,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
             {isNew && (
               <div className="absolute top-5 right-5 bg-yellow-400 text-yellow-900 px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5">
                 <Star className="w-3.5 h-3.5" />
-                New Word
+                מילה חדשה
               </div>
             )}
             {/* Audio button — icon only, right edge */}
@@ -144,7 +144,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
 
             <div className="text-center">
               <div className="text-white text-xs uppercase tracking-widest mb-4 opacity-80">
-                Try to Recall
+                נסה להיזכר
               </div>
               <div className="text-white text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
                 {word.english}
@@ -154,7 +154,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
               </div>
               <div className="flex items-center justify-center gap-2 text-white opacity-80">
                 <RotateCcw className="w-4 h-4" />
-                <span>Click to reveal answer</span>
+                <span>לחץ לחשיפת התשובה</span>
               </div>
             </div>
           </div>
@@ -179,7 +179,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">
                     <BookOpen className="w-4 h-4 text-purple-500" />
-                    <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Example Sentence</span>
+                    <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">משפט לדוגמה</span>
                     {sentenceSaved && <Check className="w-3.5 h-3.5 text-green-500" />}
                   </div>
                   {!isEditingSentence && (
@@ -208,7 +208,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                         onClick={() => setIsEditingSentence(false)}
                         className="flex items-center gap-1 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg transition-colors"
                       >
-                        <X className="w-3.5 h-3.5" /> Cancel
+                        <X className="w-3.5 h-3.5" /> ביטול
                       </button>
                       <button
                         onClick={handleSaveSentence}
@@ -216,7 +216,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                         className="flex items-center gap-1 px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-40 transition-colors"
                       >
                         <Save className="w-3.5 h-3.5" />
-                        {isSavingSentence ? 'Saving…' : 'Save'}
+                        {isSavingSentence ? 'שומר...' : 'שמור'}
                       </button>
                     </div>
                   </div>
@@ -237,7 +237,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
               {/* Personal Memory Aid Input */}
               <div className="w-full" onClick={(e) => e.stopPropagation()}>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  Your Memory Aid
+                  עזר הזיכרון שלך
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -254,7 +254,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                     className="px-3 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5"
                   >
                     {associationSaved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                    {isSavingAssociation ? 'Saving…' : associationSaved ? 'Saved!' : 'Save'}
+                    {isSavingAssociation ? 'שומר...' : associationSaved ? 'נשמר!' : 'שמור'}
                   </button>
                 </div>
               </div>
@@ -262,7 +262,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
 
             <div className="flex items-center justify-center gap-2 text-gray-400 mt-4">
               <RotateCcw className="w-4 h-4" />
-              <span className="text-xs">Click card to flip back</span>
+              <span className="text-xs">לחץ על הכרטיס לחזרה</span>
             </div>
           </div>
         </motion.div>
@@ -272,24 +272,14 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
       <div className="space-y-3">
         <div className="text-center text-sm text-gray-500">
           {!hasFlipped ? (
-            <span className="text-amber-600 font-medium">↑ Flip the card first</span>
+            <span className="text-amber-600 font-medium">↑ הפוך את הכרטיס תחילה</span>
           ) : (
-            <span className="font-medium text-gray-700">Did you know this word?</span>
+            <span className="font-medium text-gray-700">האם ידעת מילה זו?</span>
           )}
         </div>
 
+        {/* Know It first so it appears on the RIGHT in RTL */}
         <div className="grid grid-cols-2 gap-3">
-          <button
-            onClick={() => handleRate(1)}
-            disabled={!hasFlipped}
-            className="bg-gradient-to-br from-red-500 to-red-600 text-white py-3 sm:py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
-          >
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-2xl">✗</span>
-              <span>I Don't Know</span>
-            </div>
-          </button>
-
           <button
             onClick={() => handleRate(4)}
             disabled={!hasFlipped}
@@ -297,13 +287,24 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
           >
             <div className="flex flex-col items-center gap-1">
               <span className="text-2xl">✓</span>
-              <span>I Know It</span>
+              <span>ידעתי</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleRate(1)}
+            disabled={!hasFlipped}
+            className="bg-gradient-to-br from-red-500 to-red-600 text-white py-3 sm:py-5 rounded-2xl font-bold text-lg hover:shadow-lg hover:-translate-y-0.5 transform transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-2xl">✗</span>
+              <span>לא ידעתי</span>
             </div>
           </button>
         </div>
 
         <p className="text-center text-xs text-gray-400">
-          Don't know → Review tomorrow · Know it → Longer interval
+          לא ידעתי → חזרה מחר · ידעתי → מרווח ארוך יותר
         </p>
 
         {/* Report mistake */}
@@ -317,7 +318,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
             }`}
           >
             <Flag className="w-3 h-3" />
-            {flagToast ? 'Reported — thanks!' : 'Report mistake'}
+            {flagToast ? 'דווח — תודה!' : 'דיווח על שגיאה'}
           </button>
         </div>
       </div>

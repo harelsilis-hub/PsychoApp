@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, List, Search, X, Check } from 'lucide-react';
+import { ArrowRight, List, Search, X, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 
@@ -70,9 +70,9 @@ const WordList = () => {
   const unknownCount  = useMemo(() => words.filter((w) => marks[w.word_id] === 'dontknow').length, [words, marks]);
 
   const filterTabs = [
-    { key: 'all',      label: 'All',     count: words.length },
-    { key: 'know',     label: '✓ Know',  count: knownCount   },
-    { key: 'dontknow', label: '✗ Don\'t know', count: unknownCount },
+    { key: 'all',      label: 'הכל',      count: words.length },
+    { key: 'know',     label: '✓ יודע',   count: knownCount   },
+    { key: 'dontknow', label: '✗ לא יודע', count: unknownCount },
   ];
 
   return (
@@ -95,8 +95,8 @@ const WordList = () => {
             onClick={() => navigate(`/unit/${unitNum}`)}
             className="flex items-center gap-1.5 shrink-0 text-gray-700 hover:text-gray-900 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-bold">Unit {unitNum}</span>
+            <ArrowRight className="w-4 h-4" />
+            <span className="text-sm font-bold">יחידה {unitNum}</span>
           </button>
 
           <div className="w-px h-5 bg-gray-200 shrink-0" />
@@ -108,9 +108,9 @@ const WordList = () => {
               <List className="w-4 h-4 text-white" />
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-black text-gray-900">Word List</p>
+              <p className="text-sm font-black text-gray-900">רשימת מילים</p>
               <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">
-                {loading ? '…' : `${words.length} words`}
+                {loading ? '…' : `${words.length} מילים`}
               </p>
             </div>
           </div>
@@ -119,20 +119,20 @@ const WordList = () => {
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
-              className="pl-8 pr-7 py-1.5 text-sm bg-gray-100 rounded-xl border border-gray-200
+              placeholder="חיפוש..."
+              className="pr-8 pl-7 py-1.5 text-sm bg-gray-100 rounded-xl border border-gray-200
                          focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:bg-white
                          transition-all w-32 sm:w-48"
             />
             {query && (
               <button
                 onClick={() => setQuery('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -196,11 +196,11 @@ const WordList = () => {
               {/* Word rows */}
               {filtered.length === 0 ? (
                 <div className="text-center py-16 text-gray-400">
-                  <p className="text-lg font-semibold">No words found</p>
+                  <p className="text-lg font-semibold">לא נמצאו מילים</p>
                   <p className="text-sm mt-1">
                     {filter !== 'all'
-                      ? 'No words marked in this category yet.'
-                      : 'Try a different search term.'}
+                      ? 'אין מילים מסומנות בקטגוריה זו עדיין.'
+                      : 'נסה מונח חיפוש אחר.'}
                   </p>
                 </div>
               ) : (

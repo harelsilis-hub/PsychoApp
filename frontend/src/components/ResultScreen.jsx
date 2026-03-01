@@ -7,11 +7,11 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
 
   // Determine achievement level
   const getAchievement = (level) => {
-    if (level >= 80) return { title: 'Master', color: 'from-yellow-400 to-orange-500', emoji: '🏆' };
-    if (level >= 60) return { title: 'Advanced', color: 'from-purple-400 to-pink-500', emoji: '⭐' };
-    if (level >= 40) return { title: 'Intermediate', color: 'from-blue-400 to-cyan-500', emoji: '💫' };
-    if (level >= 20) return { title: 'Beginner', color: 'from-green-400 to-emerald-500', emoji: '🌱' };
-    return { title: 'Starter', color: 'from-gray-400 to-gray-500', emoji: '🎯' };
+    if (level >= 80) return { title: 'מאסטר', color: 'from-yellow-400 to-orange-500', emoji: '🏆' };
+    if (level >= 60) return { title: 'מתקדם', color: 'from-purple-400 to-pink-500', emoji: '⭐' };
+    if (level >= 40) return { title: 'בינוני', color: 'from-blue-400 to-cyan-500', emoji: '💫' };
+    if (level >= 20) return { title: 'מתחיל', color: 'from-green-400 to-emerald-500', emoji: '🌱' };
+    return { title: 'מתחיל', color: 'from-gray-400 to-gray-500', emoji: '🎯' };
   };
 
   const achievement = getAchievement(finalLevel);
@@ -42,7 +42,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
               transition={{ delay: 0.3 }}
               className="text-4xl md:text-5xl font-bold text-gray-900 mb-3"
             >
-              Placement Complete!
+              המיקום הושלם!
             </motion.h1>
 
             <motion.p
@@ -51,7 +51,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
               transition={{ delay: 0.4 }}
               className="text-xl text-gray-600"
             >
-              Your vocabulary level has been determined
+              רמת אוצר המילים שלך נקבעה
             </motion.p>
           </div>
 
@@ -64,7 +64,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
           >
             <div className={`bg-gradient-to-r ${achievement.color} rounded-2xl p-8 text-center text-white shadow-lg`}>
               <div className="text-sm font-semibold mb-2 opacity-90 uppercase tracking-wider">
-                Your Level
+                הרמה שלך
               </div>
               <div className="text-7xl font-bold mb-2">
                 {finalLevel}
@@ -84,15 +84,15 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
           >
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">{questionCount}</div>
-              <div className="text-sm text-gray-600">Questions</div>
+              <div className="text-sm text-gray-600">שאלות</div>
             </div>
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">±2</div>
-              <div className="text-sm text-gray-600">Accuracy</div>
+              <div className="text-sm text-gray-600">דיוק</div>
             </div>
             <div className="bg-gray-50 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-gray-900">98%</div>
-              <div className="text-sm text-gray-600">Confidence</div>
+              <div className="text-sm text-gray-600">ביטחון</div>
             </div>
           </motion.div>
 
@@ -105,25 +105,25 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
           >
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-600" />
-              What's Next
+              מה הלאה
             </h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">
-                  Start learning with personalized word recommendations
+                  התחל ללמוד עם המלצות מילים מותאמות אישית
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">
-                  Use spaced repetition (SM-2) for optimal retention
+                  השתמש בחזרות מרווחות (SM-2) לשמירה אופטימלית
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-700">
-                  Create and share memory associations
+                  צור ושתף אסוציאציות זיכרון
                 </span>
               </li>
             </ul>
@@ -140,7 +140,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
               onClick={() => navigate('/dashboard')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 text-white py-4 rounded-xl font-semibold hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
-              <span>Continue to Dashboard</span>
+              <span>המשך ללוח הבקרה</span>
               <ArrowRight className="w-5 h-5" />
             </button>
 
@@ -148,7 +148,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
               onClick={onReset}
               className="border-2 border-gray-300 text-gray-700 py-4 rounded-xl font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all"
             >
-              Take Test Again
+              קח את הבחינה שוב
             </button>
           </motion.div>
 
@@ -159,7 +159,7 @@ const ResultScreen = ({ finalLevel, questionCount, onReset }) => {
             transition={{ delay: 1 }}
             className="mt-6 text-center text-sm text-gray-500"
           >
-            Your level has been saved to your profile
+            הרמה שלך נשמרה בפרופיל
           </motion.div>
         </div>
       </motion.div>

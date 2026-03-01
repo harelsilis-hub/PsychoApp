@@ -83,10 +83,10 @@ const SortingHatPage = () => {
                 <Brain className="w-10 h-10 text-white" />
               </motion.div>
               <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                The Sorting Hat
+                כובע המיון
               </h1>
               <p className="text-xl text-gray-600">
-                Adaptive Vocabulary Placement Test
+                מבחן מיקום אוצר מילים אדפטיבי
               </p>
             </div>
 
@@ -97,8 +97,8 @@ const SortingHatPage = () => {
                   <Sparkles className="w-4 h-4 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Smart Algorithm</h3>
-                  <p className="text-gray-600">Binary search with regression checks for 95-98% accuracy</p>
+                  <h3 className="font-semibold text-gray-900">אלגוריתם חכם</h3>
+                  <p className="text-gray-600">חיפוש בינארי עם בדיקות רגרסיה לדיוק 95-98%</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -106,8 +106,8 @@ const SortingHatPage = () => {
                   <ArrowRight className="w-4 h-4 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Quick & Efficient</h3>
-                  <p className="text-gray-600">Determine your level in just 10-15 questions</p>
+                  <h3 className="font-semibold text-gray-900">מהיר ויעיל</h3>
+                  <p className="text-gray-600">קבע את רמתך בין 10-15 שאלות בלבד</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -115,20 +115,20 @@ const SortingHatPage = () => {
                   <Trophy className="w-4 h-4 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">Personalized</h3>
-                  <p className="text-gray-600">Get your exact vocabulary level for optimal learning</p>
+                  <h3 className="font-semibold text-gray-900">מותאם אישית</h3>
+                  <p className="text-gray-600">קבל את רמת אוצר המילים המדויקת שלך ללמידה אופטימלית</p>
                 </div>
               </div>
             </div>
 
             {/* Instructions */}
             <div className="bg-gray-50 rounded-xl p-6 mb-8">
-              <h3 className="font-semibold text-gray-900 mb-3">How it works:</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">איך זה עובד:</h3>
               <ol className="space-y-2 text-gray-600">
-                <li>1. We'll show you a word in English and Hebrew</li>
-                <li>2. Tell us if you know the word or not</li>
-                <li>3. We'll adapt to your level in real-time</li>
-                <li>4. Get your personalized vocabulary level!</li>
+                <li>1. נציג לך מילה באנגלית ובעברית</li>
+                <li>2. ספר לנו אם אתה מכיר את המילה או לא</li>
+                <li>3. נתאים את עצמנו לרמתך בזמן אמת</li>
+                <li>4. קבל את רמת אוצר המילים האישית שלך!</li>
               </ol>
             </div>
 
@@ -141,10 +141,10 @@ const SortingHatPage = () => {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Starting...
+                  מתחיל...
                 </span>
               ) : (
-                'Begin Placement Test'
+                'התחל מבחן מיקום'
               )}
             </button>
           </div>
@@ -165,13 +165,13 @@ const SortingHatPage = () => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Oops!</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">אופס!</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
             onClick={resetTest}
             className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
           >
-            Try Again
+            נסה שוב
           </button>
         </motion.div>
       </div>
@@ -188,10 +188,10 @@ const SortingHatPage = () => {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Brain className="w-5 h-5 text-purple-600" />
-                <span className="font-semibold text-gray-900">Sorting Hat</span>
+                <span className="font-semibold text-gray-900">כובע המיון</span>
               </div>
               <div className="text-sm text-gray-600">
-                Question {session.question_count + 1} of 20
+                שאלה {session.question_count + 1} מתוך 20
               </div>
             </div>
             <ProgressBar
