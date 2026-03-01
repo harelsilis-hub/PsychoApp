@@ -40,7 +40,7 @@ class Word(Base):
     global_difficulty_level: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     # Crowdsourced error reporting — users can flag words with mistakes
-    is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
+    is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
 
     # Relationships
     associations: Mapped[List["Association"]] = relationship(

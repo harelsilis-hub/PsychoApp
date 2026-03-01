@@ -11,7 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.db.session import engine, Base
+from app.db.session import engine, Base, DIALECT
 from app.models import User, Word, Association, UserWordProgress, PlacementSession
 from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router
 
@@ -36,28 +36,51 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Create all tables (no-op for tables that already exist)
         await conn.run_sync(Base.metadata.create_all)
 
-        # ── Column migrations (idempotent ALTER TABLE for existing DBs) ───────
-        # SQLite raises OperationalError when a column already exists — safe to ignore.
-        migrations = [
-            "ALTER TABLE words ADD COLUMN is_flagged INTEGER DEFAULT 0 NOT NULL",
-            "ALTER TABLE words ADD COLUMN global_difficulty_level INTEGER DEFAULT NULL",
-            "ALTER TABLE users ADD COLUMN created_at DATETIME NULL",
-            "UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL",
-            "ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0 NOT NULL",
-            "UPDATE users SET is_admin = 1 WHERE email = 'harel.silis@gmail.com'",
-            "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0",
-            "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
-            "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
-            # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
-            "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
-            "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
-            "UPDATE words SET hebrew = '\u05e2\u05d5\u05d1\u05e8' WHERE english = 'embryo'  AND length(hebrew) <= 2",
-        ]
-        for migration_sql in migrations:
-            try:
-                await conn.execute(text(migration_sql))
-            except Exception:
-                pass  # column already present
+        # ── Column migrations (idempotent, dialect-aware) ─────────────────────
+        if DIALECT == "postgresql":
+            # PostgreSQL: CREATE TABLE already added all columns via create_all.
+            # Use IF NOT EXISTS as a safety net, then run data patches.
+            migrations = [
+                "ALTER TABLE words ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT false NOT NULL",
+                "ALTER TABLE words ADD COLUMN IF NOT EXISTS global_difficulty_level INTEGER DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false NOT NULL",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_words_reviewed INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_date DATE DEFAULT NULL",
+                # Ensure admin account
+                "UPDATE users SET is_admin = true WHERE email = 'harel.silis@gmail.com'",
+                # Fix Hebrew words truncated by unescaped gershayim
+                "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
+                "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
+            ]
+            for migration_sql in migrations:
+                try:
+                    await conn.execute(text(migration_sql))
+                except Exception:
+                    pass
+        else:
+            # SQLite: raises OperationalError when column already exists — safe to ignore.
+            migrations = [
+                "ALTER TABLE words ADD COLUMN is_flagged INTEGER DEFAULT 0 NOT NULL",
+                "ALTER TABLE words ADD COLUMN global_difficulty_level INTEGER DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN created_at DATETIME NULL",
+                "UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL",
+                "ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0 NOT NULL",
+                "UPDATE users SET is_admin = 1 WHERE email = 'harel.silis@gmail.com'",
+                "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
+                "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
+                # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
+                "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
+                "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
+                "UPDATE words SET hebrew = '\u05e2\u05d5\u05d1\u05e8' WHERE english = 'embryo'  AND length(hebrew) <= 2",
+            ]
+            for migration_sql in migrations:
+                try:
+                    await conn.execute(text(migration_sql))
+                except Exception:
+                    pass  # column already present
 
     print("[OK] Database tables ready.")
 

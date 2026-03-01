@@ -1,3 +1,9 @@
+databases:
+  - name: psychoapp-db
+    plan: free
+    databaseName: psychoapp
+    user: psychoapp
+
 services:
   - type: web
     name: psychoapp-api
@@ -9,7 +15,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:///./vocabulary.db
+        fromDatabase:
+          name: psychoapp-db
+          property: connectionString
       - key: ALLOWED_ORIGINS
         value: https://psychoapp-il.vercel.app,https://frontend-one-mu-68.vercel.app
       - key: PYTHON_VERSION

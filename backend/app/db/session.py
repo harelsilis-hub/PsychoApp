@@ -1,20 +1,35 @@
 """
 Database session and engine configuration.
-Uses AsyncEngine with aiosqlite for asynchronous database operations.
+Supports both SQLite (local dev) and PostgreSQL (production on Render).
 """
+import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
 
-# Database URL - using aiosqlite for async SQLite
-DATABASE_URL = "sqlite+aiosqlite:///./vocabulary.db"
+# Read DATABASE_URL from environment.
+# Render provides postgres:// — SQLAlchemy 2 needs postgresql+asyncpg://
+_raw_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./vocabulary.db")
 
-# Create AsyncEngine
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,  # Set to False in production
-    future=True,
-)
+if _raw_url.startswith("postgres://"):
+    _raw_url = _raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif _raw_url.startswith("postgresql://") and "+asyncpg" not in _raw_url:
+    _raw_url = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+DATABASE_URL = _raw_url
+
+# Dialect name ('postgresql' or 'sqlite') — used for dialect-aware migrations in main.py
+_is_postgres = DATABASE_URL.startswith("postgresql")
+
+# Engine kwargs differ by dialect
+_engine_kwargs: dict = {"echo": False, "future": True}
+if _is_postgres:
+    _engine_kwargs["pool_pre_ping"] = True  # detect stale connections
+
+engine = create_async_engine(DATABASE_URL, **_engine_kwargs)
+
+# Expose dialect name so main.py can choose the right migration SQL
+DIALECT = engine.dialect.name  # 'postgresql' or 'sqlite'
 
 # Create async session factory
 AsyncSessionLocal = async_sessionmaker(
@@ -34,12 +49,6 @@ class Base(DeclarativeBase):
 
 # Dependency for FastAPI
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    FastAPI dependency that provides a database session.
-
-    Yields:
-        AsyncSession: Database session for the request.
-    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
