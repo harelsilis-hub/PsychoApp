@@ -284,6 +284,9 @@ class ReviewService:
             'status': progress.status.value,
             'message': message,
             'quality': quality,
+            # True only when a word earns its place in the quiz for the first time:
+            # was LEARNING (marked Don't Know in Filter) → now REVIEW (marked Know in Review session)
+            'graduated': old_status == WordStatus.LEARNING and progress.status == WordStatus.REVIEW,
         }
 
         return progress, result_info

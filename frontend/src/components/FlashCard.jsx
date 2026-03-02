@@ -303,10 +303,6 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
           </button>
         </div>
 
-        <p className="text-center text-xs text-gray-400">
-          לא ידעתי → חזרה מחר · ידעתי → מרווח ארוך יותר
-        </p>
-
         {/* Report mistake */}
         <div className="flex justify-center pt-1">
           <button

@@ -15,6 +15,7 @@ import ReviewSession from './pages/ReviewSession';
 import Quiz from './pages/Quiz';
 import WordList from './pages/WordList';
 import Admin from './pages/Admin';
+import FeedbackWidget from './components/FeedbackWidget';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,12 +24,19 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+const AuthenticatedFeedback = () => {
+  const { user } = useAuth();
+  if (!user) return null;
+  return <FeedbackWidget />;
+};
+
 function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
           <FloatingWordsBackground />
+          <AuthenticatedFeedback />
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />

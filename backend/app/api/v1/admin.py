@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.db.session import get_db
 from app.models.word import Word
 from app.models.user import User
+from app.models.user_feedback import UserFeedback
 from app.auth.dependencies import get_current_user, require_admin
 
 router = APIRouter()
@@ -201,3 +202,73 @@ async def add_word(
         "hebrew": word.hebrew,
         "unit": word.unit,
     }
+
+
+# ── Feedback: user submit ─────────────────────────────────────────────────────
+
+class FeedbackBody(BaseModel):
+    message: str
+    category: str = "general"   # "bug" | "idea" | "general"
+
+
+@router.post("/feedback")
+async def submit_feedback(
+    body: FeedbackBody,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Any authenticated user can submit a feedback note."""
+    if not body.message.strip():
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+    fb = UserFeedback(
+        user_id=current_user.id,
+        user_email=current_user.email,
+        category=body.category,
+        message=body.message.strip(),
+    )
+    db.add(fb)
+    await db.commit()
+    return {"success": True}
+
+
+# ── Feedback: admin read ──────────────────────────────────────────────────────
+
+@router.get("/feedback")
+async def get_feedback(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return all feedback notes, newest first."""
+    result = await db.execute(
+        select(UserFeedback).order_by(UserFeedback.created_at.desc())
+    )
+    items = result.scalars().all()
+    return {
+        "feedback": [
+            {
+                "id": f.id,
+                "user_email": f.user_email,
+                "category": f.category,
+                "message": f.message,
+                "is_read": f.is_read,
+                "created_at": f.created_at.isoformat() if f.created_at else None,
+            }
+            for f in items
+        ],
+        "unread_count": sum(1 for f in items if not f.is_read),
+    }
+
+
+@router.patch("/feedback/{feedback_id}/read")
+async def mark_feedback_read(
+    feedback_id: int,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Mark a feedback note as read."""
+    fb = await db.get(UserFeedback, feedback_id)
+    if not fb:
+        raise HTTPException(status_code=404, detail="Feedback not found")
+    fb.is_read = True
+    await db.commit()
+    return {"success": True}

@@ -111,24 +111,25 @@ async def submit_review_result(
         today = date_type.today()
         goal_reached = False
 
-        # Capture old date before any writes so streak comparison is correct
+        # Capture before any writes so streak comparison is always correct
         old_active_date = current_user.last_active_date
 
-        # Midnight reset: if last_active_date is stale, reset the daily counter
-        if old_active_date != today:
-            current_user.daily_words_reviewed = 0
-
-        current_user.daily_words_reviewed += 1
-        current_user.last_active_date = today  # always keep this fresh
+        # Only count words that graduated LEARNING → REVIEW
+        # (marked Don't Know in Filter, then marked Know in Review session)
+        if result_info['graduated']:
+            if old_active_date != today:
+                current_user.daily_words_reviewed = 0
+            current_user.daily_words_reviewed += 1
+            current_user.last_active_date = today
 
         # Check if the user just hit the daily goal for the first time today
         if current_user.daily_words_reviewed == DAILY_GOAL:
             goal_reached = True
             yesterday = today - timedelta(days=1)
             if old_active_date == yesterday:
-                current_user.current_streak += 1          # extend streak
+                current_user.current_streak += 1
             else:
-                current_user.current_streak = 1           # restart streak
+                current_user.current_streak = 1
 
         await db.commit()
         await db.refresh(current_user)
@@ -252,14 +253,21 @@ async def get_all_learned_words(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Return all REVIEW or MASTERED words across every unit for the current user."""
+    """Return all REVIEW words across every unit for the current user.
+    Only REVIEW status is included — MASTERED words were either marked directly
+    as known in FilterMode (bypassing review) or have been fully mastered and no
+    longer need practice. The quiz pool is strictly words that earned REVIEW status
+    by going through the review session.
+    Ordered so overdue words (next_review in the past) come first.
+    """
     try:
         stmt = (
             select(Word, UserWordProgress)
             .join(UserWordProgress, UserWordProgress.word_id == Word.id)
             .where(UserWordProgress.user_id == current_user.id)
-            .where(UserWordProgress.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]))
-            .order_by(Word.unit, Word.id)
+            .where(UserWordProgress.status == WordStatus.REVIEW)
+            # Due / overdue words come first; far-future words at the end
+            .order_by(UserWordProgress.next_review.asc().nullsfirst())
         )
         result = await db.execute(stmt)
         rows = result.all()
@@ -272,6 +280,7 @@ async def get_all_learned_words(
                 "unit": word.unit,
                 "status": progress.status.value,
                 "global_difficulty_level": word.global_difficulty_level,
+                "next_review": progress.next_review.isoformat() if progress.next_review else None,
             }
             for word, progress in rows
         ]

@@ -5,7 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
 
-const UNKNOWNS_TARGET = 10;
+const UNKNOWNS_TARGET = 15;
 
 const FilterMode = () => {
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Brain, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -19,10 +19,16 @@ function shuffle(arr) {
  * Build quiz questions from learned words (status = REVIEW or MASTERED).
  * learnedWords   = words the user has already learned, used as question targets
  * distractorPool = same pool used as wrong-answer options
+ * recentIds      = Set of word_ids shown in the previous quiz round (shown last)
  * Each question stores word_id so SM-2 can be updated on answer.
+ * Priority: due words → scheduled-fresh → scheduled-recent (just reviewed this session)
  */
-function buildQuestions(learnedWords, distractorPool) {
-  const ordered = shuffle([...learnedWords]);
+function buildQuestions(learnedWords, distractorPool, recentIds = new Set()) {
+  const now = new Date();
+  const due            = learnedWords.filter(w => !w.next_review || new Date(w.next_review) <= now);
+  const scheduledFresh = learnedWords.filter(w => w.next_review && new Date(w.next_review) > now && !recentIds.has(w.word_id));
+  const scheduledRecent= learnedWords.filter(w => w.next_review && new Date(w.next_review) > now &&  recentIds.has(w.word_id));
+  const ordered = [...shuffle([...due]), ...shuffle([...scheduledFresh]), ...shuffle([...scheduledRecent])];
   if (ordered.length === 0) return [];
 
   const pool = distractorPool.length >= 4 ? distractorPool : [...distractorPool, ...ordered];
@@ -117,6 +123,9 @@ const Quiz = () => {
   const [noWords, setNoWords]         = useState(false);
   const [error, setError]             = useState(null);
 
+  // Track word IDs from the last round so they're deprioritised on retry
+  const prevQuizIds = useRef(new Set());
+
   const loadQuiz = async () => {
     setLoading(true);
     setQuizDone(false);
@@ -136,8 +145,11 @@ const Quiz = () => {
         return;
       }
 
-      // Learned words are also the distractor pool (diverse across all units)
-      setQuestions(buildQuestions(learnedWords, learnedWords));
+      // Build questions, deprioritising words seen in the previous round
+      const qs = buildQuestions(learnedWords, learnedWords, prevQuizIds.current);
+      // Record this round's word IDs so next retry pushes them to the back
+      prevQuizIds.current = new Set(qs.map(q => q.word_id));
+      setQuestions(qs);
     } catch (err) {
       console.error(err);
       setError('Failed to load quiz. Please check your connection and try again.');
@@ -323,6 +335,17 @@ const Quiz = () => {
                   );
                 })}
               </div>
+
+              {/* SM-2 hint (appears after answering) */}
+              {isAnswered && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-center text-xs text-gray-400 mb-2"
+                >
+                  שגוי → מרווח קצר יותר · נכון → מרווח ארוך יותר
+                </motion.p>
+              )}
 
               {/* Next button (appears after answering) */}
               {isAnswered && (

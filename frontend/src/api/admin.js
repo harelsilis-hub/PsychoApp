@@ -35,4 +35,19 @@ export const adminAPI = {
     const res = await apiClient.post('/v1/admin/words', { english, hebrew, unit });
     return res.data;
   },
+
+  submitFeedback: async ({ message, category }) => {
+    const res = await apiClient.post('/v1/admin/feedback', { message, category });
+    return res.data;
+  },
+
+  getFeedback: async () => {
+    const res = await apiClient.get('/v1/admin/feedback');
+    return res.data;
+  },
+
+  markFeedbackRead: async (id) => {
+    const res = await apiClient.patch(`/v1/admin/feedback/${id}/read`);
+    return res.data;
+  },
 };

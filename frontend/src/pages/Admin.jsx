@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 
 // ─── Inline editable word row ─────────────────────────────────────────────────
@@ -169,6 +169,7 @@ const Admin = () => {
   const [stats, setStats]           = useState(null);
   const [users, setUsers]           = useState([]);
   const [flagged, setFlagged]       = useState([]);
+  const [feedback, setFeedback]     = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [searching, setSearching]   = useState(false);
@@ -183,14 +184,16 @@ const Admin = () => {
   }, []);
 
   const loadData = async () => {
-    const [s, f, u] = await Promise.all([
+    const [s, f, u, fb] = await Promise.all([
       adminAPI.getStats().catch(() => null),
       adminAPI.getFlagged().catch(() => ({ words: [] })),
       adminAPI.getUsers().catch(() => ({ users: [] })),
+      adminAPI.getFeedback().catch(() => ({ feedback: [] })),
     ]);
     if (s) setStats(s);
     setFlagged(f.words || []);
     setUsers(u.users || []);
+    setFeedback(fb.feedback || []);
   };
 
   const handleSearch = async (e) => {
@@ -457,6 +460,65 @@ const Admin = () => {
           >
             {addToast}
           </motion.p>
+        )}
+      </Section>
+
+      {/* ── Section 5: Feedback Inbox ────────────────────────────────────────── */}
+      <Section
+        icon={MessageSquare}
+        title="Feedback Inbox"
+        badge={feedback.filter((f) => !f.is_read).length || undefined}
+        color="blue"
+      >
+        {feedback.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No feedback yet.</p>
+        ) : (
+          <div className="space-y-3">
+            {feedback.map((f) => (
+              <motion.div
+                key={f.id}
+                layout
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`p-4 rounded-xl border ${
+                  f.is_read
+                    ? 'bg-gray-50 border-gray-100'
+                    : 'bg-blue-50 border-blue-200'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        f.category === 'bug'   ? 'bg-red-100 text-red-600' :
+                        f.category === 'idea'  ? 'bg-amber-100 text-amber-700' :
+                                                  'bg-gray-100 text-gray-600'
+                      }`}>
+                        {f.category === 'bug' ? '🐛 Bug' : f.category === 'idea' ? '💡 Idea' : '💬 General'}
+                      </span>
+                      <span className="text-xs text-gray-400">{f.user_email}</span>
+                      <span className="text-xs text-gray-300">
+                        {f.created_at ? new Date(f.created_at).toLocaleString() : ''}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 leading-relaxed" dir="rtl">{f.message}</p>
+                  </div>
+                  {!f.is_read && (
+                    <button
+                      onClick={async () => {
+                        await adminAPI.markFeedbackRead(f.id);
+                        setFeedback((prev) => prev.map((x) => x.id === f.id ? { ...x, is_read: true } : x));
+                      }}
+                      className="shrink-0 flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5" />
+                      Mark read
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         )}
       </Section>
     </div>
