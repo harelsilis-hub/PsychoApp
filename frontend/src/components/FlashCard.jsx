@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { RotateCcw, Star, BookOpen, Save, Check, Volume2, Pencil, X, Flag } from 'lucide-react';
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
+import { useLanguage } from '../context/LanguageContext';
 
 const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
+  const { language } = useLanguage();
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasFlipped, setHasFlipped] = useState(false);
   const [aiAssociation, setAiAssociation] = useState('');
@@ -106,7 +108,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     if (!word?.english) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(word.english);
-    utterance.lang = 'en-US';
+    utterance.lang = language === 'he' ? 'he-IL' : 'en-US';
     window.speechSynthesis.speak(utterance);
   };
 
@@ -168,7 +170,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
           >
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="text-gray-400 text-xs uppercase tracking-widest mb-2">
-                עברית (Hebrew)
+                {language === 'he' ? 'הגדרה' : 'עברית (Hebrew)'}
               </div>
               <div className="text-gray-900 text-3xl sm:text-5xl font-bold mb-6" dir="rtl">
                 {word.hebrew}

@@ -1,4 +1,4 @@
-"""Authentication endpoints — register and login."""
+"""Authentication endpoints — register, login, and current user."""
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 from app.db.session import get_db
 from app.models.user import User
 from app.auth.jwt import create_access_token
+from app.auth.dependencies import get_current_user
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -64,3 +65,14 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
 
     token = create_access_token(user.id, user.email)
     return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin)
+
+
+@router.get("/me", response_model=AuthResponse)
+async def me(current_user: User = Depends(get_current_user)):
+    """Return the current authenticated user's fresh data from the DB."""
+    return AuthResponse(
+        access_token="",
+        user_id=current_user.id,
+        email=current_user.email,
+        is_admin=current_user.is_admin,
+    )

@@ -8,18 +8,24 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Rehydrate user from localStorage on mount
-    const storedUser = localStorage.getItem('auth_user');
     const storedToken = localStorage.getItem('auth_token');
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('auth_user');
-        localStorage.removeItem('auth_token');
-      }
+    if (!storedToken) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+    // Always fetch fresh user data from the server (catches stale is_admin, etc.)
+    authAPI.me()
+      .then((data) => {
+        const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin };
+        localStorage.setItem('auth_user', JSON.stringify(userObj));
+        setUser(userObj);
+      })
+      .catch(() => {
+        // Token is invalid or expired — clear everything
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password) => {

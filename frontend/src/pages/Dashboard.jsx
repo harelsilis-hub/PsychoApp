@@ -5,15 +5,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
-const UNIT_TOTALS = {
+// Fallback English totals — overridden by server data when available
+const UNIT_TOTALS_EN = {
   1: 283, 2: 376, 3: 359, 4: 379, 5: 384,
   6: 386, 7: 387, 8: 404, 9: 388, 10: 396,
 };
 
 const DAILY_GOAL = 15;
 
-/* ג”€ג”€ג”€ Circular progress ring ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
+/* ג"€ג"€ג"€ Circular progress ring ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ */
 const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] }) => {
   const r   = (size - stroke * 2) / 2;
   const circ = 2 * Math.PI * r;
@@ -42,34 +44,39 @@ const Ring = ({ pct, size = 56, stroke = 5, gradient = ['#7c3aed', '#4f46e5'] })
   );
 };
 
-/* ג”€ג”€ג”€ Dashboard ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
+/* ג"€ג"€ג"€ Dashboard ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ */
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
+  const { language, switchLanguage } = useLanguage();
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
 
   useEffect(() => {
-    progressAPI.getUnitStats()
+    progressAPI.getUnitStats(language)
       .then(setUnitStats)
       .catch((err) => console.error('Failed to load unit stats:', err));
     progressAPI.getUserStats()
       .then(setUserStats)
       .catch((err) => console.error('Failed to load user stats:', err));
-  }, [location.key]);
+  }, [location.key, language]);
 
   const getUnitData = (unitNum) => {
-    const total = UNIT_TOTALS[unitNum];
-    if (!unitStats) return { learned: 0, total, percent: 0 };
+    const fallbackTotal = language === 'en' ? (UNIT_TOTALS_EN[unitNum] ?? 0) : 0;
+    if (!unitStats) return { learned: 0, total: fallbackTotal, percent: 0 };
     const found = unitStats.units.find((u) => u.unit === unitNum);
-    return found || { learned: 0, total, percent: 0 };
+    return found || { learned: 0, total: fallbackTotal, percent: 0 };
   };
+
+  // Derive available unit numbers from server data (supports any number of units)
+  const availableUnits = unitStats?.units?.map((u) => u.unit) ??
+    Array.from({ length: 10 }, (_, i) => i + 1);
 
   const overallPercent = unitStats?.overall_percent ?? 0;
   const totalLearned   = unitStats?.total_learned  ?? 0;
-  const totalWords     = unitStats?.total_words    ?? 3742;
+  const totalWords     = unitStats?.total_words    ?? (language === 'en' ? 3742 : 0);
   const streak         = userStats?.current_streak ?? 0;
   const reviewed       = userStats?.daily_words_reviewed ?? 0;
   const goalPct        = Math.min(100, (reviewed / DAILY_GOAL) * 100);
@@ -83,7 +90,7 @@ const Dashboard = () => {
       <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3">
         <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
-          {/* ג”€ג”€ Module 1: Greeting ג”€ג”€ */}
+          {/* ג"€ג"€ Module 1: Greeting ג"€ג"€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -114,7 +121,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ג”€ג”€ Module 2: Streak ג”€ג”€ */}
+          {/* ג"€ג"€ Module 2: Streak ג"€ג"€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -140,7 +147,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ג”€ג”€ Module 3: Goal + Mastery ג”€ג”€ */}
+          {/* ג"€ג"€ Module 3: Goal + Mastery ג"€ג"€ */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -184,7 +191,7 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* ג”€ג”€ Dark mode toggle ג”€ג”€ */}
+          {/* Dark mode toggle */}
           <motion.button
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -200,7 +207,7 @@ const Dashboard = () => {
             {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
           </motion.button>
 
-         {/* ג”€ג”€ Logout ג”€ג”€ */}
+         {/* ג"€ג"€ Logout ג"€ג"€ */}
           <motion.button
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -291,22 +298,85 @@ const Dashboard = () => {
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
       <main className="relative z-10 md:flex-1 md:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
-        {/* Section title */}
+        {/* Section title + Language selector */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.25 }}
           className="mb-3 shrink-0"
         >
-          <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
-          <p className="text-sm text-gray-600 mt-0.5 font-medium">
-            {totalLearned.toLocaleString()} &thinsp;/&thinsp; {totalWords.toLocaleString()} מילים נלמדו
-          </p>
+          <div className="flex items-baseline justify-between mb-3">
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
+            <p className="text-sm text-gray-600 font-medium">
+              {totalLearned.toLocaleString()} / {totalWords.toLocaleString()} נלמדו
+            </p>
+          </div>
+
+          {/* ── Bold language selector ── */}
+          <div className="grid grid-cols-2 gap-2.5">
+            {/* English option */}
+            <motion.button
+              onClick={() => switchLanguage('en')}
+              whileTap={{ scale: 0.97 }}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all duration-250 text-right ${
+                language === 'en'
+                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-xl shadow-indigo-300/50 text-white'
+                  : 'bg-white/80 border-gray-200 text-gray-500 hover:border-violet-300 hover:bg-white'
+              }`}
+            >
+              {language === 'en' && (
+                <motion.div
+                  layoutId="lang-active-bg"
+                  className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 -z-10"
+                />
+              )}
+              <span className="text-2xl leading-none">🔤</span>
+              <div className="leading-tight text-right flex-1">
+                <p className={`text-sm font-black tracking-tight ${language === 'en' ? 'text-white' : 'text-gray-800'}`}>
+                  אנגלית
+                </p>
+                <p className={`text-[11px] font-semibold mt-0.5 ${language === 'en' ? 'text-white/75' : 'text-gray-400'}`}>
+                  English &larr; עברית &nbsp;·&nbsp; {language === 'en' ? totalWords.toLocaleString() : '3,742'} מילים
+                </p>
+              </div>
+              {language === 'en' && (
+                <span className="shrink-0 w-5 h-5 rounded-full bg-white/25 flex items-center justify-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                </span>
+              )}
+            </motion.button>
+
+            {/* Hebrew option */}
+            <motion.button
+              onClick={() => switchLanguage('he')}
+              whileTap={{ scale: 0.97 }}
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all duration-250 text-right ${
+                language === 'he'
+                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-xl shadow-indigo-300/50 text-white'
+                  : 'bg-white/80 border-gray-200 text-gray-500 hover:border-violet-300 hover:bg-white'
+              }`}
+            >
+              <span className="text-2xl leading-none">📖</span>
+              <div className="leading-tight text-right flex-1">
+                <p className={`text-sm font-black tracking-tight ${language === 'he' ? 'text-white' : 'text-gray-800'}`}>
+                  עברית
+                </p>
+                <p className={`text-[11px] font-semibold mt-0.5 ${language === 'he' ? 'text-white/75' : 'text-gray-400'}`}>
+                  מילה &larr; הגדרה &nbsp;·&nbsp; {language === 'he' ? totalWords.toLocaleString() : '1,703'} מילים
+                </p>
+              </div>
+              {language === 'he' && (
+                <span className="shrink-0 w-5 h-5 rounded-full bg-white/25 flex items-center justify-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                </span>
+              )}
+            </motion.button>
+          </div>
         </motion.div>
 
-        {/* ג”€ג”€ Unit grid ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */}
+        {/* ג"€ג"€ Unit grid ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
-          {Array.from({ length: 10 }, (_, i) => i + 1).map((unit, idx) => {
+          {availableUnits.map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
             const started   = learned > 0;
             const completed = percent >= 100;

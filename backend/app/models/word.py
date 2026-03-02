@@ -30,6 +30,7 @@ class Word(Base):
     english: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
     hebrew: Mapped[str] = mapped_column(String(255), nullable=False)
     unit: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    language: Mapped[str] = mapped_column(String(10), index=True, nullable=False, default="en", server_default="en")
     audio_url: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
 
     # Memory Aids (Associations)

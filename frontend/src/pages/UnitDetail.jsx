@@ -3,8 +3,9 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Zap, BookOpen, Brain, Layers, Target } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
+import { useLanguage } from '../context/LanguageContext';
 
-const UNIT_TOTALS = {
+const UNIT_TOTALS_EN = {
   1: 283, 2: 376, 3: 359, 4: 379, 5: 384,
   6: 386, 7: 387, 8: 404, 9: 388, 10: 396,
 };
@@ -86,19 +87,21 @@ const UnitDetail = () => {
   const navigate = useNavigate();
   const { id }   = useParams();
   const unitNum  = parseInt(id, 10);
+  const { language } = useLanguage();
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    progressAPI.getUnitStats()
+    progressAPI.getUnitStats(language)
       .then((data) => {
         const unit = data.units.find((u) => u.unit === unitNum);
-        setStats(unit || { unit: unitNum, learned: 0, total: UNIT_TOTALS[unitNum] || 0, percent: 0 });
+        const fallback = language === 'en' ? (UNIT_TOTALS_EN[unitNum] || 0) : 0;
+        setStats(unit || { unit: unitNum, learned: 0, total: fallback, percent: 0 });
       })
       .catch(console.error);
-  }, [unitNum]);
+  }, [unitNum, language]);
 
   const learned   = stats?.learned  ?? 0;
-  const total     = stats?.total    ?? UNIT_TOTALS[unitNum] ?? 0;
+  const total     = stats?.total    ?? UNIT_TOTALS_EN[unitNum] ?? 0;
   const percent   = stats?.percent  ?? 0;
   const remaining = total - learned;
   const completed = percent >= 100;

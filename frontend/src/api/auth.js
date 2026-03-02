@@ -10,4 +10,9 @@ export const authAPI = {
     const response = await apiClient.post('/v1/auth/login', { email, password });
     return response.data;
   },
+
+  me: async () => {
+    const response = await apiClient.get('/v1/auth/me');
+    return response.data;
+  },
 };

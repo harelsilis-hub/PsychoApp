@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingWordsBackground from './components/FloatingWordsBackground';
 import LoginPage from './pages/LoginPage';
@@ -33,6 +34,7 @@ const AuthenticatedFeedback = () => {
 function App() {
   return (
     <ThemeProvider>
+      <LanguageProvider>
       <AuthProvider>
         <Router>
           <FloatingWordsBackground />
@@ -64,6 +66,7 @@ function App() {
           </Routes>
         </Router>
       </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

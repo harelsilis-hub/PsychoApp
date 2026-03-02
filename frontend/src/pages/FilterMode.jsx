@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
+import { useLanguage } from '../context/LanguageContext';
 
 const UNKNOWNS_TARGET = 15;
 
@@ -11,6 +12,7 @@ const FilterMode = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const unitNum = parseInt(id, 10);
+  const { language } = useLanguage();
 
   // Words stored as a queue — we shift from the front
   const [queue, setQueue] = useState([]);
@@ -33,7 +35,7 @@ const FilterMode = () => {
   const redirectFiredRef = useRef(false);
 
   useEffect(() => {
-    reviewAPI.getFilterWords(unitNum)
+    reviewAPI.getFilterWords(unitNum, language)
       .then((data) => {
         setQueue(data.words || []);
         setLoading(false);
@@ -42,7 +44,7 @@ const FilterMode = () => {
         console.error(err);
         setLoading(false);
       });
-  }, [unitNum]);
+  }, [unitNum, language]);
 
   // Once 10 unknowns are collected, show toast then navigate
   useEffect(() => {

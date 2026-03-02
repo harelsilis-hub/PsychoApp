@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Brain, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
+import { useLanguage } from '../context/LanguageContext';
 
 const QUESTIONS_PER_QUIZ = 10;
 
@@ -113,6 +114,7 @@ const Quiz = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const unitNum = parseInt(id, 10);
+  const { language } = useLanguage();
 
   const [questions, setQuestions]     = useState([]);
   const [qIndex, setQIndex]           = useState(0);
@@ -136,7 +138,7 @@ const Quiz = () => {
     setError(null);
 
     try {
-      const res = await reviewAPI.getAllLearnedWords();
+      const res = await reviewAPI.getAllLearnedWords(language);
       const learnedWords = res.words || [];
 
       if (learnedWords.length === 0) {
@@ -231,7 +233,7 @@ const Quiz = () => {
           <Brain className="w-12 h-12 text-green-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">אין מילים לבחינה עדיין</h2>
           <p className="text-gray-500 mb-6">
-            הבוחן בוחן מילים שסימנת כ<strong>ידועות</strong> בסשן חזרה. עבור דרך סינון מילים → סשן חזרה וסמן מילים כ"ידועות" — הן יופיעו כאן.
+            הבוחן בוחן מילים שסימנת כ<strong>ידועות</strong> בסשן חזרה. עבור דרך סינון מילים ← סשן חזרה וסמן מילים כ"ידועות" — הן יופיעו כאן.
           </p>
           <button
             onClick={() => navigate(`/unit/${unitNum}`)}
@@ -343,7 +345,7 @@ const Quiz = () => {
                   animate={{ opacity: 1 }}
                   className="text-center text-xs text-gray-400 mb-2"
                 >
-                  שגוי → מרווח קצר יותר · נכון → מרווח ארוך יותר
+                  שגוי ← מרווח קצר יותר · נכון ← מרווח ארוך יותר
                 </motion.p>
               )}
 

@@ -19,18 +19,18 @@ export const reviewAPI = {
     return response.data;
   },
 
-  getUnitWords: async (unit, limit = 50) => {
-    const response = await apiClient.get(`/v1/review/unit/${unit}`, { params: { limit } });
+  getUnitWords: async (unit, limit = 50, language = 'en') => {
+    const response = await apiClient.get(`/v1/review/unit/${unit}`, { params: { limit, language } });
     return response.data;
   },
 
-  getFilterWords: async (unit) => {
-    const response = await apiClient.get(`/v1/review/unit/${unit}/filter`);
+  getFilterWords: async (unit, language = 'en') => {
+    const response = await apiClient.get(`/v1/review/unit/${unit}/filter`, { params: { language } });
     return response.data;
   },
 
-  getLearnedWords: async (unit) => {
-    const response = await apiClient.get(`/v1/review/unit/${unit}/learned`);
+  getLearnedWords: async (unit, language = 'en') => {
+    const response = await apiClient.get(`/v1/review/unit/${unit}/learned`, { params: { language } });
     return response.data;
   },
 
@@ -39,8 +39,8 @@ export const reviewAPI = {
     return response.data;
   },
 
-  getAllLearnedWords: async () => {
-    const response = await apiClient.get('/v1/review/learned/all');
+  getAllLearnedWords: async (language = 'en') => {
+    const response = await apiClient.get('/v1/review/learned/all', { params: { language } });
     return response.data;
   },
 

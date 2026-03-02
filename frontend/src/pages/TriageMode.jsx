@@ -3,9 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Brain, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
+import { useLanguage } from '../context/LanguageContext';
 
 const TriageMode = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [wordQueue, setWordQueue] = useState([]);
   const [totalRemaining, setTotalRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -28,7 +30,7 @@ const TriageMode = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await progressAPI.getBatchTriageWords(50);
+      const data = await progressAPI.getBatchTriageWords(50, language);
       setWordQueue(data.words);
       setTotalRemaining(data.remaining);
     } catch (err) {

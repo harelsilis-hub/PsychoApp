@@ -10,7 +10,7 @@ from app.models.word import Word
 from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.models.word_interaction_event import WordInteractionEvent
 
-UNIT_WORD_TOTALS = {1: 283, 2: 376, 3: 359, 4: 379, 5: 384, 6: 386, 7: 387, 8: 404, 9: 388, 10: 396}
+UNIT_WORD_TOTALS_EN = {1: 283, 2: 376, 3: 359, 4: 379, 5: 384, 6: 386, 7: 387, 8: 404, 9: 388, 10: 396}
 
 
 class ProgressService:
@@ -171,7 +171,7 @@ class ProgressService:
         }
 
     @staticmethod
-    async def get_unit_stats(db: AsyncSession, user_id: int) -> dict:
+    async def get_unit_stats(db: AsyncSession, user_id: int, language: str = "en") -> dict:
         """
         Get per-unit progress counts and overall stats for a user.
 
@@ -185,6 +185,16 @@ class ProgressService:
                 'overall_percent': float,
             }
         """
+        # Get all units and their total word counts for this language
+        total_stmt = (
+            select(Word.unit, func.count(Word.id).label("total"))
+            .where(Word.language == language)
+            .group_by(Word.unit)
+            .order_by(Word.unit)
+        )
+        total_result = await db.execute(total_stmt)
+        totals_by_unit = {row.unit: row.total for row in total_result.all()}
+
         # Count learned words (REVIEW or MASTERED) per unit via LEFT OUTER JOIN
         stmt = (
             select(Word.unit, func.count(UserWordProgress.id).label("learned"))
@@ -197,19 +207,21 @@ class ProgressService:
                     UserWordProgress.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]),
                 ),
             )
+            .where(Word.language == language)
             .group_by(Word.unit)
             .order_by(Word.unit)
         )
         result = await db.execute(stmt)
         learned_by_unit = {row.unit: row.learned for row in result.all()}
 
+        all_units = sorted(totals_by_unit.keys())
         units = []
         total_learned = 0
-        total_words = sum(UNIT_WORD_TOTALS.values())
+        total_words = sum(totals_by_unit.values())
 
-        for unit_num in range(1, 11):
+        for unit_num in all_units:
             learned = learned_by_unit.get(unit_num, 0)
-            total = UNIT_WORD_TOTALS[unit_num]
+            total = totals_by_unit[unit_num]
             total_learned += learned
             units.append({
                 "unit": unit_num,
@@ -229,7 +241,8 @@ class ProgressService:
     async def get_next_triage_word(
         db: AsyncSession,
         user_id: int,
-        user_level: int
+        user_level: int,
+        language: str = "en",
     ) -> tuple[Word | None, int]:
         """
         Get next word for triage mode at user's level.
@@ -238,25 +251,23 @@ class ProgressService:
             db: Database session.
             user_id: User ID.
             user_level: User's current level from placement test.
+            language: 'en' or 'he'
 
         Returns:
             Tuple of (Word, remaining_count).
         """
-        # Get words at user's unit that haven't been triaged
-        # Clamp unit to 1-10 range
         unit_number = max(1, min(10, user_level))
 
-        # Get all word IDs that have been triaged by this user
         stmt = select(UserWordProgress.word_id).where(
             UserWordProgress.user_id == user_id
         )
         result = await db.execute(stmt)
         triaged_word_ids = [row[0] for row in result.all()]
 
-        # Get untriaged words at user's unit
         stmt = (
             select(Word)
             .where(Word.unit == unit_number)
+            .where(Word.language == language)
         )
         if triaged_word_ids:
             stmt = stmt.where(Word.id.not_in(triaged_word_ids))
@@ -265,10 +276,10 @@ class ProgressService:
         result = await db.execute(stmt)
         word = result.scalar_one_or_none()
 
-        # Count remaining words
         count_stmt = (
             select(func.count(Word.id))
             .where(Word.unit == unit_number)
+            .where(Word.language == language)
         )
         if triaged_word_ids:
             count_stmt = count_stmt.where(Word.id.not_in(triaged_word_ids))
@@ -284,6 +295,7 @@ class ProgressService:
         user_id: int,
         user_level: int,
         count: int = 50,
+        language: str = "en",
     ) -> tuple[list[Word], int]:
         """Return up to `count` random untriaged words + total remaining count."""
         unit_number = max(1, min(10, user_level))
@@ -292,14 +304,14 @@ class ProgressService:
         result = await db.execute(stmt)
         triaged_word_ids = [row[0] for row in result.all()]
 
-        stmt = select(Word).where(Word.unit == unit_number)
+        stmt = select(Word).where(Word.unit == unit_number).where(Word.language == language)
         if triaged_word_ids:
             stmt = stmt.where(Word.id.not_in(triaged_word_ids))
         stmt = stmt.order_by(func.random()).limit(count)
         result = await db.execute(stmt)
         words = list(result.scalars().all())
 
-        count_stmt = select(func.count(Word.id)).where(Word.unit == unit_number)
+        count_stmt = select(func.count(Word.id)).where(Word.unit == unit_number).where(Word.language == language)
         if triaged_word_ids:
             count_stmt = count_stmt.where(Word.id.not_in(triaged_word_ids))
         result = await db.execute(count_stmt)

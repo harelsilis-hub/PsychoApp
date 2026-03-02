@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, List, Search, X, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
+import { useLanguage } from '../context/LanguageContext';
 
 const MARKS_KEY = 'psychoapp_word_marks';
 
@@ -19,6 +20,7 @@ const WordList = () => {
   const navigate  = useNavigate();
   const { id }    = useParams();
   const unitNum   = parseInt(id, 10);
+  const { language } = useLanguage();
 
   const [words,   setWords]   = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,13 +29,13 @@ const WordList = () => {
   const [marks,   setMarks]   = useState(loadMarks);
 
   useEffect(() => {
-    reviewAPI.getUnitWords(unitNum, 500)
+    reviewAPI.getUnitWords(unitNum, 500, language)
       .then((data) => {
         setWords(data.words || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [unitNum]);
+  }, [unitNum, language]);
 
   const toggleMark = (wordId, value) => {
     setMarks((prev) => {

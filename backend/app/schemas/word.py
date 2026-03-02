@@ -7,7 +7,8 @@ class WordBase(BaseModel):
 
     english: str = Field(..., description="English translation")
     hebrew: str = Field(..., description="Hebrew word")
-    unit: int = Field(..., ge=1, le=10, description="Unit number (1-10)")
+    unit: int = Field(..., ge=1, description="Unit number")
+    language: str = Field(default="en", description="Language: 'en' or 'he'")
 
 
 class WordCreate(WordBase):
@@ -36,5 +37,6 @@ class WordUpdate(BaseModel):
 
     english: str | None = Field(None, description="English translation")
     hebrew: str | None = Field(None, description="Hebrew word")
-    unit: int | None = Field(None, ge=1, le=10, description="Unit number (1-10)")
+    unit: int | None = Field(None, ge=1, description="Unit number")
+    language: str | None = Field(None, description="Language: 'en' or 'he'")
     audio_url: str | None = Field(None, description="URL to pronunciation audio")

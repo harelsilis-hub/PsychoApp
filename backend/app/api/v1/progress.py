@@ -63,19 +63,21 @@ async def get_user_stats(
 
 @router.get("/unit-stats")
 async def get_unit_progress_stats(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
     Get per-unit progress stats and overall learned percentage for dashboard.
     """
-    stats = await ProgressService.get_unit_stats(db, current_user.id)
+    stats = await ProgressService.get_unit_stats(db, current_user.id, language)
     return stats
 
 
 @router.delete("/unit/{unit_number}/reset")
 async def reset_unit_progress(
     unit_number: int,
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -84,7 +86,7 @@ async def reset_unit_progress(
         raise HTTPException(status_code=400, detail="Unit must be 1-10")
 
     try:
-        word_ids_stmt = select(Word.id).where(Word.unit == unit_number)
+        word_ids_stmt = select(Word.id).where(Word.unit == unit_number).where(Word.language == language)
         result = await db.execute(word_ids_stmt)
         word_ids = [row[0] for row in result.all()]
 
@@ -105,6 +107,7 @@ async def reset_unit_progress(
 @router.get("/triage/batch", response_model=dict)
 async def get_batch_triage_words(
     limit: int = Query(default=50, ge=1, le=100),
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -113,7 +116,7 @@ async def get_batch_triage_words(
     user_level = stats["level"]
 
     words, remaining = await ProgressService.get_batch_triage_words(
-        db, current_user.id, user_level, limit
+        db, current_user.id, user_level, limit, language
     )
 
     if not words:
@@ -130,6 +133,7 @@ async def get_batch_triage_words(
 
 @router.get("/triage/next", response_model=dict)
 async def get_next_triage_word(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -138,7 +142,7 @@ async def get_next_triage_word(
     user_level = stats["level"]
 
     word, remaining = await ProgressService.get_next_triage_word(
-        db, current_user.id, user_level
+        db, current_user.id, user_level, language
     )
 
     if not word:

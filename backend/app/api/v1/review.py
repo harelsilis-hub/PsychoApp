@@ -164,6 +164,7 @@ async def submit_review_result(
 async def get_unit_words(
     unit_number: int,
     limit: int = Query(default=500, ge=1, le=500, description="Max words to return"),
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewSessionResponse:
@@ -175,7 +176,7 @@ async def get_unit_words(
         )
 
     try:
-        word_entries = await ReviewService.get_unit_words(db, current_user.id, unit_number, limit)
+        word_entries = await ReviewService.get_unit_words(db, current_user.id, unit_number, limit, language)
 
         words = []
         new_count = 0
@@ -196,8 +197,7 @@ async def get_unit_words(
                 )
             )
 
-        unit_word_counts = {1: 283, 2: 376, 3: 359, 4: 379, 5: 384, 6: 386, 7: 387, 8: 404, 9: 388, 10: 396}
-        total_in_unit = unit_word_counts.get(unit_number, len(words))
+        total_in_unit = len(words)
 
         return ReviewSessionResponse(
             words=words,
@@ -250,6 +250,7 @@ async def get_all_learning_words(
 
 @router.get("/learned/all")
 async def get_all_learned_words(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -266,6 +267,7 @@ async def get_all_learned_words(
             .join(UserWordProgress, UserWordProgress.word_id == Word.id)
             .where(UserWordProgress.user_id == current_user.id)
             .where(UserWordProgress.status == WordStatus.REVIEW)
+            .where(Word.language == language)
             # Due / overdue words come first; far-future words at the end
             .order_by(UserWordProgress.next_review.asc().nullsfirst())
         )
@@ -294,6 +296,7 @@ async def get_all_learned_words(
 async def get_filter_words(
     unit_number: int,
     limit: int = Query(default=200, ge=1, le=500),
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -316,6 +319,7 @@ async def get_filter_words(
                 ),
             )
             .where(Word.unit == unit_number)
+            .where(Word.language == language)
             .where(UserWordProgress.id.is_(None))   # no prior interaction at all
             .order_by(Word.id)
             .limit(limit)
@@ -343,6 +347,7 @@ async def get_filter_words(
 @router.get("/unit/{unit_number}/learned")
 async def get_learned_words(
     unit_number: int,
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -357,6 +362,7 @@ async def get_learned_words(
             select(Word)
             .join(UserWordProgress, UserWordProgress.word_id == Word.id)
             .where(Word.unit == unit_number)
+            .where(Word.language == language)
             .where(UserWordProgress.user_id == current_user.id)
             .where(UserWordProgress.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]))
             .order_by(Word.id)

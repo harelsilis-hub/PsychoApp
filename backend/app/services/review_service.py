@@ -125,7 +125,8 @@ class ReviewService:
         db: AsyncSession,
         user_id: int,
         unit_number: int,
-        limit: int = 50
+        limit: int = 50,
+        language: str = "en",
     ) -> list[tuple]:
         """
         Get words for a specific unit, pairing each with its progress record (or None).
@@ -155,6 +156,7 @@ class ReviewService:
                 )
             )
             .where(Word.unit == unit_number)
+            .where(Word.language == language)
             .order_by(Word.id)
             .limit(limit)
         )
