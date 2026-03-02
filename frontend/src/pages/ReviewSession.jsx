@@ -183,6 +183,7 @@ const ReviewSession = () => {
   const handleSubmit = (quality) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
+    window.speechSynthesis?.cancel(); // stop any TTS playing
     const currentWord = sessionWords[currentIndex];
 
     // Advance immediately (optimistic UI)
@@ -352,14 +353,14 @@ const ReviewSession = () => {
         {/* Main card area */}
         <div className="flex-1 min-w-0 flex flex-col items-center">
           <div className="w-full max-w-xl">
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {currentWord && (
                 <motion.div
                   key={currentWord.word_id}
-                  initial={{ opacity: 0, x: 60 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -60 }}
-                  transition={{ duration: 0.35, type: 'spring', stiffness: 120 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
                 >
                   <FlashCard
                     word={currentWord}
