@@ -176,7 +176,8 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                 {word.hebrew}
               </div>
 
-              {/* Example Sentence */}
+              {/* Example Sentence — hidden in Hebrew mode (sentences are English only) */}
+              {language !== 'he' && (
               <div className="w-full mb-4" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-1.5">
@@ -235,6 +236,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                   </button>
                 )}
               </div>
+              )}
 
               {/* Personal Memory Aid Input */}
               <div className="w-full" onClick={(e) => e.stopPropagation()}>
@@ -247,7 +249,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                     value={userAssociationInput}
                     onChange={(e) => setUserAssociationInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSaveAssociation()}
-                    placeholder="e.g. 'Sounds like...', 'Reminds me of...'"
+                    placeholder={language === 'he' ? 'למשל: "נשמע כמו...", "מזכיר לי..."' : "e.g. 'Sounds like...', 'Reminds me of...'"}
                     className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
                   />
                   <button
