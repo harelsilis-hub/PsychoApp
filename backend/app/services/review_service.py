@@ -77,7 +77,8 @@ class ReviewService:
     async def get_due_words(
         db: AsyncSession,
         user_id: int,
-        limit: int = 20
+        limit: int = 20,
+        language: str = "en",
     ) -> list[tuple[UserWordProgress, Word]]:
         """
         Get words due for review, prioritizing overdue words.
@@ -91,6 +92,7 @@ class ReviewService:
             db: Database session
             user_id: User ID
             limit: Max words to return
+            language: Language filter ('en' or 'he')
 
         Returns:
             List of (UserWordProgress, Word) tuples ordered by priority
@@ -100,6 +102,7 @@ class ReviewService:
             select(UserWordProgress, Word)
             .join(Word, UserWordProgress.word_id == Word.id)
             .where(UserWordProgress.user_id == user_id)
+            .where(Word.language == language)
             .where(
                 or_(
                     # Due words: REVIEW or LEARNING with next_review in past

@@ -7,6 +7,7 @@ import { reviewAPI } from '../api/review';
 import FlashCard from '../components/FlashCard';
 import StudyCard from '../components/StudyCard';
 import SessionComplete from '../components/SessionComplete';
+import { useLanguage } from '../context/LanguageContext';
 
 // ─── Community Sidebar ────────────────────────────────────────────────────────
 
@@ -114,6 +115,7 @@ const ReviewSession = () => {
   const location    = useLocation();
   const { id: unitId } = useParams();           // present when path is /unit/:id/review
   const [searchParams]  = useSearchParams();    // ?unit=X legacy support
+  const { language } = useLanguage();
 
   const [sessionWords, setSessionWords]   = useState([]);
   const [currentIndex, setCurrentIndex]   = useState(0);
@@ -151,7 +153,7 @@ const ReviewSession = () => {
       // ② Unit route mode: /unit/:id/review with no state → show only LEARNING (unknown) words
       const unit = unitId ? parseInt(unitId, 10) : parseInt(searchParams.get('unit') || '0', 10);
       if (unit > 0) {
-        const data = await reviewAPI.getAllLearningWords();
+        const data = await reviewAPI.getAllLearningWords(language);
         const unknownWords = (data.words || [])
           .filter((w) => w.unit === unit)
           .map((w) => ({ ...w, is_new: false }));
@@ -166,7 +168,7 @@ const ReviewSession = () => {
       }
 
       // ③ Fallback: regular due-words session
-      const data = await reviewAPI.getReviewSession();
+      const data = await reviewAPI.getReviewSession(20, language);
       if (data.words.length === 0) { navigate('/'); return; }
       setSessionWords(data.words);
       setSessionStats((p) => ({ ...p, total: data.words.length }));

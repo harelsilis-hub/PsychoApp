@@ -1,8 +1,8 @@
 import apiClient from './client';
 
 export const reviewAPI = {
-  getReviewSession: async (limit = 20) => {
-    const response = await apiClient.get('/v1/review/session', { params: { limit } });
+  getReviewSession: async (limit = 20, language = 'en') => {
+    const response = await apiClient.get('/v1/review/session', { params: { limit, language } });
     return response.data;
   },
 
@@ -34,8 +34,8 @@ export const reviewAPI = {
     return response.data;
   },
 
-  getAllLearningWords: async () => {
-    const response = await apiClient.get('/v1/review/learning/all');
+  getAllLearningWords: async (language = 'en') => {
+    const response = await apiClient.get('/v1/review/learning/all', { params: { language } });
     return response.data;
   },
 

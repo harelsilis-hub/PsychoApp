@@ -26,6 +26,7 @@ router = APIRouter()
 @router.get("/session", response_model=ReviewSessionResponse)
 async def get_review_session(
     limit: int = Query(default=20, ge=1, le=100, description="Max words per session"),
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewSessionResponse:
@@ -34,7 +35,7 @@ async def get_review_session(
     Returns words due for review + new learning words up to limit.
     """
     try:
-        progress_word_pairs = await ReviewService.get_due_words(db, current_user.id, limit)
+        progress_word_pairs = await ReviewService.get_due_words(db, current_user.id, limit, language)
 
         words = []
         due_count = 0
@@ -216,6 +217,7 @@ async def get_unit_words(
 
 @router.get("/learning/all")
 async def get_all_learning_words(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -226,6 +228,7 @@ async def get_all_learning_words(
             .join(UserWordProgress, UserWordProgress.word_id == Word.id)
             .where(UserWordProgress.user_id == current_user.id)
             .where(UserWordProgress.status == WordStatus.LEARNING)
+            .where(Word.language == language)
             .order_by(Word.unit, Word.id)
         )
         result = await db.execute(stmt)
