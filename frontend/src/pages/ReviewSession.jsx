@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ArrowRight, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
@@ -8,6 +9,7 @@ import FlashCard from '../components/FlashCard';
 import StudyCard from '../components/StudyCard';
 import SessionComplete from '../components/SessionComplete';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 // ─── Community Sidebar ────────────────────────────────────────────────────────
 
@@ -116,6 +118,7 @@ const ReviewSession = () => {
   const { id: unitId } = useParams();           // present when path is /unit/:id/review
   const [searchParams]  = useSearchParams();    // ?unit=X legacy support
   const { language } = useLanguage();
+  const { playCorrect, playWrong } = useSound();
 
   const [sessionWords, setSessionWords]   = useState([]);
   const [currentIndex, setCurrentIndex]   = useState(0);
@@ -185,7 +188,8 @@ const ReviewSession = () => {
   const handleSubmit = (quality) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    window.speechSynthesis?.cancel(); // stop any TTS playing
+    window.speechSynthesis?.cancel();
+    if (quality >= 3) playCorrect(); else playWrong();
     const currentWord = sessionWords[currentIndex];
 
     // Advance immediately (optimistic UI)
@@ -335,8 +339,11 @@ const ReviewSession = () => {
               <BookOpen className="w-5 h-5 text-purple-600" />
               <span className="font-semibold text-gray-800">{sessionTitle}</span>
             </div>
-            <div className="text-sm text-gray-500 font-medium">
-              {sessionStats.reviewed} <span className="text-gray-300">/</span> {sessionStats.total}
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-gray-500 font-medium">
+                {sessionStats.reviewed} <span className="text-gray-300">/</span> {sessionStats.total}
+              </span>
+              <SoundToggle />
             </div>
           </div>
           <div className="mt-2.5 h-1.5 bg-gray-100 rounded-full overflow-hidden">

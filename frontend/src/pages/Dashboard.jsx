@@ -1,11 +1,12 @@
 ﻿import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Brain, LogOut, Moon, Sun, ShieldCheck } from 'lucide-react';
+import { Brain, LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 // Fallback English totals — overridden by server data when available
 const UNIT_TOTALS_EN = {
@@ -51,6 +52,7 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const { isDark, toggle } = useTheme();
   const { language, switchLanguage } = useLanguage();
+  const { soundEnabled, toggleSound } = useSound();
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
 
@@ -190,6 +192,22 @@ const Dashboard = () => {
               </p>
             </div>
           </motion.div>
+
+          {/* Sound toggle */}
+          <motion.button
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            onClick={toggleSound}
+            title={soundEnabled ? 'כבה צלילים' : 'הפעל צלילים'}
+            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
+                       flex items-center justify-center
+                       text-gray-400 hover:text-gray-800
+                       hover:bg-white/75 transition-all duration-200"
+          >
+            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-gray-300" />}
+          </motion.button>
 
           {/* Dark mode toggle */}
           <motion.button

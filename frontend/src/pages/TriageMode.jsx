@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Brain, ArrowRight, Sparkles } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 const TriageMode = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { playTick, playDontKnow } = useSound();
   const [wordQueue, setWordQueue] = useState([]);
   const [totalRemaining, setTotalRemaining] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -47,6 +50,7 @@ const TriageMode = () => {
   const handleChoice = (isKnown) => {
     if (wordQueue.length === 0) return;
 
+    if (isKnown) playTick(); else playDontKnow();
     exitDirectionRef.current = isKnown ? 'right' : 'left';
     progressAPI.triageWord(wordQueue[0].id, isKnown).catch(console.error);
     setWordQueue(q => q.slice(1));
@@ -133,8 +137,9 @@ const TriageMode = () => {
               <Brain className="w-5 h-5 text-purple-600" />
               <span className="font-semibold text-gray-900">Triage Mode</span>
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
               {wordQueue.length} remaining
+              <SoundToggle />
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap, BookOpen, Brain, Layers, Target } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useLanguage } from '../context/LanguageContext';
@@ -225,6 +226,8 @@ const UnitDetail = () => {
               />
             </div>
           </div>
+
+          <SoundToggle className="shrink-0" />
         </motion.div>
       </div>
 

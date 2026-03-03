@@ -4,9 +4,11 @@ import { RotateCcw, Star, BookOpen, Save, Check, Volume2, Pencil, X, Flag } from
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
   const { language } = useLanguage();
+  const { speakWord, playCorrect, playWrong } = useSound();
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasFlipped, setHasFlipped] = useState(false);
   const [aiAssociation, setAiAssociation] = useState('');
@@ -86,6 +88,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
 
   const handleRate = (quality) => {
     if (!hasFlipped) return;
+    if (quality >= 3) playCorrect(); else playWrong();
     onRate(quality);
     setIsFlipped(false);
     setHasFlipped(false);
@@ -103,13 +106,10 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     }
   };
 
-  const speakWord = (e) => {
+  const handleSpeak = (e) => {
     e.stopPropagation();
     if (!word?.english) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(word.english);
-    utterance.lang = language === 'he' ? 'he-IL' : 'en-US';
-    window.speechSynthesis.speak(utterance);
+    speakWord(word.english, language === 'he' ? 'he-IL' : 'en-US');
   };
 
   return (
@@ -137,7 +137,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
             )}
             {/* Audio button — icon only, right edge */}
             <button
-              onClick={speakWord}
+              onClick={handleSpeak}
               title="Hear pronunciation"
               className="absolute right-5 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white/20 hover:bg-white/30 active:bg-white/40 text-white rounded-full transition-colors"
             >

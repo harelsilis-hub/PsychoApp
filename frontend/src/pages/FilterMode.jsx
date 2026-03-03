@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { progressAPI } from '../api/progress';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 const UNKNOWNS_TARGET = 15;
 
@@ -13,6 +15,7 @@ const FilterMode = () => {
   const { id } = useParams();
   const unitNum = parseInt(id, 10);
   const { language } = useLanguage();
+  const { playTick, playDontKnow } = useSound();
 
   // Words stored as a queue — we shift from the front
   const [queue, setQueue] = useState([]);
@@ -84,6 +87,7 @@ const FilterMode = () => {
   const handleChoice = (isKnown) => {
     if (swipingRef.current || !currentWord || autoRedirecting) return;
     swipingRef.current = true;
+    if (isKnown) playTick(); else playDontKnow();
 
     // 1. Optimistic update — collect unknowns before the server responds
     if (!isKnown) {
@@ -270,6 +274,7 @@ const FilterMode = () => {
           <Zap className="w-4 h-4 text-yellow-500" />
           <span className="font-semibold text-gray-800 flex-1">סינון מילים — יחידה {unitNum}</span>
           <span className="text-sm text-gray-500">{remaining} נותרו</span>
+          <SoundToggle />
         </div>
 
         {/* "Unknowns collected" progress bar */}

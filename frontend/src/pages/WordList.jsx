@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, List, Search, X, Check } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { useLanguage } from '../context/LanguageContext';
@@ -119,6 +120,8 @@ const WordList = () => {
 
           <div className="flex-1" />
 
+          <SoundToggle className="shrink-0" />
+
           {/* Search */}
           <div className="relative">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -231,11 +234,8 @@ const WordList = () => {
                         </span>
 
                         {/* Hebrew */}
-                        <span
-                          className="flex-1 text-sm font-semibold text-gray-700 text-right"
-                          dir="rtl"
-                        >
-                          {word.hebrew}
+                        <span className="flex-1 text-sm font-semibold text-gray-700 text-right">
+                          <bdi>{word.hebrew}</bdi>
                         </span>
 
                         {/* ✓ / ✗ buttons */}

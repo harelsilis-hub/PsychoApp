@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { SoundProvider } from './context/SoundContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import FloatingWordsBackground from './components/FloatingWordsBackground';
 import LoginPage from './pages/LoginPage';
@@ -36,6 +37,7 @@ const AuthenticatedFeedback = () => {
 function App() {
   return (
     <ThemeProvider>
+      <SoundProvider>
       <LanguageProvider>
       <AuthProvider>
         <Router>
@@ -71,6 +73,7 @@ function App() {
         </Router>
       </AuthProvider>
       </LanguageProvider>
+      </SoundProvider>
     </ThemeProvider>
   );
 }

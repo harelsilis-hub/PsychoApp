@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Brain, CheckCircle, XCircle, Trophy } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
 import { useLanguage } from '../context/LanguageContext';
+import { useSound } from '../context/SoundContext';
 
 const QUESTIONS_PER_QUIZ = 10;
 
@@ -60,7 +62,8 @@ function buildQuestions(learnedWords, distractorPool, recentIds = new Set()) {
 
 // ─── Result screen ─────────────────────────────────────────────────────────────
 
-const QuizResult = ({ score, total, onRetry, onBack }) => {
+const QuizResult = ({ score, skipped, total, onRetry, onBack }) => {
+  const wrong = total - score - skipped;
   const pct = Math.round((score / total) * 100);
   const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '📚' : '💪';
   const msg   = pct >= 90 ? 'מצוין!' : pct >= 70 ? 'כל הכבוד!' : pct >= 50 ? 'מאמץ טוב!' : 'המשך להתאמן!';
@@ -75,17 +78,21 @@ const QuizResult = ({ score, total, onRetry, onBack }) => {
         <div className="text-5xl mb-3">{emoji}</div>
         <h2 className="text-3xl font-bold text-gray-900 mb-1">{msg}</h2>
         <p className="text-gray-500 mb-6">
-          You scored <span className="font-bold text-purple-600">{score} / {total}</span> ({pct}%)
+          ענית נכון על <span className="font-bold text-purple-600">{score} / {total}</span> ({pct}%)
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-green-50 rounded-2xl p-4">
             <div className="text-2xl font-bold text-green-600">{score}</div>
             <div className="text-xs text-gray-500">נכון</div>
           </div>
           <div className="bg-red-50 rounded-2xl p-4">
-            <div className="text-2xl font-bold text-red-500">{total - score}</div>
+            <div className="text-2xl font-bold text-red-500">{wrong}</div>
             <div className="text-xs text-gray-500">שגוי</div>
+          </div>
+          <div className="bg-gray-50 rounded-2xl p-4">
+            <div className="text-2xl font-bold text-gray-400">{skipped}</div>
+            <div className="text-xs text-gray-500">לא ידעתי</div>
           </div>
         </div>
 
@@ -115,11 +122,13 @@ const Quiz = () => {
   const { id } = useParams();
   const unitNum = parseInt(id, 10);
   const { language } = useLanguage();
+  const { playCorrect, playWrong, playDontKnow } = useSound();
 
   const [questions, setQuestions]     = useState([]);
   const [qIndex, setQIndex]           = useState(0);
-  const [selected, setSelected]       = useState(null);   // hebrew string chosen
+  const [selected, setSelected]       = useState(null);   // hebrew string chosen, or '__DONT_KNOW__'
   const [score, setScore]             = useState(0);
+  const [skipped, setSkipped]         = useState(0);
   const [loading, setLoading]         = useState(true);
   const [quizDone, setQuizDone]       = useState(false);
   const [noWords, setNoWords]         = useState(false);
@@ -133,6 +142,7 @@ const Quiz = () => {
     setQuizDone(false);
     setQIndex(0);
     setScore(0);
+    setSkipped(0);
     setSelected(null);
     setNoWords(false);
     setError(null);
@@ -167,11 +177,25 @@ const Quiz = () => {
 
   const handleSelect = async (opt) => {
     if (isAnswered) return;
+    if (opt.isCorrect) playCorrect(); else playWrong();
     setSelected(opt.hebrew);
     if (opt.isCorrect) setScore((s) => s + 1);
     // Submit to SM-2: correct → quality 4 (good recall), wrong → quality 1 (failed)
     try {
       await reviewAPI.submitReview(currentQ.word_id, opt.isCorrect ? 4 : 1);
+    } catch (err) {
+      console.error('SM-2 update failed:', err);
+    }
+  };
+
+  const handleDontKnow = async () => {
+    if (isAnswered) return;
+    playDontKnow();
+    setSelected('__DONT_KNOW__');
+    setSkipped((s) => s + 1);
+    // quality 0 = complete blackout — hardest penalty, resets interval
+    try {
+      await reviewAPI.submitReview(currentQ.word_id, 0);
     } catch (err) {
       console.error('SM-2 update failed:', err);
     }
@@ -251,6 +275,7 @@ const Quiz = () => {
     return (
       <QuizResult
         score={score}
+        skipped={skipped}
         total={questions.length}
         onRetry={loadQuiz}
         onBack={() => navigate(`/unit/${unitNum}`)}
@@ -274,6 +299,7 @@ const Quiz = () => {
           <span className="text-sm text-gray-500 font-medium">
             {qIndex} / {questions.length}
           </span>
+          <SoundToggle />
         </div>
         <div className="h-1.5 bg-gray-100">
           <motion.div
@@ -314,13 +340,14 @@ const Quiz = () => {
               </div>
 
               {/* Options */}
-              <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 {currentQ.options.map((opt, i) => {
+                  const isDontKnow = selected === '__DONT_KNOW__';
                   let style = 'bg-white border-2 border-gray-200 text-gray-800 hover:border-purple-400 hover:bg-purple-50';
                   if (isAnswered) {
-                    if (opt.isCorrect)                  style = 'bg-green-500 border-2 border-green-500 text-white';
-                    else if (opt.hebrew === selected)   style = 'bg-red-500 border-2 border-red-500 text-white';
-                    else                                style = 'bg-white border-2 border-gray-200 text-gray-400 opacity-60';
+                    if (opt.isCorrect)                                    style = 'bg-green-500 border-2 border-green-500 text-white';
+                    else if (!isDontKnow && opt.hebrew === selected)      style = 'bg-red-500 border-2 border-red-500 text-white';
+                    else                                                   style = 'bg-white border-2 border-gray-200 text-gray-400 opacity-60';
                   }
                   return (
                     <button
@@ -337,6 +364,21 @@ const Quiz = () => {
                   );
                 })}
               </div>
+
+              {/* Don't Know button — hidden only when user picked an option */}
+              {(!isAnswered || selected === '__DONT_KNOW__') && (
+                <button
+                  onClick={handleDontKnow}
+                  disabled={isAnswered}
+                  className={`w-full mb-3 py-2.5 rounded-2xl border-2 text-sm font-semibold transition-all
+                    ${selected === '__DONT_KNOW__'
+                      ? 'border-red-400 bg-red-50 text-red-500 cursor-default'
+                      : 'border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-500'
+                    }`}
+                >
+                  {selected === '__DONT_KNOW__' ? '✗ לא ידעתי' : 'לא יודע'}
+                </button>
+              )}
 
               {/* SM-2 hint (appears after answering) */}
               {isAnswered && (

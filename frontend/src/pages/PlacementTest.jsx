@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Trophy, ArrowRight } from 'lucide-react';
+import SoundToggle from '../components/SoundToggle';
 import { useNavigate } from 'react-router-dom';
 import { sortingAPI } from '../api/sorting';
 
@@ -190,8 +191,9 @@ const PlacementTest = () => {
                 <Brain className="w-5 h-5 text-purple-600" />
                 <span className="font-semibold text-gray-900">Placement Test</span>
               </div>
-              <div className="text-sm text-gray-600">
+              <div className="flex items-center gap-3 text-sm text-gray-600">
                 Question {session.question_count + 1} of 20
+                <SoundToggle />
               </div>
             </div>
             {/* Progress Bar */}
