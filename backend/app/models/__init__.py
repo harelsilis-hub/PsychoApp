@@ -6,6 +6,7 @@ from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.models.placement_session import PlacementSession
 from app.models.word_interaction_event import WordInteractionEvent
 from app.models.user_feedback import UserFeedback
+from app.models.password_reset_token import PasswordResetToken
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "PlacementSession",
     "WordInteractionEvent",
     "UserFeedback",
+    "PasswordResetToken",
 ]

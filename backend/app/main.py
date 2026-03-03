@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db.session import engine, Base, DIALECT
-from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback
+from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken
 from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router
 
 
