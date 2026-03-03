@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag } from 'lucide-react';
+import { ArrowRight, CheckCircle, XCircle, Zap, RotateCcw, BookOpen, Flag, Undo2 } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
@@ -26,6 +26,7 @@ const FilterMode = () => {
   const [isResetting, setIsResetting] = useState(false);
   const [autoRedirecting, setAutoRedirecting] = useState(false);
   const [flagToast, setFlagToast] = useState(false);
+  const [history, setHistory] = useState([]);
 
   // Ref-based gate: prevents double-fire without causing re-renders that lock the UI
   const swipingRef = useRef(false);
@@ -89,6 +90,9 @@ const FilterMode = () => {
     swipingRef.current = true;
     if (isKnown) playTick(); else playDontKnow();
 
+    // Push to history for undo support
+    setHistory((prev) => [...prev, { word: currentWord, wasKnown: isKnown }]);
+
     // 1. Optimistic update — collect unknowns before the server responds
     if (!isKnown) {
       setUnknowns((prev) => [...prev, { ...currentWord, is_new: true }]);
@@ -122,6 +126,17 @@ const FilterMode = () => {
       </div>
     );
   }
+
+  const handleUndo = () => {
+    if (history.length === 0 || exitDir || autoRedirecting) return;
+    const last = history[history.length - 1];
+    setHistory((prev) => prev.slice(0, -1));
+    setQueue((q) => [last.word, ...q]);
+    if (!last.wasKnown) {
+      setUnknowns((u) => u.slice(0, -1));
+    }
+    setIsFlipped(false);
+  };
 
   const handleReset = async () => {
     setIsResetting(true);
@@ -275,6 +290,15 @@ const FilterMode = () => {
           <span className="font-semibold text-gray-800 flex-1">סינון מילים — יחידה {unitNum}</span>
           <span className="text-sm text-gray-500">{remaining} נותרו</span>
           <SoundToggle />
+          {history.length > 0 && !exitDir && (
+            <button
+              onClick={handleUndo}
+              className="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 text-amber-700 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
+            >
+              <Undo2 className="w-3.5 h-3.5" />
+              ביטול
+            </button>
+          )}
         </div>
 
         {/* "Unknowns collected" progress bar */}

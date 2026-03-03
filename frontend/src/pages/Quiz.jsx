@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Brain, CheckCircle, XCircle, Trophy } from 'lucide-react';
+import { ArrowRight, Brain, CheckCircle, XCircle, Trophy, ChevronRight } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
@@ -126,7 +126,8 @@ const Quiz = () => {
 
   const [questions, setQuestions]     = useState([]);
   const [qIndex, setQIndex]           = useState(0);
-  const [selected, setSelected]       = useState(null);   // hebrew string chosen, or '__DONT_KNOW__'
+  const [answers, setAnswers]         = useState({});     // qIndex → hebrew string or '__DONT_KNOW__'
+  const [animDir, setAnimDir]         = useState(1);      // 1 = forward, -1 = backward
   const [score, setScore]             = useState(0);
   const [skipped, setSkipped]         = useState(0);
   const [loading, setLoading]         = useState(true);
@@ -141,9 +142,10 @@ const Quiz = () => {
     setLoading(true);
     setQuizDone(false);
     setQIndex(0);
+    setAnswers({});
+    setAnimDir(1);
     setScore(0);
     setSkipped(0);
-    setSelected(null);
     setNoWords(false);
     setError(null);
 
@@ -173,12 +175,13 @@ const Quiz = () => {
   useEffect(() => { loadQuiz(); }, [unitNum]);
 
   const currentQ = questions[qIndex];
+  const selected = answers[qIndex] ?? null;
   const isAnswered = selected !== null;
 
   const handleSelect = async (opt) => {
     if (isAnswered) return;
     if (opt.isCorrect) playCorrect(); else playWrong();
-    setSelected(opt.hebrew);
+    setAnswers((prev) => ({ ...prev, [qIndex]: opt.hebrew }));
     if (opt.isCorrect) setScore((s) => s + 1);
     // Submit to SM-2: correct → quality 4 (good recall), wrong → quality 1 (failed)
     try {
@@ -191,7 +194,7 @@ const Quiz = () => {
   const handleDontKnow = async () => {
     if (isAnswered) return;
     playDontKnow();
-    setSelected('__DONT_KNOW__');
+    setAnswers((prev) => ({ ...prev, [qIndex]: '__DONT_KNOW__' }));
     setSkipped((s) => s + 1);
     // quality 0 = complete blackout — hardest penalty, resets interval
     try {
@@ -202,11 +205,18 @@ const Quiz = () => {
   };
 
   const handleNext = () => {
-    setSelected(null);
+    setAnimDir(1);
     if (qIndex + 1 >= questions.length) {
       setQuizDone(true);
     } else {
       setQIndex(qIndex + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (qIndex > 0) {
+      setAnimDir(-1);
+      setQIndex((q) => q - 1);
     }
   };
 
@@ -297,8 +307,17 @@ const Quiz = () => {
           <Brain className="w-4 h-4 text-green-600" />
           <span className="font-semibold text-gray-800 flex-1">בוחן תרגול — יחידה {unitNum}</span>
           <span className="text-sm text-gray-500 font-medium">
-            {qIndex} / {questions.length}
+            {qIndex + 1} / {questions.length}
           </span>
+          {qIndex > 0 && (
+            <button
+              onClick={handleBack}
+              className="flex items-center gap-1 bg-green-100 hover:bg-green-200 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+              קודם
+            </button>
+          )}
           <SoundToggle />
         </div>
         <div className="h-1.5 bg-gray-100">
@@ -315,9 +334,9 @@ const Quiz = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={qIndex}
-              initial={{ opacity: 0, x: 40 }}
+              initial={{ opacity: 0, x: 40 * animDir }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
+              exit={{ opacity: 0, x: -40 * animDir }}
               transition={{ duration: 0.3 }}
             >
               {/* Question */}

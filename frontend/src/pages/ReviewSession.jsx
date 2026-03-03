@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ArrowRight, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown } from 'lucide-react';
+import { Brain, ArrowRight, XCircle, Heart, Users, MessageSquare, BookOpen, Crown, ChevronDown, ChevronRight } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
@@ -127,10 +127,21 @@ const ReviewSession = () => {
   const [isSubmitting, setIsSubmitting]   = useState(false);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [associationRefresh, setAssociationRefresh] = useState(0);
-  const [sessionStats, setSessionStats]   = useState({ total: 0, reviewed: 0, perfect: 0, good: 0, failed: 0 });
+  const [ratings, setRatings]             = useState({});   // index → quality
+  const [sessionTotal, setSessionTotal]   = useState(0);
   const [noUnknowns, setNoUnknowns]       = useState(false);
   const [goalReached, setGoalReached]     = useState(false);
   const [mobileAssocOpen, setMobileAssocOpen] = useState(false);
+
+  // Derived session stats from ratings map (correct even after re-rating)
+  const ratingValues = Object.values(ratings);
+  const sessionStats = {
+    total:    sessionTotal,
+    reviewed: ratingValues.length,
+    perfect:  ratingValues.filter((q) => q === 5).length,
+    good:     ratingValues.filter((q) => q >= 3 && q < 5).length,
+    failed:   ratingValues.filter((q) => q < 3).length,
+  };
 
 
   // Words can be passed directly from FilterMode via router state
@@ -145,11 +156,13 @@ const ReviewSession = () => {
     try {
       setLoading(true);
       setError(null);
+      setRatings({});
+      setCurrentIndex(0);
 
       // ① Post-filter mode: words passed as state
       if (stateWords && stateWords.length > 0) {
         setSessionWords(stateWords);
-        setSessionStats((p) => ({ ...p, total: stateWords.length }));
+        setSessionTotal(stateWords.length);
         return;
       }
 
@@ -166,7 +179,7 @@ const ReviewSession = () => {
           return;
         }
         setSessionWords(unknownWords);
-        setSessionStats((p) => ({ ...p, total: unknownWords.length }));
+        setSessionTotal(unknownWords.length);
         return;
       }
 
@@ -174,7 +187,7 @@ const ReviewSession = () => {
       const data = await reviewAPI.getReviewSession(20, language);
       if (data.words.length === 0) { navigate('/'); return; }
       setSessionWords(data.words);
-      setSessionStats((p) => ({ ...p, total: data.words.length }));
+      setSessionTotal(data.words.length);
 
     } catch (err) {
       console.error('Failed to load session:', err);
@@ -192,14 +205,8 @@ const ReviewSession = () => {
     if (quality >= 3) playCorrect(); else playWrong();
     const currentWord = sessionWords[currentIndex];
 
-    // Advance immediately (optimistic UI)
-    setSessionStats((prev) => {
-      const updated = { ...prev, reviewed: prev.reviewed + 1 };
-      if (quality === 5)               updated.perfect += 1;
-      else if (quality >= 3)           updated.good    += 1;
-      else                             updated.failed  += 1;
-      return updated;
-    });
+    // Track rating — overwrites previous rating for this card if re-rating
+    setRatings((prev) => ({ ...prev, [currentIndex]: quality }));
 
     if (currentIndex < sessionWords.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -226,6 +233,7 @@ const ReviewSession = () => {
   const handleKnown      = () => handleSubmit(4);
   const handleUnknown    = () => handleSubmit(1);
   const handleAssocSaved = () => setAssociationRefresh((n) => n + 1);
+  const handleBack       = () => { if (currentIndex > 0) setCurrentIndex((i) => i - 1); };
 
   // ── Loading ────────────────────────────────────────────────
   if (loading) {
@@ -304,7 +312,7 @@ const ReviewSession = () => {
   }
 
   const currentWord = sessionWords[currentIndex];
-  const progressPct = (sessionStats.reviewed / sessionStats.total) * 100;
+  const progressPct = (currentIndex / sessionWords.length) * 100;
   const sessionTitle = isStudyMode ? 'סשן חזרה' : unitId ? `חזרה — יחידה ${unitId}` : 'סשן חזרה';
 
   // ── Main UI ────────────────────────────────────────────────
@@ -341,8 +349,17 @@ const ReviewSession = () => {
             </div>
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-500 font-medium">
-                {sessionStats.reviewed} <span className="text-gray-300">/</span> {sessionStats.total}
+                {currentIndex + 1} <span className="text-gray-300">/</span> {sessionWords.length}
               </span>
+              {currentIndex > 0 && (
+                <button
+                  onClick={handleBack}
+                  className="flex items-center gap-1 bg-purple-100 hover:bg-purple-200 text-purple-700 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                  קודם
+                </button>
+              )}
               <SoundToggle />
             </div>
           </div>
