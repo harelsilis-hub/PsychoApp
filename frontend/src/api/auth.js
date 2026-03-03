@@ -15,4 +15,14 @@ export const authAPI = {
     const response = await apiClient.get('/v1/auth/me');
     return response.data;
   },
+
+  forgotPassword: async (email) => {
+    const response = await apiClient.post('/v1/auth/forgot-password', { email });
+    return response.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await apiClient.post('/v1/auth/reset-password', { token, password });
+    return response.data;
+  },
 };
