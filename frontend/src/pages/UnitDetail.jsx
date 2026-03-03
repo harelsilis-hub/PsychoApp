@@ -38,7 +38,7 @@ const ActionCard = ({ action, delay }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     onClick={action.onClick}
-    className="flex flex-col text-left w-full
+    className="flex flex-col text-right w-full
                bg-white/90 backdrop-blur-xl border border-gray-200/70
                rounded-[24px] overflow-hidden
                shadow-lg shadow-gray-200/60
@@ -119,8 +119,8 @@ const UnitDetail = () => {
       iconShadow: 'shadow-orange-300/60',
       topBar:     'from-amber-400 to-orange-500',
       title:      'סינון מילים',
-      subtitle:   'החלק — סמן מה שאתה יודע',
-      detail:     'מיין מהר את אוצר המילים כרטיס-כרטיס. סמן כל מילה כידועה או לא ידועה. עצור ברגע שמצאת 10 מילים לא ידועות — הן יהפכו לרשימת החזרה האישית שלך.',
+      subtitle:   'בואו נבדוק מה המצב.',
+      detail:     'עושים סדר מהיר: עוברים על המילים החדשות ומסמנים אילו מילים אתם כבר מכירים, ואילו דורשות חיזוק.',
       cta:        'התחל סינון',
       btnGrad:    'from-amber-400 to-orange-500',
       btnShadow:  'shadow-orange-200/60',
@@ -132,10 +132,10 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-violet-500 to-indigo-600',
       iconShadow: 'shadow-indigo-300/60',
       topBar:     'from-violet-500 to-indigo-600',
-      title:      'סשן חזרה',
-      subtitle:   'למד את המילים הלא ידועות לעומק',
-      detail:     'למד כל מילה עם תרגומה לעברית, טיפ זיכרון מבוסס-AI ומנמוניקה אישית. דרג את איכות השליפה כדי לעדכן את לוח-הזמנים של SM-2.',
-      cta:        'התחל חזרה',
+      title:      'שינון ולמידה',
+      subtitle:   'הזמן להכניס את המילים לראש.',
+      detail:     'למידה ממוקדת בעזרת כרטיסיות: קוראים, הופכים, ומשננים רק את המילים שסיננתם בשלב הקודם עד שהכל יושב טוב.',
+      cta:        'התחל שינון',
       btnGrad:    'from-violet-500 to-indigo-600',
       btnShadow:  'shadow-indigo-200/60',
       onClick:    () => navigate(`/unit/${unitNum}/review`),
@@ -146,9 +146,9 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-emerald-400 to-teal-500',
       iconShadow: 'shadow-emerald-300/60',
       topBar:     'from-emerald-400 to-teal-500',
-      title:      'בוחן תרגול',
-      subtitle:   'בחן את עצמך עם שאלות רב-ברירה',
-      detail:     '10 שאלות מתוך מילים שכבר למדת. ארבע אפשרויות, תשובה אחת נכונה — הדרך המהירה ביותר להפוך זיכרון קצר-טווח לזיכרון ארוך-טווח.',
+      title:      'בוחן ומעקב',
+      subtitle:   'רגע האמת של הזיכרון.',
+      detail:     'תרגול חכם מבוסס אלגוריתם למידה: מילים שהתקשיתם בהן יחזרו מהר כדי לעזור לכם לזכור, ומילים שכבר למדתם יופיעו במרווחים גדולים יותר לטווח הארוך.',
       cta:        'התחל בוחן',
       btnGrad:    'from-emerald-400 to-teal-500',
       btnShadow:  'shadow-emerald-200/60',
