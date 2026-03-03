@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Brain, Eye, EyeOff } from 'lucide-react';
 
@@ -112,6 +112,7 @@ const LoginPage = () => {
             </label>
             <input
               type="email"
+              dir="ltr"
               autoFocus
               autoComplete="email"
               value={email}
@@ -128,6 +129,7 @@ const LoginPage = () => {
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
+                dir="ltr"
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -152,12 +154,24 @@ const LoginPage = () => {
               </label>
               <input
                 type="password"
+                dir="ltr"
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
               />
+            </div>
+          )}
+
+          {mode === 'login' && (
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-violet-600 hover:text-violet-800 font-semibold transition-colors"
+              >
+                שכחתי סיסמה?
+              </Link>
             </div>
           )}
 
