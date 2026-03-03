@@ -400,9 +400,11 @@ const Dashboard = () => {
             const completed = percent >= 100;
 
             const btnLabel  = completed ? `חזרה ${unit}` : started ? `המשך ${unit}` : `התחל ${unit}`;
-            const numGrad   = completed
-              ? 'from-emerald-400 to-teal-500'
-              : 'from-violet-600 to-indigo-500';
+            const numColor  = completed
+              ? 'text-emerald-500'
+              : started
+              ? 'text-violet-600'
+              : 'text-gray-400';
             const barGrad   = completed
               ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
               : 'bg-gradient-to-r from-violet-500 to-indigo-600';
@@ -425,7 +427,7 @@ const Dashboard = () => {
                   className="w-full md:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
                              bg-white/90 backdrop-blur-xl
                              border border-gray-200/70
-                             rounded-[22px]
+                             rounded-[22px] overflow-visible
                              shadow-md shadow-gray-200/40
                              hover:shadow-xl hover:shadow-violet-200/50
                              hover:-translate-y-1
@@ -437,8 +439,7 @@ const Dashboard = () => {
                   {/* Gradient unit number */}
                   <div className="flex items-start justify-between leading-none">
                     <span
-                      className={`text-[32px] sm:text-[40px] md:text-[52px] font-black leading-[1] tracking-tighter
-                                  bg-gradient-to-br ${numGrad} bg-clip-text text-transparent`}
+                      className={`text-[32px] sm:text-[40px] md:text-[52px] font-black leading-tight tracking-tighter ${numColor}`}
                     >
                       {unit}
                     </span>
