@@ -35,14 +35,14 @@ class AuthResponse(BaseModel):
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new user account."""
-    result = await db.execute(select(User).where(User.email == data.email.lower()))
+    result = await db.execute(select(User).where(User.email == data.email.strip().lower()))
     if result.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="An account with this email already exists."
         )
-    hashed = pwd_context.hash(data.password)
-    user = User(email=data.email.lower(), hashed_password=hashed)
+    hashed = pwd_context.hash(data.password.strip())
+    user = User(email=data.email.strip().lower(), hashed_password=hashed)
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -54,10 +54,10 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=AuthResponse)
 async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     """Log in with email and password."""
-    result = await db.execute(select(User).where(User.email == data.email.lower()))
+    result = await db.execute(select(User).where(User.email == data.email.strip().lower()))
     user = result.scalar_one_or_none()
 
-    if not user or not pwd_context.verify(data.password, user.hashed_password):
+    if not user or not pwd_context.verify(data.password.strip(), user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
