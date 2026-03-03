@@ -12,3 +12,7 @@ services:
         value: https://psychoapp-il.vercel.app,https://frontend-one-mu-68.vercel.app
       - key: PYTHON_VERSION
         value: 3.11.0
+      - key: RESEND_API_KEY
+        value: re_Cm4GMzFa_FKievEXcCDza8fsG2k9FyGD9
+      - key: FRONTEND_URL
+        value: https://psychoapp-il.vercel.app

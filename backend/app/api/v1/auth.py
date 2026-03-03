@@ -113,6 +113,11 @@ async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depend
     reset_link = f"{frontend_url}/reset-password?token={token}"
     resend_key = os.getenv("RESEND_API_KEY", "")
 
+    if not resend_key:
+        # Env var not configured — log and return success silently
+        print(f"[WARN] RESEND_API_KEY not set. Reset link for {user.email}: {reset_link}")
+        return {"message": "אם הכתובת קיימת במערכת, נשלח אליה קישור לאיפוס סיסמה."}
+
     async with httpx.AsyncClient() as client:
         await client.post(
             "https://api.resend.com/emails",
