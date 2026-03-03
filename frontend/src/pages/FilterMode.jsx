@@ -296,7 +296,7 @@ const FilterMode = () => {
               className="flex items-center gap-1 bg-amber-100 hover:bg-amber-200 text-amber-700 px-2.5 py-1 rounded-full text-xs font-bold transition-colors"
             >
               <Undo2 className="w-3.5 h-3.5" />
-              ביטול
+              חזור
             </button>
           )}
         </div>
