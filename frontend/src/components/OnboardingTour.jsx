@@ -41,7 +41,7 @@ const buildSteps = (mobile) => [
   {
     // On mobile the sticky header skews the bounding rect — use centered modal instead
     target: mobile ? 'body' : '.tour-language',
-    placement: 'center',
+    placement: mobile ? 'center' : 'bottom',
     title: '🌐 בחירת שפה',
     content: <C text="כאן תוכלו לעבור בקלות בין תרגול באנגלית לתרגול בעברית בכל רגע." step={1} />,
     disableBeacon: true,

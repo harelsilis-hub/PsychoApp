@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       screens: {
-        landscape: { raw: '(orientation: landscape)' },
+        landscape: { raw: '(orientation: landscape) and (max-height: 500px)' },
       },
       colors: {
         primary: {

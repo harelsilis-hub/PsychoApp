@@ -89,7 +89,7 @@ const Dashboard = () => {
          style={{ background: 'transparent' }}>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-2 landscape:pt-1.5 sm:pt-4 pb-1.5 landscape:pb-1 sm:pb-3">
+      <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3">
         <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
           {/* ג"€ג"€ Module 1: Greeting ג"€ג"€ */}
@@ -309,24 +309,24 @@ const Dashboard = () => {
       </div>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <main className="relative z-10 lg:flex-1 lg:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-2 landscape:pt-1.5 pb-6 sm:pb-4 flex flex-col">
+      <main className="relative z-10 lg:flex-1 lg:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
         {/* Section title + Language selector */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.25 }}
-          className="mb-3 landscape:mb-1.5 shrink-0"
+          className="mb-3 shrink-0"
         >
-          <div className="flex items-baseline justify-between mb-3 landscape:mb-1.5">
-            <h1 className="text-xl landscape:text-base font-black text-gray-900 tracking-tight">היחידות שלך</h1>
+          <div className="flex items-baseline justify-between mb-3">
+            <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
             <p className="text-sm text-gray-600 font-medium">
               {totalLearned.toLocaleString()} / {totalWords.toLocaleString()} נלמדו
             </p>
           </div>
 
           {/* ── Bold language selector ── */}
-          <div className="tour-language grid grid-cols-2 gap-2.5 landscape:hidden">
+          <div className="tour-language grid grid-cols-2 gap-2.5">
             {/* English option */}
             <motion.button
               onClick={() => switchLanguage('en')}
@@ -419,7 +419,7 @@ const Dashboard = () => {
               >
                 <button
                   onClick={() => navigate(`/unit/${unit}`)}
-                  className="w-full lg:h-full text-left flex flex-col gap-1 landscape:gap-1 p-3 landscape:p-2 sm:p-4
+                  className="w-full lg:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
                              bg-white/90 backdrop-blur-xl
                              border border-gray-200/70
                              rounded-[22px] overflow-visible
@@ -444,7 +444,7 @@ const Dashboard = () => {
                   </div>
 
                   {/* Unit label */}
-                  <div className="-mt-1 landscape:hidden">
+                  <div className="-mt-1">
                     <p className="text-sm font-bold text-gray-600 uppercase tracking-[0.14em]">
                       יחידה {unit}
                     </p>
@@ -453,7 +453,7 @@ const Dashboard = () => {
 
                   {/* Progress bar */}
                   <div className="space-y-1 mt-auto">
-                    <div className="flex items-center justify-between landscape:hidden">
+                    <div className="flex items-center justify-between">
                       <span className="text-sm font-semibold text-gray-600">{learned} נלמדו</span>
                       <span className={`text-sm font-black tabular-nums
                         ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
@@ -472,8 +472,8 @@ const Dashboard = () => {
 
                   {/* CTA button */}
                   <div
-                    className={`w-full py-1.5 landscape:py-1 rounded-xl text-center
-                                text-sm landscape:text-xs font-black uppercase tracking-[0.12em]
+                    className={`w-full py-2 rounded-xl text-center
+                                text-sm font-black uppercase tracking-[0.12em]
                                 ${btnClass}
                                 group-hover:shadow-md transition-shadow duration-300`}
                   >
