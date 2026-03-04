@@ -54,21 +54,19 @@ const InstallPWA = () => {
       {/* Floating install button */}
       <AnimatePresence>
         <motion.button
-          initial={{ opacity: 0, y: 80 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 80 }}
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.7 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 2 }}
           onClick={handleInstall}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50
-                     flex items-center gap-2.5 px-5 py-3 rounded-2xl
+          className="fixed bottom-6 left-4 z-50
+                     flex items-center gap-2 px-4 py-2.5 rounded-2xl
                      bg-gradient-to-r from-violet-600 to-indigo-600
-                     text-white font-bold text-sm shadow-xl shadow-indigo-300/50
-                     hover:shadow-2xl hover:-translate-y-0.5
-                     active:scale-95 transition-all duration-200"
-          style={{ transform: 'translateX(-50%)' }}
+                     text-white font-bold text-xs shadow-xl shadow-indigo-300/50
+                     hover:shadow-2xl active:scale-95 transition-all duration-200"
         >
-          <Download className="w-4 h-4" />
-          התקן את האפליקציה
+          <Download className="w-3.5 h-3.5 shrink-0" />
+          התקן
         </motion.button>
       </AnimatePresence>
 
