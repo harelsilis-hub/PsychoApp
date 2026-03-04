@@ -21,6 +21,7 @@ import WordList from './pages/WordList';
 import Admin from './pages/Admin';
 import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
+import InstallPWA from './components/InstallPWA';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -45,6 +46,7 @@ function App() {
           <FloatingWordsBackground />
           <AuthenticatedFeedback />
           <OnboardingTour />
+          <InstallPWA />
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
