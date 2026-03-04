@@ -186,6 +186,10 @@ const OnboardingTour = () => {
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
+  // On mobile (<640px) the desktop streak element is display:none but appears
+  // first in the DOM — Joyride finds the hidden one and breaks. Skip streak on mobile.
+  const isMobile = () => window.innerWidth < 640;
+
   useEffect(() => {
     if (!user) return;
     const isDone = localStorage.getItem(tourKey(user.id));
@@ -195,18 +199,24 @@ const OnboardingTour = () => {
     }
   }, [location.pathname, user]);
 
+  const goToUnit = () => {
+    setRun(false);
+    navigate('/unit/1');
+    setTimeout(() => {
+      setStepIndex(3);
+      setRun(true);
+    }, 1200);
+  };
+
   const handleCallback = (data) => {
     const { action, index, status, type } = data;
 
     if (type === EVENTS.STEP_AFTER) {
       if (action === ACTIONS.NEXT) {
-        if (index === 2) {
-          setRun(false);
-          navigate('/unit/1');
-          setTimeout(() => {
-            setStepIndex(3);
-            setRun(true);
-          }, 700);
+        // Desktop: navigate after streak step (index 2)
+        // Mobile: skip streak and navigate right after language step (index 1)
+        if (index === 2 || (index === 1 && isMobile())) {
+          goToUnit();
           return;
         }
         setStepIndex(index + 1);
@@ -215,17 +225,13 @@ const OnboardingTour = () => {
           setRun(false);
           navigate('/');
           setTimeout(() => {
-            setStepIndex(2);
+            setStepIndex(isMobile() ? 1 : 2);
             setRun(true);
           }, 700);
           return;
         }
         setStepIndex(index - 1);
       }
-    }
-
-    if (type === EVENTS.TARGET_NOT_FOUND) {
-      setStepIndex((i) => i + 1);
     }
 
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
