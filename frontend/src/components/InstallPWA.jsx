@@ -59,7 +59,7 @@ const InstallPWA = () => {
           exit={{ opacity: 0, scale: 0.7 }}
           transition={{ type: 'spring', stiffness: 260, damping: 22, delay: 2 }}
           onClick={handleInstall}
-          className="fixed bottom-6 left-4 z-50
+          className="fixed bottom-4 right-4 z-50
                      flex items-center gap-2 px-4 py-2.5 rounded-2xl
                      bg-gradient-to-r from-violet-600 to-indigo-600
                      text-white font-bold text-xs shadow-xl shadow-indigo-300/50
