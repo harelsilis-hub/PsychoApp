@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Zap, BookOpen, Brain, Layers, Target } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowRight, Zap, BookOpen, Brain, Layers, Target, X } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useLanguage } from '../context/LanguageContext';
+
+const MAX_PENDING_REVIEWS = 15;
 
 const UNIT_TOTALS_EN = {
   1: 283, 2: 376, 3: 359, 4: 379, 5: 384,
@@ -90,6 +92,8 @@ const UnitDetail = () => {
   const unitNum  = parseInt(id, 10);
   const { language } = useLanguage();
   const [stats, setStats] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [showGatekeeper, setShowGatekeeper] = useState(false);
 
   useEffect(() => {
     progressAPI.getUnitStats(language)
@@ -99,7 +103,19 @@ const UnitDetail = () => {
         setStats(unit || { unit: unitNum, learned: 0, total: fallback, percent: 0 });
       })
       .catch(console.error);
+
+    progressAPI.getUnitPendingCount(unitNum, language)
+      .then((data) => setPendingCount(data.pending_count ?? 0))
+      .catch(console.error);
   }, [unitNum, language]);
+
+  const handleFilterClick = () => {
+    if (pendingCount >= MAX_PENDING_REVIEWS) {
+      setShowGatekeeper(true);
+    } else {
+      navigate(`/unit/${unitNum}/filter`);
+    }
+  };
 
   const learned   = stats?.learned  ?? 0;
   const total     = stats?.total    ?? UNIT_TOTALS_EN[unitNum] ?? 0;
@@ -125,7 +141,7 @@ const UnitDetail = () => {
       cta:        'התחל סינון',
       btnGrad:    'from-amber-400 to-orange-500',
       btnShadow:  'shadow-orange-200/60',
-      onClick:    () => navigate(`/unit/${unitNum}/filter`),
+      onClick:    handleFilterClick,
     },
     // ── Step 2 ──
     {
@@ -162,6 +178,74 @@ const UnitDetail = () => {
   return (
     <div className="min-h-[100dvh] lg:h-[100dvh] lg:overflow-hidden flex flex-col relative"
          style={{ background: 'transparent' }}>
+
+      {/* ── Gatekeeper Modal ───────────────────────────────────── */}
+      <AnimatePresence>
+        {showGatekeeper && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+            onClick={() => setShowGatekeeper(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-7 text-right"
+            >
+              {/* Close button */}
+              <div className="flex justify-between items-start mb-5">
+                <button
+                  onClick={() => setShowGatekeeper(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                {/* Warning icon */}
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500
+                                flex items-center justify-center shadow-lg shadow-orange-200/60">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+              </div>
+
+              <h2 className="text-xl font-black text-gray-900 mb-3">
+                רגע, יש לך פה עבודה!
+              </h2>
+              <p className="text-sm text-gray-600 leading-relaxed mb-7">
+                הצטברו לך{' '}
+                <span className="font-black text-orange-500">{pendingCount}</span>
+                {' '}מילים שמחכות לשינון ביחידה זו. כדאי לסיים ללמוד אותן לפני שמוסיפים מילים חדשות.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setShowGatekeeper(false);
+                    navigate(`/unit/${unitNum}/review`);
+                  }}
+                  className="w-full py-3.5 rounded-2xl font-black text-white text-sm
+                             bg-gradient-to-r from-violet-500 to-indigo-600
+                             shadow-md shadow-indigo-200/60
+                             hover:shadow-xl transition-shadow duration-200"
+                >
+                  עבור לשינון ←
+                </button>
+                <button
+                  onClick={() => setShowGatekeeper(false)}
+                  className="w-full py-3 rounded-2xl font-semibold text-sm text-gray-600
+                             bg-gray-100 hover:bg-gray-200 transition-colors"
+                >
+                  ביטול
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ══════════════════════════════════════════════════════════
           HEADER

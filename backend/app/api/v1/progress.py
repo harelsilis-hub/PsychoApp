@@ -2,13 +2,13 @@
 Progress API endpoints - User progress tracking and triage mode.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
 from app.models.word import Word
-from app.models.user_word_progress import UserWordProgress
+from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.services.progress import ProgressService
 from app.schemas.progress import (
     TriageUpdate,
@@ -102,6 +102,30 @@ async def reset_unit_progress(
         return {"success": True, "reset_count": len(word_ids)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to reset unit: {str(e)}")
+
+
+@router.get("/unit/{unit_number}/pending-count")
+async def get_unit_pending_count(
+    unit_number: int,
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Count words with LEARNING status in a unit — i.e. pending review backlog."""
+    if unit_number < 1 or unit_number > 10:
+        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+
+    stmt = (
+        select(func.count(UserWordProgress.id))
+        .join(Word, UserWordProgress.word_id == Word.id)
+        .where(UserWordProgress.user_id == current_user.id)
+        .where(Word.unit == unit_number)
+        .where(Word.language == language)
+        .where(UserWordProgress.status == WordStatus.LEARNING)
+    )
+    result = await db.execute(stmt)
+    count = result.scalar() or 0
+    return {"pending_count": count}
 
 
 @router.get("/triage/batch", response_model=dict)

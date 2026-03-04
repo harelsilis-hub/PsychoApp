@@ -8,7 +8,7 @@ import { progressAPI } from '../api/progress';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
 
-const UNKNOWNS_TARGET = 15;
+const MAX_PENDING = 15;
 
 const FilterMode = () => {
   const navigate = useNavigate();
@@ -20,6 +20,7 @@ const FilterMode = () => {
   // Words stored as a queue — we shift from the front
   const [queue, setQueue] = useState([]);
   const [unknowns, setUnknowns] = useState([]);
+  const [existingPending, setExistingPending] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exitDir, setExitDir] = useState(null);       // 'left' | 'right' — drives fly-off anim
   const [isFlipped, setIsFlipped] = useState(false);
@@ -48,18 +49,25 @@ const FilterMode = () => {
         console.error(err);
         setLoading(false);
       });
+
+    progressAPI.getUnitPendingCount(unitNum, language)
+      .then((data) => setExistingPending(data.pending_count ?? 0))
+      .catch(console.error);
   }, [unitNum, language]);
 
-  // Once 10 unknowns are collected, show toast then navigate
+  // Total pending = words already in review backlog + unknowns collected this session
+  const totalPending = existingPending + unknowns.length;
+
+  // Once total hits the cap, show toast then navigate to review
   useEffect(() => {
-    if (unknowns.length >= UNKNOWNS_TARGET && !redirectFiredRef.current) {
+    if (totalPending >= MAX_PENDING && !redirectFiredRef.current) {
       redirectFiredRef.current = true;
       setAutoRedirecting(true);
       setTimeout(() => {
-        navigate(`/unit/${unitNum}/review`, { state: { words: unknownsRef.current } });
+        navigate(`/unit/${unitNum}/review`);
       }, 1800);
     }
-  }, [unknowns.length, navigate, unitNum]);
+  }, [totalPending, navigate, unitNum]);
 
   const currentWord = queue[0] ?? null;
   const remaining   = queue.length;
@@ -209,7 +217,7 @@ const FilterMode = () => {
           <div className="space-y-3">
             {count > 0 && (
               <button
-                onClick={() => navigate(`/unit/${unitNum}/review`, { state: { words: unknowns } })}
+                onClick={() => navigate(`/unit/${unitNum}/review`)}
                 className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold"
               >
                 עבור לסשן החזרה
@@ -227,7 +235,7 @@ const FilterMode = () => {
     );
   }
 
-  const progressPct = (unknowns.length / UNKNOWNS_TARGET) * 100;
+  const progressPct = Math.min((totalPending / MAX_PENDING) * 100, 100);
 
   // ── Main filter UI ─────────────────────────────────────────
   return (
@@ -259,7 +267,7 @@ const FilterMode = () => {
                 <BookOpen className="w-8 h-8 text-white" />
               </motion.div>
               <h2 className="text-xl font-black text-gray-900 mb-1.5">
-                נאספו 10 מילים!
+                נאספו {MAX_PENDING} מילים!
               </h2>
               <p className="text-sm text-gray-500 mb-6">
                 עובר לסשן החזרה...
@@ -305,7 +313,7 @@ const FilterMode = () => {
         <div className="max-w-xl mx-auto px-4 pb-2">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>מילים לא ידועות שנאספו</span>
-            <span className="font-semibold text-red-500">{unknowns.length} / {UNKNOWNS_TARGET}</span>
+            <span className="font-semibold text-red-500">{totalPending} / {MAX_PENDING}</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <motion.div

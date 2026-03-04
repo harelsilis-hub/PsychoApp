@@ -28,4 +28,9 @@ export const progressAPI = {
     const response = await apiClient.delete(`/v1/progress/unit/${unitNumber}/reset?language=${language}`);
     return response.data;
   },
+
+  getUnitPendingCount: async (unitNumber, language = 'en') => {
+    const response = await apiClient.get(`/v1/progress/unit/${unitNumber}/pending-count`, { params: { language } });
+    return response.data;
+  },
 };
