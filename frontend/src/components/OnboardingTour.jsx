@@ -30,7 +30,7 @@ const C = ({ text, step }) => (
   </div>
 );
 
-const steps = [
+const buildSteps = (mobile) => [
   {
     target: 'body',
     placement: 'center',
@@ -39,7 +39,9 @@ const steps = [
     disableBeacon: true,
   },
   {
-    target: '.tour-language',
+    // On mobile the sticky header skews the bounding rect — use centered modal instead
+    target: mobile ? 'body' : '.tour-language',
+    placement: 'center',
     title: '🌐 בחירת שפה',
     content: <C text="כאן תוכלו לעבור בקלות בין תרגול באנגלית לתרגול בעברית בכל רגע." step={1} />,
     disableBeacon: true,
@@ -52,18 +54,21 @@ const steps = [
   },
   {
     target: '.tour-filter',
+    placement: mobile ? 'top' : 'auto',
     title: '🔍 צעד 1: סינון',
     content: <C text="מפרידים את המילים שאתם כבר מכירים מאלה שדורשות למידה — כדי לא לבזבז זמן." step={3} />,
     disableBeacon: true,
   },
   {
     target: '.tour-review',
+    placement: mobile ? 'top' : 'auto',
     title: '🧠 צעד 2: שינון ואסוציאציות',
     content: <C text="כעת משננים רק את המילים שלא הכרתם בסינון. תוכלו להיעזר באסוציאציות שתלמידים אחרים יצרו או לכתוב אסוציאציות משלכם כדי לזכור טוב יותר!" step={4} />,
     disableBeacon: true,
   },
   {
     target: '.tour-quiz',
+    placement: mobile ? 'top' : 'auto',
     title: '✅ צעד 3: בוחן ומעקב',
     content: <C text="האלגוריתם שלנו יזהה מה קשה לכם ויציג את זה יותר, בזמן שמילים קלות יופיעו במרווחים גדולים יותר." step={5} />,
     disableBeacon: true,
@@ -243,7 +248,7 @@ const OnboardingTour = () => {
 
   return (
     <Joyride
-      steps={steps}
+      steps={buildSteps(isMobile())}
       run={run}
       stepIndex={stepIndex}
       continuous
