@@ -4,7 +4,7 @@ Admin panel endpoints — completely open, no authentication required.
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, text
 from pydantic import BaseModel
 
 from app.db.session import get_db
@@ -272,3 +272,18 @@ async def mark_feedback_read(
     fb.is_read = True
     await db.commit()
     return {"success": True}
+
+
+# ── ONE-TIME: strip trailing hyphens from english words ───────────────────────
+
+@router.post("/fix-hyphens")
+async def fix_hyphens(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """One-time fix: remove trailing hyphens from english field."""
+    result = await db.execute(
+        text("UPDATE words SET english = TRIM(TRAILING '-' FROM TRIM(english)) WHERE english LIKE '%-'")
+    )
+    await db.commit()
+    return {"success": True, "rows_updated": result.rowcount}
