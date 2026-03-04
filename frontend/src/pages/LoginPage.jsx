@@ -66,9 +66,7 @@ const LoginPage = () => {
 
       {/* Logo */}
       <div className="flex items-center gap-3 mb-8">
-        <div className="w-11 h-11 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-300/50">
-          <Brain className="w-6 h-6 text-white" />
-        </div>
+        <img src="/mila_logo.png" alt="Mila" className="w-12 h-12 object-contain" />
         <div>
           <p className="text-xl font-black text-gray-900 tracking-tight leading-none">Mila</p>
           <p className="text-xs text-gray-400 font-medium mt-0.5">אוצר מילים פסיכומטרי</p>
@@ -194,7 +192,7 @@ const LoginPage = () => {
       </div>
 
       <p className="mt-5 text-xs text-gray-400 text-center">
-        למד 3,742 מילים פסיכומטריות בשיטת החזרות המרווחות.
+        למד 5,442 מילים פסיכומטריות בשיטת החזרות המרווחות.
       </p>
     </div>
   );

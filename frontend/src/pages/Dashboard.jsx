@@ -103,17 +103,12 @@ const Dashboard = () => {
                        rounded-[20px] sm:rounded-[24px] px-4 sm:px-5 py-3 sm:py-4
                        shadow-xl shadow-violet-200/30"
           >
-            <div className="w-12 h-12 shrink-0 rounded-2xl
-                            bg-gradient-to-br from-violet-500 to-indigo-600
-                            flex items-center justify-center
-                            shadow-lg shadow-indigo-400/50">
-              <Brain className="w-6 h-6 text-white" />
-            </div>
+            <img src="/mila_logo.png" alt="Mila" className="hidden sm:block w-12 h-12 shrink-0 object-contain" />
             <div className="min-w-0">
-              <p className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
+              <p className="hidden sm:block text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
                 אוצר מילים פסיכומטרי
               </p>
-              <p className="text-xl font-black text-gray-900 leading-tight truncate">
+              <p className="text-base sm:text-xl font-black text-gray-900 leading-tight break-words">
                 שלום,{' '}
                 <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
                   {username}
@@ -408,11 +403,11 @@ const Dashboard = () => {
             const barGrad   = completed
               ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
               : 'bg-gradient-to-r from-violet-500 to-indigo-600';
-            const btnGrad   = completed
-              ? 'from-emerald-400 to-teal-500 shadow-emerald-300/50'
+            const btnClass  = completed
+              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-sm shadow-emerald-200/60'
               : started
-              ? 'from-violet-500 to-indigo-600 shadow-indigo-300/50'
-              : 'from-gray-300 to-gray-400 shadow-gray-200/50';
+              ? 'bg-gradient-to-r from-violet-500 to-indigo-600 text-white shadow-sm shadow-indigo-200/60'
+              : 'bg-white border-2 border-violet-300 text-violet-500';
 
             return (
               <motion.div
@@ -478,9 +473,8 @@ const Dashboard = () => {
                   {/* CTA button */}
                   <div
                     className={`w-full py-2 rounded-xl text-center
-                                text-sm font-black text-white uppercase tracking-[0.12em]
-                                bg-gradient-to-r ${btnGrad}
-                                shadow-sm
+                                text-sm font-black uppercase tracking-[0.12em]
+                                ${btnClass}
                                 group-hover:shadow-md transition-shadow duration-300`}
                   >
                     {btnLabel}
