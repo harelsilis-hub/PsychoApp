@@ -25,7 +25,7 @@ export const reviewAPI = {
   },
 
   getFilterWords: async (unit, language = 'en') => {
-    const response = await apiClient.get(`/v1/review/unit/${unit}/filter`, { params: { language } });
+    const response = await apiClient.get(`/v1/review/unit/${unit}/filter`, { params: { language, limit: 500 } });
     return response.data;
   },
 

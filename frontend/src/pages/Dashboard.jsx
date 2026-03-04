@@ -264,7 +264,7 @@ const Dashboard = () => {
           className="sm:hidden landscape:hidden max-w-6xl mx-auto mt-2 flex gap-2"
         >
           {/* Streak chip */}
-          <div className="tour-streak flex-1 flex items-center gap-2
+          <div className="tour-streak-mobile flex-1 flex items-center gap-2
                           bg-white/55 backdrop-blur-2xl border border-gray-200/70
                           rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/20">
             <span className="text-2xl leading-none">🔥</span>

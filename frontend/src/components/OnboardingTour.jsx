@@ -47,7 +47,8 @@ const buildSteps = (mobile) => [
     disableBeacon: true,
   },
   {
-    target: '.tour-streak',
+    target: mobile ? '.tour-streak-mobile' : '.tour-streak',
+    placement: mobile ? 'bottom' : 'auto',
     title: '🔥 הרצף היומי',
     content: <C text="הסוד לזיכרון מנצח הוא התמדה! היכנסו כל יום, תרגלו קצת, ושמרו על האש דולקת." step={2} />,
     disableBeacon: true,
@@ -218,9 +219,8 @@ const OnboardingTour = () => {
 
     if (type === EVENTS.STEP_AFTER) {
       if (action === ACTIONS.NEXT) {
-        // Desktop: navigate after streak step (index 2)
-        // Mobile: skip streak and navigate right after language step (index 1)
-        if (index === 2 || (index === 1 && isMobile())) {
+        // Navigate to unit after streak step (index 2) on both desktop and mobile
+        if (index === 2) {
           goToUnit();
           return;
         }
@@ -230,7 +230,7 @@ const OnboardingTour = () => {
           setRun(false);
           navigate('/');
           setTimeout(() => {
-            setStepIndex(isMobile() ? 1 : 2);
+            setStepIndex(2);
             setRun(true);
           }, 700);
           return;

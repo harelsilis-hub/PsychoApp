@@ -142,7 +142,7 @@ const FilterMode = () => {
     setIsResetting(true);
     try {
       await progressAPI.resetUnitProgress(unitNum);
-      const data = await reviewAPI.getFilterWords(unitNum);
+      const data = await reviewAPI.getFilterWords(unitNum, language);
       setQueue(data.words || []);
       setUnknowns([]);
       redirectFiredRef.current = false;
@@ -318,7 +318,7 @@ const FilterMode = () => {
       </div>
 
       {/* Card area */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
         <div className="max-w-sm w-full">
           <AnimatePresence>
             {currentWord && (
