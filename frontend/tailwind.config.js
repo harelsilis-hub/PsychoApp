@@ -7,6 +7,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        landscape: { raw: '(orientation: landscape)' },
+      },
       colors: {
         primary: {
           50: '#f0f9ff',
