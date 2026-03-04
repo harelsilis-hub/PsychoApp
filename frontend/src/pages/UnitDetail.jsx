@@ -38,14 +38,14 @@ const ActionCard = ({ action, delay }) => (
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     onClick={action.onClick}
-    className="flex flex-col text-right w-full
+    className={`flex flex-col text-right w-full ${action.tourClass ?? ''}
                bg-white/90 backdrop-blur-xl border border-gray-200/70
                rounded-[24px] overflow-hidden
                shadow-lg shadow-gray-200/60
                hover:shadow-2xl hover:shadow-gray-300/60
                hover:-translate-y-1.5 hover:bg-white
                active:scale-[0.98]
-               transition-all duration-300 group"
+               transition-all duration-300 group`}
   >
     {/* Coloured top accent bar */}
     <div className={`h-[5px] shrink-0 bg-gradient-to-r ${action.topBar}`} />
@@ -118,6 +118,7 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-amber-400 to-orange-500',
       iconShadow: 'shadow-orange-300/60',
       topBar:     'from-amber-400 to-orange-500',
+      tourClass:  'tour-filter',
       title:      'סינון מילים',
       subtitle:   'בואו נבדוק מה המצב.',
       detail:     'עושים סדר מהיר: עוברים על המילים החדשות ומסמנים אילו מילים אתם כבר מכירים, ואילו דורשות חיזוק.',
@@ -132,6 +133,7 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-violet-500 to-indigo-600',
       iconShadow: 'shadow-indigo-300/60',
       topBar:     'from-violet-500 to-indigo-600',
+      tourClass:  'tour-review',
       title:      'שינון ולמידה',
       subtitle:   'הזמן להכניס את המילים לראש.',
       detail:     'למידה ממוקדת בעזרת כרטיסיות: קוראים, הופכים, ומשננים רק את המילים שסיננתם בשלב הקודם עד שהכל יושב טוב.',
@@ -146,6 +148,7 @@ const UnitDetail = () => {
       iconBg:     'bg-gradient-to-br from-emerald-400 to-teal-500',
       iconShadow: 'shadow-emerald-300/60',
       topBar:     'from-emerald-400 to-teal-500',
+      tourClass:  'tour-quiz',
       title:      'בוחן ומעקב',
       subtitle:   'רגע האמת של הזיכרון.',
       detail:     'תרגול חכם מבוסס אלגוריתם למידה: מילים שהתקשיתם בהן יחזרו מהר כדי לעזור לכם לזכור, ומילים שכבר למדתם יופיעו במרווחים גדולים יותר לטווח הארוך.',

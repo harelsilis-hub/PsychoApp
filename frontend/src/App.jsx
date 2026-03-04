@@ -20,6 +20,7 @@ import Quiz from './pages/Quiz';
 import WordList from './pages/WordList';
 import Admin from './pages/Admin';
 import FeedbackWidget from './components/FeedbackWidget';
+import OnboardingTour from './components/OnboardingTour';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -43,6 +44,7 @@ function App() {
         <Router>
           <FloatingWordsBackground />
           <AuthenticatedFeedback />
+          <OnboardingTour />
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />

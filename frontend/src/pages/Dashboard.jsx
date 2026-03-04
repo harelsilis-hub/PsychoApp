@@ -123,7 +123,7 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden sm:flex items-center gap-3.5
+            className="tour-streak hidden sm:flex items-center gap-3.5
                        bg-white/55 backdrop-blur-2xl
                        border border-gray-200/70
                        rounded-[24px] px-6 py-4
@@ -264,7 +264,7 @@ const Dashboard = () => {
           className="sm:hidden max-w-6xl mx-auto mt-2 flex gap-2"
         >
           {/* Streak chip */}
-          <div className="flex-1 flex items-center gap-2
+          <div className="tour-streak flex-1 flex items-center gap-2
                           bg-white/55 backdrop-blur-2xl border border-gray-200/70
                           rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/20">
             <span className="text-2xl leading-none">🔥</span>
@@ -326,7 +326,7 @@ const Dashboard = () => {
           </div>
 
           {/* ── Bold language selector ── */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="tour-language grid grid-cols-2 gap-2.5">
             {/* English option */}
             <motion.button
               onClick={() => switchLanguage('en')}
