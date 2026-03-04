@@ -85,7 +85,7 @@ const Dashboard = () => {
   const username       = user?.email?.split('@')[0] ?? 'there';
 
   return (
-    <div className="min-h-[100dvh] md:h-[100dvh] md:overflow-hidden flex flex-col relative"
+    <div className="min-h-[100dvh] lg:h-[100dvh] lg:overflow-hidden flex flex-col relative"
          style={{ background: 'transparent' }}>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
@@ -309,7 +309,7 @@ const Dashboard = () => {
       </div>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <main className="relative z-10 md:flex-1 md:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
+      <main className="relative z-10 lg:flex-1 lg:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
         {/* Section title + Language selector */}
         <motion.div
@@ -388,7 +388,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ג"€ג"€ Unit grid ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 md:flex-1 md:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:flex-1 lg:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
           {availableUnits.map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
             const started   = learned > 0;
@@ -415,11 +415,11 @@ const Dashboard = () => {
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                className="group md:h-full"
+                className="group lg:h-full"
               >
                 <button
                   onClick={() => navigate(`/unit/${unit}`)}
-                  className="w-full md:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
+                  className="w-full lg:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
                              bg-white/90 backdrop-blur-xl
                              border border-gray-200/70
                              rounded-[22px] overflow-visible
