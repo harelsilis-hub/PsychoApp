@@ -81,8 +81,7 @@ const useSounds = () => {
 
     // Hebrew: always use backend gTTS for consistent pronunciation across all devices
     if (langPrefix === 'he') {
-      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
-      const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
+      const url = `${import.meta.env.VITE_API_URL || '/api'}/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
       alert('DEBUG url: ' + url);
       const audio = document.createElement('audio');
       audio.src = url;
