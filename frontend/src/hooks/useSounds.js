@@ -76,6 +76,20 @@ const useSounds = () => {
   // TTS pronunciation of a word
   const speakWord = useCallback((word, lang = 'en-US') => {
     if (!soundEnabled) return;
+
+    const langPrefix = lang.split('-')[0];
+    const voices = voicesRef.current;
+    const hasVoice = voices.some(v => v.lang === lang || v.lang.startsWith(langPrefix));
+
+    // If no matching device voice (common on Android for Hebrew) — use backend gTTS
+    if (!hasVoice && langPrefix === 'he') {
+      const apiBase = import.meta.env.VITE_API_URL || '';
+      const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
+      const audio = new Audio(url);
+      audio.play().catch(() => {});
+      return;
+    }
+
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
 
@@ -84,10 +98,7 @@ const useSounds = () => {
     utterance.rate = 0.85;
     utterance.volume = 0.9;
 
-    // Use pre-loaded voices — keeps this call synchronous inside the gesture handler
-    const voices = voicesRef.current;
     if (voices.length > 0) {
-      const langPrefix = lang.split('-')[0];
       const match =
         voices.find(v => v.lang === lang) ||
         voices.find(v => v.lang.startsWith(langPrefix));

@@ -15,7 +15,7 @@ from sqlalchemy import text
 
 from app.db.session import engine, Base, DIALECT
 from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router
 
 
 @asynccontextmanager
@@ -220,6 +220,12 @@ app.include_router(
     leaderboard_router,
     prefix="/api/v1/leaderboard",
     tags=["Leaderboard"],
+)
+
+app.include_router(
+    tts_router,
+    prefix="/api/v1",
+    tags=["Text-to-Speech"],
 )
 
 # TODO: Add additional route modules here
