@@ -78,42 +78,35 @@ const useSounds = () => {
     if (!soundEnabled) return;
 
     const langPrefix = lang.split('-')[0];
-    const voices = voicesRef.current;
-    const hasVoice = voices.some(v => v.lang === lang || v.lang.startsWith(langPrefix));
 
-    // If no matching device voice (common on Android for Hebrew) — use backend gTTS
-    if (!hasVoice && langPrefix === 'he') {
-      const apiBase = import.meta.env.VITE_API_URL || '';
-      const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
-      const audio = new Audio(url);
-      audio.play().catch(() => {});
-      return;
+    // Hebrew on Android: device rarely has a Hebrew voice — use backend gTTS instead
+    if (langPrefix === 'he') {
+      const hasHebrewVoice = voicesRef.current.some(
+        v => v.lang === lang || v.lang.startsWith('he')
+      );
+      if (!hasHebrewVoice) {
+        const apiBase = import.meta.env.VITE_API_URL || '';
+        const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
+        new Audio(url).play().catch(() => {});
+        return;
+      }
     }
 
+    // Browser TTS — works reliably for English on all platforms, and Hebrew on iOS/desktop
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
-
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.lang = lang;
     utterance.rate = 0.85;
     utterance.volume = 0.9;
-
+    const voices = voicesRef.current;
     if (voices.length > 0) {
       const match =
         voices.find(v => v.lang === lang) ||
         voices.find(v => v.lang.startsWith(langPrefix));
       if (match) utterance.voice = match;
     }
-
     window.speechSynthesis.speak(utterance);
-
-    // Android Chrome bug: speak() often stalls — pause/resume unsticks it
-    setTimeout(() => {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.pause();
-        window.speechSynthesis.resume();
-      }
-    }, 100);
   }, [soundEnabled]);
 
   const toggleSound = useCallback(() => {
