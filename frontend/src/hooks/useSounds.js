@@ -85,7 +85,7 @@ const useSounds = () => {
         v => v.lang === lang || v.lang.startsWith('he')
       );
       if (!hasHebrewVoice) {
-        const apiBase = import.meta.env.VITE_API_URL || '';
+        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
         const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
         new Audio(url).play().catch(() => {});
         return;
