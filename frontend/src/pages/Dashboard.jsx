@@ -384,66 +384,64 @@ const Dashboard = () => {
           transition={{ duration: 0.45, delay: 0.12 }}
           className="sm:hidden landscape:hidden max-w-6xl mx-auto mt-2 flex gap-1.5"
         >
-          {/* Streak chip */}
-          <div className="tour-streak-mobile flex-1 flex items-center gap-2
+          {/* Streak */}
+          <div className="tour-streak-mobile flex-1 flex items-center gap-1
                           bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                          rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/20">
-            <span className="text-2xl leading-none">🔥</span>
-            <div className="leading-none">
-              <p className="text-lg font-black text-gray-900 tabular-nums">{streak}</p>
-              <p className="text-[9px] font-bold text-orange-400 uppercase tracking-wide mt-0.5">רצף</p>
+                          rounded-xl px-2 py-2 shadow-md shadow-orange-200/20">
+            <span className="text-base leading-none shrink-0">🔥</span>
+            <div className="leading-none min-w-0">
+              <p className="text-sm font-black text-gray-900 tabular-nums">{streak}</p>
+              <p className="text-[8px] font-bold text-orange-400 uppercase mt-0.5">רצף</p>
             </div>
           </div>
 
-          {/* Daily chip */}
-          <div className="flex-1 flex items-center gap-2
+          {/* Daily */}
+          <div className="flex-1 flex items-center gap-1
                           bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                          rounded-2xl px-3 py-2.5 shadow-md shadow-orange-200/10">
+                          rounded-xl px-2 py-2 shadow-md shadow-orange-200/10">
             <div className="relative shrink-0">
-              <Ring pct={goalPct} size={34} stroke={3} gradient={['#fb923c', '#fbbf24']} />
+              <Ring pct={goalPct} size={26} stroke={2.5} gradient={['#fb923c', '#fbbf24']} />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[8px] font-black text-gray-700 tabular-nums leading-none">{reviewed}</span>
+                <span className="text-[7px] font-black text-gray-700 leading-none">{reviewed}</span>
               </div>
             </div>
-            <div className="leading-none">
-              <p className="text-sm font-black text-gray-900 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
-              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">יומי</p>
+            <div className="leading-none min-w-0">
+              <p className="text-[11px] font-black text-gray-900 tabular-nums">{reviewed}/{DAILY_GOAL}</p>
+              <p className="text-[8px] font-bold text-gray-500 uppercase mt-0.5">יומי</p>
             </div>
           </div>
 
-          {/* Mastery chip */}
-          <div className="flex-1 flex items-center gap-2
+          {/* Mastery */}
+          <div className="flex-1 flex items-center gap-1
                           bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                          rounded-2xl px-3 py-2.5 shadow-md shadow-violet-200/20">
+                          rounded-xl px-2 py-2 shadow-md shadow-violet-200/20">
             <div className="relative shrink-0">
-              <Ring pct={overallPercent} size={34} stroke={3} gradient={['#7c3aed', '#6366f1']} />
+              <Ring pct={overallPercent} size={26} stroke={2.5} gradient={['#7c3aed', '#6366f1']} />
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[8px] font-black text-violet-700 tabular-nums leading-none">{overallPercent}%</span>
+                <span className="text-[7px] font-black text-violet-700 leading-none">{overallPercent}%</span>
               </div>
             </div>
-            <div className="leading-none">
-              <p className="text-sm font-black text-gray-900 tabular-nums">{overallPercent}%</p>
-              <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">שליטה</p>
+            <div className="leading-none min-w-0">
+              <p className="text-[11px] font-black text-gray-900 tabular-nums">{overallPercent}%</p>
+              <p className="text-[8px] font-bold text-gray-500 uppercase mt-0.5">שליטה</p>
             </div>
           </div>
 
-          {/* XP chip (mobile) — tappable → leaderboard */}
+          {/* Leaderboard */}
           <button
             onClick={() => navigate('/leaderboard')}
-            className="flex-1 flex items-center gap-1.5
+            className="flex-1 flex items-center gap-1
                         bg-yellow-50/80 backdrop-blur-2xl
                         border border-yellow-300/60
-                        rounded-2xl px-2.5 py-2.5 shadow-md shadow-yellow-200/30
+                        rounded-xl px-2 py-2 shadow-md shadow-yellow-200/30
                         active:scale-95 transition-transform duration-100"
           >
-            <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
+            <Trophy className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
             <div className="leading-none min-w-0">
               <p className="text-[10px] font-black truncate" style={{ color: levelInfo.color }}>
                 {levelInfo.title}
               </p>
-              <p className="text-[9px] font-bold text-yellow-600 tracking-wide mt-0.5">
-                לוח ›
-              </p>
+              <p className="text-[8px] font-bold text-yellow-600 uppercase mt-0.5">לוח ›</p>
             </div>
           </button>
         </motion.div>
