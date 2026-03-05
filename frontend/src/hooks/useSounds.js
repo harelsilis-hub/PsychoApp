@@ -83,14 +83,15 @@ const useSounds = () => {
     if (langPrefix === 'he') {
       const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
       const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
+      alert('DEBUG url: ' + url);
       const audio = document.createElement('audio');
       audio.src = url;
       audio.style.display = 'none';
       document.body.appendChild(audio);
       const cleanup = () => { try { document.body.removeChild(audio); } catch {} };
       audio.addEventListener('ended', cleanup);
-      audio.addEventListener('error', cleanup);
-      audio.play().catch(cleanup);
+      audio.addEventListener('error', () => { alert('DEBUG audio error'); cleanup(); });
+      audio.play().then(() => alert('DEBUG play ok')).catch(e => { alert('DEBUG play failed: ' + e.message); cleanup(); });
       return;
     }
 
