@@ -292,6 +292,11 @@ async def recalculate_xp(
         "1": 10, "2": 10, "3": 50, "4": 80, "5": 120,
     }
 
+    # Wipe all retroactive events first to allow safe re-runs
+    await db.execute(
+        text("DELETE FROM point_events WHERE source LIKE 'retroactive_%'")
+    )
+
     users_result = await db.execute(select(User))
     users = users_result.scalars().all()
     updated = 0

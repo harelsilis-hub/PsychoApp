@@ -10,21 +10,21 @@ from app.models.association import Association
 
 # ── Level thresholds ───────────────────────────────────────────────────────────
 LEVELS = [
-    (0,       "Bronze I",     "#CD7F32"),
-    (1000,    "Bronze II",    "#CD7F32"),
-    (3000,    "Bronze III",   "#CD7F32"),
-    (7000,    "Silver I",     "#C0C0C0"),
-    (15000,   "Silver II",    "#C0C0C0"),
-    (25000,   "Silver III",   "#C0C0C0"),
-    (40000,   "Gold I",       "#FFD700"),
-    (60000,   "Gold II",      "#FFD700"),
-    (85000,   "Gold III",     "#FFD700"),
-    (120000,  "Platinum I",   "#00CED1"),
-    (160000,  "Platinum II",  "#00CED1"),
-    (210000,  "Platinum III", "#00CED1"),
-    (270000,  "Diamond I",    "#00BFFF"),
-    (340000,  "Diamond II",   "#00BFFF"),
-    (420000,  "Champion",     "#FFD700"),
+    (0,       "Bronze I",      "#CD7F32"),
+    (4000,    "Bronze II",     "#CD7F32"),
+    (12000,   "Bronze III",    "#CD7F32"),
+    (30000,   "Silver I",      "#C0C0C0"),
+    (70000,   "Silver II",     "#C0C0C0"),
+    (130000,  "Silver III",    "#C0C0C0"),
+    (200000,  "Gold I",        "#FFD700"),
+    (280000,  "Gold II",       "#FFD700"),
+    (370000,  "Gold III",      "#FFD700"),
+    (460000,  "Platinum I",    "#00CED1"),
+    (530000,  "Platinum II",   "#00CED1"),
+    (580000,  "Platinum III",  "#00CED1"),
+    (610000,  "Diamond I",     "#00BFFF"),
+    (640000,  "Diamond II",    "#00BFFF"),
+    (660000,  "Champion",      "#FFD700"),
 ]
 
 # ── Base point values ──────────────────────────────────────────────────────────

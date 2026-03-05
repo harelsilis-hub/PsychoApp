@@ -10,21 +10,21 @@ import { useSound } from '../context/SoundContext';
 
 // ── Level helper (mirrors backend LEVELS) ──────────────────────────────────────
 const LEVELS = [
-  [0,      'Bronze I',     '#CD7F32'],
-  [1000,   'Bronze II',    '#CD7F32'],
-  [3000,   'Bronze III',   '#CD7F32'],
-  [7000,   'Silver I',     '#C0C0C0'],
-  [15000,  'Silver II',    '#C0C0C0'],
-  [25000,  'Silver III',   '#C0C0C0'],
-  [40000,  'Gold I',       '#FFD700'],
-  [60000,  'Gold II',      '#FFD700'],
-  [85000,  'Gold III',     '#FFD700'],
-  [120000, 'Platinum I',   '#00CED1'],
-  [160000, 'Platinum II',  '#00CED1'],
-  [210000, 'Platinum III', '#00CED1'],
-  [270000, 'Diamond I',    '#00BFFF'],
-  [340000, 'Diamond II',   '#00BFFF'],
-  [420000, 'Champion',     '#FFD700'],
+  [0,      'Bronze I',      '#CD7F32'],
+  [4000,   'Bronze II',     '#CD7F32'],
+  [12000,  'Bronze III',    '#CD7F32'],
+  [30000,  'Silver I',      '#C0C0C0'],
+  [70000,  'Silver II',     '#C0C0C0'],
+  [130000, 'Silver III',    '#C0C0C0'],
+  [200000, 'Gold I',        '#FFD700'],
+  [280000, 'Gold II',       '#FFD700'],
+  [370000, 'Gold III',      '#FFD700'],
+  [460000, 'Platinum I',    '#00CED1'],
+  [530000, 'Platinum II',   '#00CED1'],
+  [580000, 'Platinum III',  '#00CED1'],
+  [610000, 'Diamond I',     '#00BFFF'],
+  [640000, 'Diamond II',    '#00BFFF'],
+  [660000, 'Champion',      '#FFD700'],
 ];
 
 function getLevelInfo(xp) {
@@ -130,7 +130,7 @@ const Dashboard = () => {
   const levelInfo      = getLevelInfo(xp);
 
   return (
-    <div className="min-h-[100dvh] lg:h-[100dvh] lg:overflow-hidden flex flex-col relative"
+    <div className="h-[100dvh] flex flex-col relative"
          style={{ background: 'transparent' }}>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
@@ -382,7 +382,7 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.12 }}
-          className="sm:hidden landscape:hidden max-w-6xl mx-auto mt-2 flex gap-2"
+          className="sm:hidden landscape:hidden max-w-6xl mx-auto mt-2 flex gap-1.5"
         >
           {/* Streak chip */}
           <div className="tour-streak-mobile flex-1 flex items-center gap-2
@@ -430,20 +430,19 @@ const Dashboard = () => {
           {/* XP chip (mobile) — tappable → leaderboard */}
           <button
             onClick={() => navigate('/leaderboard')}
-            className="flex-1 flex items-center gap-2
+            className="flex-1 flex items-center gap-1.5
                         bg-yellow-50/80 backdrop-blur-2xl
                         border border-yellow-300/60
-                        rounded-2xl px-3 py-2.5 shadow-md shadow-yellow-200/30
-                        active:scale-95 transition-transform duration-100 text-right"
+                        rounded-2xl px-2.5 py-2.5 shadow-md shadow-yellow-200/30
+                        active:scale-95 transition-transform duration-100"
           >
-            <Trophy className="w-5 h-5 text-yellow-500 shrink-0" />
-            <div className="leading-none min-w-0 flex-1">
-              <p className="text-[11px] font-black truncate" style={{ color: levelInfo.color }}>
+            <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
+            <div className="leading-none min-w-0">
+              <p className="text-[10px] font-black truncate" style={{ color: levelInfo.color }}>
                 {levelInfo.title}
-                <span className="text-gray-500 font-semibold"> · {xp.toLocaleString()}</span>
               </p>
-              <p className="text-[9px] font-bold text-yellow-600 uppercase tracking-wide mt-0.5">
-                לוח מובילים ›
+              <p className="text-[9px] font-bold text-yellow-600 tracking-wide mt-0.5">
+                לוח ›
               </p>
             </div>
           </button>
@@ -451,7 +450,7 @@ const Dashboard = () => {
       </div>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <main className="relative z-10 lg:flex-1 lg:min-h-0 max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
+      <main className="relative z-10 flex-1 min-h-0 overflow-y-auto max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
 
         {/* Section title + Language selector */}
         <motion.div
