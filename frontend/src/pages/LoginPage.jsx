@@ -11,7 +11,9 @@ const LoginPage = () => {
   const [email, setEmail]                 = useState('');
   const [password, setPassword]           = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [displayName, setDisplayName]     = useState('');
   const [showPassword, setShowPassword]   = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError]                 = useState('');
   const [loading, setLoading]             = useState(false);
 
@@ -20,6 +22,7 @@ const LoginPage = () => {
     setError('');
     setPassword('');
     setConfirmPassword('');
+    setDisplayName('');
   };
 
   const handleSubmit = async (e) => {
@@ -43,6 +46,10 @@ const LoginPage = () => {
         setError('הסיסמאות אינן תואמות.');
         return;
       }
+      if (!agreedToTerms) {
+        setError('יש לאשר את תנאי השימוש כדי להירשם.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -50,7 +57,7 @@ const LoginPage = () => {
       if (mode === 'login') {
         await login(email.trim(), password);
       } else {
-        await register(email.trim(), password);
+        await register(email.trim(), password, displayName.trim() || null);
       }
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -104,6 +111,23 @@ const LoginPage = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-7 space-y-3">
+
+          {mode === 'register' && (
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
+                שם תצוגה
+              </label>
+              <input
+                type="text"
+                maxLength={30}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="כיצד תופיע בלוח המובילים"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
+              />
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
               אימייל
@@ -162,6 +186,23 @@ const LoginPage = () => {
             </div>
           )}
 
+          {mode === 'register' && (
+            <label className="flex items-start gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 accent-violet-600 w-4 h-4 shrink-0"
+              />
+              <span className="text-xs text-gray-500 leading-relaxed">
+                קראתי ואני מסכים/ה ל
+                <Link to="/terms" target="_blank" className="text-violet-600 hover:text-violet-800 underline font-semibold mx-1">
+                  תנאי השימוש
+                </Link>
+              </span>
+            </label>
+          )}
+
           {mode === 'login' && (
             <div className="flex justify-end">
               <Link
@@ -193,6 +234,11 @@ const LoginPage = () => {
 
       <p className="mt-5 text-xs text-gray-400 text-center">
         למד 5,442 מילים פסיכומטריות בשיטת החזרות המרווחות.
+      </p>
+      <p className="mt-2 text-xs text-gray-400 text-center">
+        <Link to="/terms" className="hover:text-gray-600 underline transition-colors">
+          תנאי שימוש
+        </Link>
       </p>
     </div>
   );

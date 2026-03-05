@@ -4,6 +4,7 @@ from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, String, Integer, Date, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+
 from app.db.session import Base
 
 if TYPE_CHECKING:
@@ -38,6 +39,7 @@ class User(Base):
     current_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     daily_words_reviewed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    display_name: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
 
     # Relationships
     progress: Mapped[List["UserWordProgress"]] = relationship(

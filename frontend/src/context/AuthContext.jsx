@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
     // Always fetch fresh user data from the server (catches stale is_admin, etc.)
     authAPI.me()
       .then((data) => {
-        const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin };
+        const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin, display_name: data.display_name || null };
         localStorage.setItem('auth_user', JSON.stringify(userObj));
         setUser(userObj);
       })
@@ -30,16 +30,16 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const data = await authAPI.login(email, password);
-    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false };
+    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false, display_name: data.display_name || null };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));
     setUser(userObj);
     return data;
   };
 
-  const register = async (email, password) => {
-    const data = await authAPI.register(email, password);
-    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false };
+  const register = async (email, password, displayName = null) => {
+    const data = await authAPI.register(email, password, displayName);
+    const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false, display_name: data.display_name || null };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));
     setUser(userObj);

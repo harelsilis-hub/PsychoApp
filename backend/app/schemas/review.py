@@ -42,6 +42,12 @@ class ReviewSubmitResponse(BaseModel):
     current_streak: int = 0
     daily_goal: int = 15
     goal_reached: bool = False
+    # Gamification fields
+    xp_earned: int = 0
+    new_xp: int = 0
+    level_up: bool = False
+    new_level_title: str | None = None
+    new_badges: list[str] = []
 
 
 class ReviewStatsResponse(BaseModel):

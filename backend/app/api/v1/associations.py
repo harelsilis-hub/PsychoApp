@@ -10,6 +10,7 @@ from app.db.session import get_db
 from app.models.user import User
 from app.models.word import Word
 from app.models.association import Association
+from app.services.gamification import award_xp, check_and_award_badges, POINTS
 from app.auth.dependencies import get_current_user
 
 
@@ -115,6 +116,14 @@ async def like_association(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Association not found")
 
     assoc.likes += 1
+
+    # Award XP to association owner (not the liker)
+    if assoc.user_id != current_user.id:
+        owner = await db.get(User, assoc.user_id)
+        if owner:
+            await award_xp(db, owner, "association_liked", POINTS["association_liked"])
+            await check_and_award_badges(db, owner)
+
     await db.commit()
     return {"id": assoc.id, "likes": assoc.likes}
 
@@ -211,6 +220,8 @@ async def save_user_association(
             text=text,
             likes=0,
         ))
+        await award_xp(db, current_user, "association_posted", POINTS["association_posted"])
+        await check_and_award_badges(db, current_user)
 
     await db.commit()
     await db.refresh(word)

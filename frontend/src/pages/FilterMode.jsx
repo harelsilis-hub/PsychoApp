@@ -28,6 +28,7 @@ const FilterMode = () => {
   const [autoRedirecting, setAutoRedirecting] = useState(false);
   const [flagToast, setFlagToast] = useState(false);
   const [history, setHistory] = useState([]);
+  const [levelUpToast, setLevelUpToast] = useState(null); // level title string
 
   // Ref-based gate: prevents double-fire without causing re-renders that lock the UI
   const swipingRef = useRef(false);
@@ -109,8 +110,16 @@ const FilterMode = () => {
     // 2. Start the fly-off animation immediately
     setExitDir(isKnown ? 'right' : 'left');
 
-    // 3. Fire API in the background — no await, never blocks the UI
+    // 3. Fire API in background, show XP floater on response
     progressAPI.triageWord(currentWord.word_id, isKnown)
+      .then((result) => {
+        if (result?.xp_earned > 0) {
+        }
+        if (result?.level_up && result?.new_level_title) {
+          setLevelUpToast(result.new_level_title);
+          setTimeout(() => setLevelUpToast(null), 3500);
+        }
+      })
       .catch((err) => console.error('Background triage failed:', err));
 
     // 4. After the card animation completes (~180ms), pop it and reset
@@ -240,6 +249,20 @@ const FilterMode = () => {
   // ── Main filter UI ─────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col">
+
+      {/* Level-up toast */}
+      <AnimatePresence>
+        {levelUpToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-2 font-bold"
+          >
+            🎉 עלית לדרגה {levelUpToast}!
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Auto-redirect toast overlay ─────────────────────── */}
       <AnimatePresence>

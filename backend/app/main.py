@@ -12,8 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db.session import engine, Base, DIALECT
-from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router
+from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router
 
 
 @asynccontextmanager
@@ -48,6 +48,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS current_streak INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_words_reviewed INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_date DATE DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(30) DEFAULT NULL",
                 # Ensure admin account
                 "UPDATE users SET is_admin = true WHERE email = 'harel.silis@gmail.com'",
                 # Fix Hebrew words truncated by unescaped gershayim
@@ -71,6 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN current_streak INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN daily_words_reviewed INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN last_active_date DATE DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN display_name VARCHAR(30) DEFAULT NULL",
                 # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
                 "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
                 "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
@@ -210,6 +212,12 @@ app.include_router(
     admin_router,
     prefix="/api/v1/admin",
     tags=["Admin Panel"],
+)
+
+app.include_router(
+    leaderboard_router,
+    prefix="/api/v1/leaderboard",
+    tags=["Leaderboard"],
 )
 
 # TODO: Add additional route modules here

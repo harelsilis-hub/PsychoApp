@@ -132,6 +132,7 @@ const ReviewSession = () => {
   const [noUnknowns, setNoUnknowns]       = useState(false);
   const [goalReached, setGoalReached]     = useState(false);
   const [mobileAssocOpen, setMobileAssocOpen] = useState(false);
+  const [levelUpToast, setLevelUpToast]   = useState(null);
 
   // Derived session stats from ratings map (correct even after re-rating)
   const ratingValues = Object.values(ratings);
@@ -222,6 +223,12 @@ const ReviewSession = () => {
         if (result.goal_reached) {
           setGoalReached(true);
           setTimeout(() => setGoalReached(false), 3000);
+        }
+        if (result?.xp_earned > 0) {
+        }
+        if (result?.level_up && result?.new_level_title) {
+          setLevelUpToast(result.new_level_title);
+          setTimeout(() => setLevelUpToast(null), 3500);
         }
       })
       .catch((err) => {
@@ -318,6 +325,21 @@ const ReviewSession = () => {
   // ── Main UI ────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col">
+
+      {/* Level-up toast */}
+      <AnimatePresence>
+        {levelUpToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-2 font-bold"
+          >
+            🎉 עלית לדרגה {levelUpToast}!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Daily goal celebration toast */}
       <AnimatePresence>
         {goalReached && (

@@ -2,11 +2,14 @@
 Sorting Hat API endpoints - Adaptive placement test.
 """
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.point_event import PointEvent
 from app.services.sorting_hat import SortingHatService
+from app.services.gamification import award_xp, check_and_award_badges, POINTS
 from app.schemas.sorting import (
     PlacementStart,
     PlacementUpdate,
@@ -75,6 +78,18 @@ async def submit_placement_answer(
     session_info = PlacementSessionInfo.model_validate(updated_session)
 
     if is_complete:
+        # Award placement XP only on first completion
+        existing_count = await db.scalar(
+            select(func.count(PointEvent.id)).where(
+                PointEvent.user_id == current_user.id,
+                PointEvent.source == "placement_complete",
+            )
+        ) or 0
+        if existing_count == 0:
+            await award_xp(db, current_user, "placement_complete", POINTS["placement_complete"])
+            await check_and_award_badges(db, current_user)
+            await db.commit()
+
         return PlacementResponse(
             session=session_info,
             word=None,
@@ -96,6 +111,18 @@ async def submit_placement_answer(
         await db.refresh(updated_session)
 
         session_info = PlacementSessionInfo.model_validate(updated_session)
+
+        # Award placement XP only on first completion
+        existing_count2 = await db.scalar(
+            select(func.count(PointEvent.id)).where(
+                PointEvent.user_id == current_user.id,
+                PointEvent.source == "placement_complete",
+            )
+        ) or 0
+        if existing_count2 == 0:
+            await award_xp(db, current_user, "placement_complete", POINTS["placement_complete"])
+            await check_and_award_badges(db, current_user)
+            await db.commit()
 
         return PlacementResponse(
             session=session_info,

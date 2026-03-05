@@ -11,6 +11,7 @@ from app.models.user import User
 from app.models.word import Word
 from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.services.review_service import ReviewService
+from app.services.gamification import award_xp, check_and_award_badges, POINTS
 from app.schemas.progress import ReviewResult
 from app.schemas.review import (
     ReviewSessionResponse,
@@ -132,6 +133,42 @@ async def submit_review_result(
             else:
                 current_user.current_streak = 1
 
+        # ── Award XP ─────────────────────────────────────────────────────────
+        quality = review_data.quality
+        xp_source = f"review_q{max(1, quality)}" if quality <= 5 else "review_q1"
+        total_xp_earned = 0
+        level_up = False
+        new_level_info = None
+
+        xp_result = await award_xp(db, current_user, xp_source, POINTS.get(xp_source, 10))
+        total_xp_earned += xp_result["xp_earned"]
+        if xp_result["level_up"]:
+            level_up = True
+        new_level_info = xp_result["new_level_info"]
+
+        if result_info.get("graduated"):
+            r2 = await award_xp(db, current_user, "graduation_review", POINTS["graduation_review"])
+            total_xp_earned += r2["xp_earned"]
+            if r2["level_up"]:
+                level_up = True
+            new_level_info = r2["new_level_info"]
+
+        if result_info.get("status") == "Mastered":
+            r3 = await award_xp(db, current_user, "graduation_mastered", POINTS["graduation_mastered"])
+            total_xp_earned += r3["xp_earned"]
+            if r3["level_up"]:
+                level_up = True
+            new_level_info = r3["new_level_info"]
+
+        if goal_reached:
+            r4 = await award_xp(db, current_user, "daily_goal", POINTS["daily_goal"])
+            total_xp_earned += r4["xp_earned"]
+            if r4["level_up"]:
+                level_up = True
+            new_level_info = r4["new_level_info"]
+
+        new_badges = await check_and_award_badges(db, current_user)
+
         await db.commit()
         await db.refresh(current_user)
 
@@ -147,6 +184,11 @@ async def submit_review_result(
             current_streak=current_user.current_streak,
             daily_goal=DAILY_GOAL,
             goal_reached=goal_reached,
+            xp_earned=total_xp_earned,
+            new_xp=current_user.xp,
+            level_up=level_up,
+            new_level_title=new_level_info["title"] if new_level_info else None,
+            new_badges=new_badges,
         )
 
     except ValueError as e:

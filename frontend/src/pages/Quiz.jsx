@@ -185,7 +185,9 @@ const Quiz = () => {
     if (opt.isCorrect) setScore((s) => s + 1);
     // Submit to SM-2: correct → quality 4 (good recall), wrong → quality 1 (failed)
     try {
-      await reviewAPI.submitReview(currentQ.word_id, opt.isCorrect ? 4 : 1);
+      const result = await reviewAPI.submitReview(currentQ.word_id, opt.isCorrect ? 4 : 1);
+      if (opt.isCorrect && result?.xp_earned > 0) {
+      }
     } catch (err) {
       console.error('SM-2 update failed:', err);
     }
@@ -298,6 +300,7 @@ const Quiz = () => {
   // ── Question UI ─────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col">
+
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">

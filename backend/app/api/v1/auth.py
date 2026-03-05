@@ -23,6 +23,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class RegisterRequest(BaseModel):
     email: str
     password: str
+    display_name: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -36,6 +37,7 @@ class AuthResponse(BaseModel):
     user_id: int
     email: str
     is_admin: bool = False
+    display_name: str | None = None
 
 
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
@@ -48,13 +50,14 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
             detail="An account with this email already exists."
         )
     hashed = pwd_context.hash(data.password.strip())
-    user = User(email=data.email.strip().lower(), hashed_password=hashed)
+    display_name = data.display_name.strip()[:30] if data.display_name else None
+    user = User(email=data.email.strip().lower(), hashed_password=hashed, display_name=display_name)
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
     token = create_access_token(user.id, user.email)
-    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin)
+    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin, display_name=user.display_name)
 
 
 @router.post("/login", response_model=AuthResponse)
@@ -70,7 +73,7 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
         )
 
     token = create_access_token(user.id, user.email)
-    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin)
+    return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin, display_name=user.display_name)
 
 
 @router.get("/me", response_model=AuthResponse)
@@ -81,6 +84,7 @@ async def me(current_user: User = Depends(get_current_user)):
         user_id=current_user.id,
         email=current_user.email,
         is_admin=current_user.is_admin,
+        display_name=current_user.display_name,
     )
 
 

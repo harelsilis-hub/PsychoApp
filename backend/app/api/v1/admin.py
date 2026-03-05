@@ -11,6 +11,11 @@ from app.db.session import get_db
 from app.models.word import Word
 from app.models.user import User
 from app.models.user_feedback import UserFeedback
+from app.models.word_interaction_event import WordInteractionEvent
+from app.models.user_word_progress import UserWordProgress, WordStatus
+from app.models.association import Association
+from app.models.point_event import PointEvent
+from app.services.gamification import get_level_info
 from app.auth.dependencies import get_current_user, require_admin
 
 router = APIRouter()
@@ -272,6 +277,83 @@ async def mark_feedback_read(
     fb.is_read = True
     await db.commit()
     return {"success": True}
+
+
+# ── Retroactive XP recalculation ─────────────────────────────────────────────
+
+@router.post("/recalculate-xp")
+async def recalculate_xp(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Replay WordInteractionEvent + UserWordProgress + Association records to seed XP for all users."""
+    OUTCOME_POINTS = {
+        "known": 30, "unknown": 10,
+        "1": 10, "2": 10, "3": 50, "4": 80, "5": 120,
+    }
+
+    users_result = await db.execute(select(User))
+    users = users_result.scalars().all()
+    updated = 0
+
+    for user in users:
+        total_xp = 0
+
+        # 1. WordInteractionEvents
+        events_result = await db.execute(
+            select(WordInteractionEvent).where(WordInteractionEvent.user_id == user.id)
+        )
+        events = events_result.scalars().all()
+        for ev in events:
+            pts = OUTCOME_POINTS.get(str(ev.outcome), 0)
+            if pts:
+                db.add(PointEvent(
+                    user_id=user.id,
+                    source=f"retroactive_{ev.interaction_type}_{ev.outcome}",
+                    base_points=pts,
+                    multiplier=1.0,
+                    final_points=pts,
+                ))
+                total_xp += pts
+
+        # 2. REVIEW status words (graduated from LEARNING)
+        review_count = await db.scalar(
+            select(func.count(UserWordProgress.id)).where(
+                UserWordProgress.user_id == user.id,
+                UserWordProgress.status == WordStatus.REVIEW,
+            )
+        ) or 0
+        if review_count:
+            db.add(PointEvent(user_id=user.id, source="retroactive_graduation_review",
+                              base_points=150, multiplier=1.0, final_points=150 * review_count))
+            total_xp += 150 * review_count
+
+        # 3. MASTERED words
+        mastered_count = await db.scalar(
+            select(func.count(UserWordProgress.id)).where(
+                UserWordProgress.user_id == user.id,
+                UserWordProgress.status == WordStatus.MASTERED,
+            )
+        ) or 0
+        if mastered_count:
+            db.add(PointEvent(user_id=user.id, source="retroactive_graduation_mastered",
+                              base_points=300, multiplier=1.0, final_points=300 * mastered_count))
+            total_xp += 300 * mastered_count
+
+        # 4. Community associations posted
+        assoc_count = await db.scalar(
+            select(func.count(Association.id)).where(Association.user_id == user.id)
+        ) or 0
+        if assoc_count:
+            db.add(PointEvent(user_id=user.id, source="retroactive_association_posted",
+                              base_points=50, multiplier=1.0, final_points=50 * assoc_count))
+            total_xp += 50 * assoc_count
+
+        user.xp = total_xp
+        updated += 1
+
+    await db.commit()
+    return {"success": True, "users_updated": updated}
 
 
 # ── ONE-TIME: strip trailing hyphens from english words ───────────────────────

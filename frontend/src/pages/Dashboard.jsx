@@ -1,12 +1,45 @@
-﻿import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Brain, LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
+﻿import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
+
+// ── Level helper (mirrors backend LEVELS) ──────────────────────────────────────
+const LEVELS = [
+  [0,      'Bronze I',     '#CD7F32'],
+  [1000,   'Bronze II',    '#CD7F32'],
+  [3000,   'Bronze III',   '#CD7F32'],
+  [7000,   'Silver I',     '#C0C0C0'],
+  [15000,  'Silver II',    '#C0C0C0'],
+  [25000,  'Silver III',   '#C0C0C0'],
+  [40000,  'Gold I',       '#FFD700'],
+  [60000,  'Gold II',      '#FFD700'],
+  [85000,  'Gold III',     '#FFD700'],
+  [120000, 'Platinum I',   '#00CED1'],
+  [160000, 'Platinum II',  '#00CED1'],
+  [210000, 'Platinum III', '#00CED1'],
+  [270000, 'Diamond I',    '#00BFFF'],
+  [340000, 'Diamond II',   '#00BFFF'],
+  [420000, 'Champion',     '#FFD700'],
+];
+
+function getLevelInfo(xp) {
+  let levelNum = 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp >= LEVELS[i][0]) levelNum = i;
+    else break;
+  }
+  const [xpStart, title, color] = LEVELS[levelNum];
+  const xpNext = levelNum + 1 < LEVELS.length ? LEVELS[levelNum + 1][0] : null;
+  const progressPct = xpNext
+    ? Math.min(100, Math.round(((xp - xpStart) / (xpNext - xpStart)) * 100))
+    : 100;
+  return { levelNum, title, color, xp, xpNext, progressPct };
+}
 
 // Fallback English totals — overridden by server data when available
 const UNIT_TOTALS_EN = {
@@ -55,6 +88,16 @@ const Dashboard = () => {
   const { soundEnabled, toggleSound } = useSound();
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     progressAPI.getUnitStats(language)
@@ -82,7 +125,9 @@ const Dashboard = () => {
   const streak         = userStats?.current_streak ?? 0;
   const reviewed       = userStats?.daily_words_reviewed ?? 0;
   const goalPct        = Math.min(100, (reviewed / DAILY_GOAL) * 100);
-  const username       = user?.email?.split('@')[0] ?? 'there';
+  const username       = user?.display_name || (user?.email?.split('@')[0] ?? 'there');
+  const xp             = userStats?.xp ?? 0;
+  const levelInfo      = getLevelInfo(xp);
 
   return (
     <div className="min-h-[100dvh] lg:h-[100dvh] lg:overflow-hidden flex flex-col relative"
@@ -108,7 +153,7 @@ const Dashboard = () => {
               <p className="hidden sm:block text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
                 אוצר מילים פסיכומטרי
               </p>
-              <p className="text-base sm:text-xl font-black text-gray-900 leading-tight break-words">
+              <p className="text-base sm:text-xl font-black text-gray-900 leading-tight truncate">
                 שלום,{' '}
                 <span className="bg-gradient-to-r from-violet-600 to-indigo-500 bg-clip-text text-transparent">
                   {username}
@@ -188,72 +233,148 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          {/* Sound toggle */}
+          {/* ── Module 4: XP bar + leaderboard link ── */}
           <motion.button
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => navigate('/leaderboard')}
+            title="לוח המובילים"
+            className="hidden sm:flex items-center gap-2.5
+                       bg-white/55 backdrop-blur-2xl
+                       border border-gray-200/70
+                       rounded-[24px] px-4 py-3
+                       shadow-xl shadow-violet-200/30
+                       hover:bg-white/75 transition-all duration-200 w-44"
+          >
+            <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center gap-1 mb-1">
+                <span className="text-[11px] font-black" style={{ color: levelInfo.color }}>
+                  {levelInfo.title}
+                </span>
+                <span className="text-[10px] font-semibold text-gray-500 tabular-nums">
+                  · {xp.toLocaleString()} XP
+                </span>
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.max(levelInfo.progressPct, 3)}%` }}
+                  transition={{ duration: 1.0, ease: 'easeOut' }}
+                  className="h-full rounded-full"
+                  style={{ background: `linear-gradient(90deg, ${levelInfo.color}88, ${levelInfo.color})` }}
+                />
+              </div>
+            </div>
+          </motion.button>
+
+          {/* ── Menu button ── */}
+          <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            onClick={toggleSound}
-            title={soundEnabled ? 'כבה צלילים' : 'הפעל צלילים'}
-            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
-                       flex items-center justify-center
-                       text-gray-400 hover:text-gray-800
-                       hover:bg-white/75 transition-all duration-200"
+            className="relative shrink-0"
           >
-            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-gray-300" />}
-          </motion.button>
-
-          {/* Dark mode toggle */}
-          <motion.button
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
-            onClick={toggle}
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
-                       flex items-center justify-center
-                       text-gray-400 hover:text-gray-800
-                       hover:bg-white/75 transition-all duration-200"
-          >
-            {isDark ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
-          </motion.button>
-
-         {/* ג"€ג"€ Logout ג"€ג"€ */}
-          <motion.button
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            onClick={logout}
-            title="Log out"
-            className="bg-white/55 backdrop-blur-2xl border border-gray-200/70
-                       rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-gray-200/30
-                       flex items-center justify-center
-                       text-gray-400 hover:text-gray-800
-                       hover:bg-white/75 transition-all duration-200"
-          >
-            <LogOut className="w-5 h-5" />
-          </motion.button>
-
-          {/* Admin link — only visible to admin users */}
-          {user?.is_admin && (
-            <motion.button
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55, delay: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              onClick={() => navigate('/admin')}
-              title="Admin panel"
-              className="bg-violet-600 backdrop-blur-2xl border border-violet-500/50
-                         rounded-[20px] sm:rounded-[24px] px-3 sm:px-4 shadow-xl shadow-violet-300/40
-                         flex items-center justify-center gap-1.5
-                         text-white hover:bg-violet-700
-                         transition-all duration-200"
+            <button
+              onClick={() => setMenuOpen(o => !o)}
+              className="h-full bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                         rounded-[20px] sm:rounded-[24px] px-4
+                         flex items-center justify-center
+                         text-gray-500 hover:text-gray-900
+                         hover:bg-white/75 transition-all duration-200
+                         shadow-xl shadow-gray-200/30"
             >
-              <ShieldCheck className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs font-bold uppercase tracking-wide">ניהול</span>
-            </motion.button>
-          )}
+              <Menu className="w-5 h-5" />
+            </button>
+
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 top-[calc(100%+8px)] w-52 z-50
+                             bg-white/95 backdrop-blur-2xl
+                             border border-gray-200/70
+                             rounded-2xl shadow-2xl shadow-gray-300/40
+                             overflow-hidden"
+                >
+                  {/* Leaderboard — mobile only */}
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate('/leaderboard'); }}
+                    className="sm:hidden w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-gray-700 hover:bg-gray-50
+                               transition-colors duration-150 text-right"
+                  >
+                    <Trophy className="w-4 h-4 text-yellow-500 shrink-0" />
+                    <span>לוח המובילים</span>
+                    <span className="mr-auto text-[11px] font-bold" style={{ color: levelInfo.color }}>
+                      {levelInfo.title}
+                    </span>
+                  </button>
+                  <div className="sm:hidden h-px bg-gray-100 mx-3" />
+
+                  {/* Sound */}
+                  <button
+                    onClick={() => { toggleSound(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-gray-700 hover:bg-gray-50
+                               transition-colors duration-150 text-right"
+                  >
+                    {soundEnabled
+                      ? <Volume2 className="w-4 h-4 text-violet-500 shrink-0" />
+                      : <VolumeX className="w-4 h-4 text-gray-300 shrink-0" />}
+                    <span>{soundEnabled ? 'כבה צלילים' : 'הפעל צלילים'}</span>
+                  </button>
+
+                  {/* Dark mode */}
+                  <button
+                    onClick={() => { toggle(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-gray-700 hover:bg-gray-50
+                               transition-colors duration-150 text-right"
+                  >
+                    {isDark
+                      ? <Sun className="w-4 h-4 text-amber-400 shrink-0" />
+                      : <Moon className="w-4 h-4 text-indigo-400 shrink-0" />}
+                    <span>{isDark ? 'מצב בהיר' : 'מצב כהה'}</span>
+                  </button>
+
+                  {/* Admin */}
+                  {user?.is_admin && (
+                    <>
+                      <div className="h-px bg-gray-100 mx-3" />
+                      <button
+                        onClick={() => { setMenuOpen(false); navigate('/admin'); }}
+                        className="w-full flex items-center gap-3 px-4 py-3
+                                   text-sm font-medium text-violet-600 hover:bg-violet-50
+                                   transition-colors duration-150 text-right"
+                      >
+                        <ShieldCheck className="w-4 h-4 shrink-0" />
+                        <span>פאנל ניהול</span>
+                      </button>
+                    </>
+                  )}
+
+                  {/* Logout */}
+                  <div className="h-px bg-gray-100 mx-3" />
+                  <button
+                    onClick={() => { setMenuOpen(false); logout(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-red-500 hover:bg-red-50
+                               transition-colors duration-150 text-right"
+                  >
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>התנתק</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
         </div>
 
         {/* Mobile-only stats row */}
@@ -305,6 +426,27 @@ const Dashboard = () => {
               <p className="text-[9px] font-bold text-gray-500 uppercase tracking-wide mt-0.5">שליטה</p>
             </div>
           </div>
+
+          {/* XP chip (mobile) — tappable → leaderboard */}
+          <button
+            onClick={() => navigate('/leaderboard')}
+            className="flex-1 flex items-center gap-2
+                        bg-yellow-50/80 backdrop-blur-2xl
+                        border border-yellow-300/60
+                        rounded-2xl px-3 py-2.5 shadow-md shadow-yellow-200/30
+                        active:scale-95 transition-transform duration-100 text-right"
+          >
+            <Trophy className="w-5 h-5 text-yellow-500 shrink-0" />
+            <div className="leading-none min-w-0 flex-1">
+              <p className="text-[11px] font-black truncate" style={{ color: levelInfo.color }}>
+                {levelInfo.title}
+                <span className="text-gray-500 font-semibold"> · {xp.toLocaleString()}</span>
+              </p>
+              <p className="text-[9px] font-bold text-yellow-600 uppercase tracking-wide mt-0.5">
+                לוח מובילים ›
+              </p>
+            </div>
+          </button>
         </motion.div>
       </div>
 

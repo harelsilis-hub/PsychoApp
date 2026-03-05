@@ -68,6 +68,12 @@ class TriageResponse(BaseModel):
     success: bool = Field(..., description="Whether the update was successful")
     status: str = Field(..., description="New status of the word (Mastered or Learning)")
     message: str = Field(..., description="Status message")
+    # Gamification fields
+    xp_earned: int = 0
+    new_xp: int = 0
+    level_up: bool = False
+    new_level_title: str | None = None
+    new_badges: list[str] = []
 
 
 class UserStatsResponse(BaseModel):

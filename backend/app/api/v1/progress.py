@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.word import Word
 from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.services.progress import ProgressService
+from app.services.gamification import award_xp, check_and_award_badges, POINTS
 from app.schemas.progress import (
     TriageUpdate,
     TriageResponse,
@@ -39,10 +40,21 @@ async def triage_word(
             triage_data.is_known
         )
 
+        # Award XP for triage action
+        xp_source = "triage_known" if triage_data.is_known else "triage_unknown"
+        xp_result = await award_xp(db, current_user, xp_source, POINTS[xp_source])
+        new_badges = await check_and_award_badges(db, current_user)
+        await db.commit()
+
         return TriageResponse(
             success=True,
             status=progress.status.value,
-            message=message
+            message=message,
+            xp_earned=xp_result["xp_earned"],
+            new_xp=xp_result["new_xp"],
+            level_up=xp_result["level_up"],
+            new_level_title=xp_result["new_level_info"]["title"] if xp_result["level_up"] else None,
+            new_badges=new_badges,
         )
     except Exception as e:
         raise HTTPException(

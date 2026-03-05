@@ -19,6 +19,8 @@ import ReviewSession from './pages/ReviewSession';
 import Quiz from './pages/Quiz';
 import WordList from './pages/WordList';
 import Admin from './pages/Admin';
+import TermsOfUsePage from './pages/TermsOfUsePage';
+import LeaderboardPage from './pages/LeaderboardPage';
 import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
 import InstallPWA from './components/InstallPWA';
@@ -53,6 +55,7 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/home" element={<HomePage />} />
+            <Route path="/terms" element={<TermsOfUsePage />} />
 
             {/* Protected routes */}
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -70,6 +73,9 @@ function App() {
 
             {/* Legacy review route */}
             <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
+
+            {/* Leaderboard */}
+            <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
 
             {/* Admin panel — requires is_admin */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
