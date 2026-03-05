@@ -79,7 +79,9 @@ const useSounds = () => {
 
     const langPrefix = lang.split('-')[0];
 
-    // Hebrew on Android: device rarely has a Hebrew voice — use backend gTTS instead
+    // Hebrew on Android: device rarely has a Hebrew voice — use backend gTTS instead.
+    // We use AudioContext (already unlocked by the gesture) + fetch to decode and play
+    // the MP3, which is far more reliable on Android than new Audio() for cross-origin URLs.
     if (langPrefix === 'he') {
       const hasHebrewVoice = voicesRef.current.some(
         v => v.lang === lang || v.lang.startsWith('he')
@@ -87,7 +89,17 @@ const useSounds = () => {
       if (!hasHebrewVoice) {
         const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
         const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
-        new Audio(url).play().catch(() => {});
+        const ctx = getCtx(); // resume AudioContext synchronously inside gesture handler
+        fetch(url)
+          .then(r => r.arrayBuffer())
+          .then(buf => ctx.decodeAudioData(buf))
+          .then(decoded => {
+            const src = ctx.createBufferSource();
+            src.buffer = decoded;
+            src.connect(ctx.destination);
+            src.start(0);
+          })
+          .catch(() => {});
         return;
       }
     }
