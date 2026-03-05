@@ -79,25 +79,19 @@ const useSounds = () => {
 
     const langPrefix = lang.split('-')[0];
 
-    // Hebrew on Android: device rarely has a Hebrew voice — use backend gTTS instead.
+    // Hebrew: always use backend gTTS for consistent pronunciation across all devices
     if (langPrefix === 'he') {
-      const hasHebrewVoice = voicesRef.current.some(
-        v => v.lang === lang || v.lang.startsWith('he')
-      );
-      if (!hasHebrewVoice) {
-        const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
-        const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
-        // Use a DOM-attached element (prevents GC) without crossOrigin (avoids CORS enforcement)
-        const audio = document.createElement('audio');
-        audio.src = url;
-        audio.style.display = 'none';
-        document.body.appendChild(audio);
-        const cleanup = () => { try { document.body.removeChild(audio); } catch {} };
-        audio.addEventListener('ended', cleanup);
-        audio.addEventListener('error', cleanup);
-        audio.play().catch(cleanup);
-        return;
-      }
+      const apiBase = (import.meta.env.VITE_API_URL || '').replace(/\/api$/, '');
+      const url = `${apiBase}/api/v1/tts?text=${encodeURIComponent(word)}&lang=he`;
+      const audio = document.createElement('audio');
+      audio.src = url;
+      audio.style.display = 'none';
+      document.body.appendChild(audio);
+      const cleanup = () => { try { document.body.removeChild(audio); } catch {} };
+      audio.addEventListener('ended', cleanup);
+      audio.addEventListener('error', cleanup);
+      audio.play().catch(cleanup);
+      return;
     }
 
     // Browser TTS — works reliably for English on all platforms, and Hebrew on iOS/desktop
