@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'mila_sounds_enabled';
 
@@ -7,6 +7,21 @@ const useSounds = () => {
     () => localStorage.getItem(STORAGE_KEY) !== 'false'
   );
   const ctxRef = useRef(null);
+  const voicesRef = useRef([]);
+
+  // Pre-load voices so speakWord can run synchronously inside a gesture handler.
+  // On Android, calling speak() inside an async callback (onvoiceschanged) loses
+  // the user-gesture context and gets silently blocked.
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+    const load = () => {
+      const v = window.speechSynthesis.getVoices();
+      if (v.length > 0) voicesRef.current = v;
+    };
+    load();
+    window.speechSynthesis.addEventListener('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', load);
+  }, []);
 
   const getCtx = useCallback(() => {
     if (!ctxRef.current) {
@@ -64,43 +79,30 @@ const useSounds = () => {
     if (!window.speechSynthesis) return;
     window.speechSynthesis.cancel();
 
-    const doSpeak = () => {
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = lang;
-      utterance.rate = 0.85;
-      utterance.volume = 0.9;
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = lang;
+    utterance.rate = 0.85;
+    utterance.volume = 0.9;
 
-      // Explicitly assign a matching voice — required on Android Chrome
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        const langPrefix = lang.split('-')[0];
-        const match =
-          voices.find(v => v.lang === lang) ||
-          voices.find(v => v.lang.startsWith(langPrefix));
-        if (match) utterance.voice = match;
-      }
-
-      window.speechSynthesis.speak(utterance);
-
-      // Android Chrome bug: speak() often silently stalls — pause/resume unsticks it
-      setTimeout(() => {
-        if (window.speechSynthesis.speaking) {
-          window.speechSynthesis.pause();
-          window.speechSynthesis.resume();
-        }
-      }, 100);
-    };
-
-    // On Android, getVoices() returns [] until voiceschanged fires
-    const voices = window.speechSynthesis.getVoices();
-    if (voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.onvoiceschanged = null;
-        doSpeak();
-      };
-    } else {
-      doSpeak();
+    // Use pre-loaded voices — keeps this call synchronous inside the gesture handler
+    const voices = voicesRef.current;
+    if (voices.length > 0) {
+      const langPrefix = lang.split('-')[0];
+      const match =
+        voices.find(v => v.lang === lang) ||
+        voices.find(v => v.lang.startsWith(langPrefix));
+      if (match) utterance.voice = match;
     }
+
+    window.speechSynthesis.speak(utterance);
+
+    // Android Chrome bug: speak() often stalls — pause/resume unsticks it
+    setTimeout(() => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 100);
   }, [soundEnabled]);
 
   const toggleSound = useCallback(() => {
