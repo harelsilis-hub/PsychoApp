@@ -15,12 +15,15 @@ async def text_to_speech(
     text: str = Query(..., max_length=200),
     lang: str = Query(default="he", max_length=10),
 ):
-    cache_key = f"{lang}:{text}"
+    # gTTS uses Google's legacy language codes — Hebrew is 'iw' not 'he'
+    gtts_lang = 'iw' if lang in ('he', 'he-IL') else lang
+
+    cache_key = f"{gtts_lang}:{text}"
     if cache_key in _cache:
         return Response(content=_cache[cache_key], media_type="audio/mpeg")
 
     try:
-        tts = gTTS(text=text, lang=lang)
+        tts = gTTS(text=text, lang=gtts_lang)
         buf = io.BytesIO()
         tts.write_to_fp(buf)
         buf.seek(0)
