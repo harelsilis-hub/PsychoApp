@@ -6,7 +6,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
   const navigate = useNavigate();
 
   const accuracy = stats.total > 0
-    ? Math.round(((stats.perfect + stats.good) / stats.total) * 100)
+    ? Math.round((stats.good / stats.total) * 100)
     : 0;
 
   const getEncouragement = () => {
@@ -61,20 +61,7 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
           </div>
 
           {/* Breakdown */}
-          <div className="grid grid-cols-3 gap-4 pt-4">
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.perfect}</div>
-              <div className="text-xs text-gray-600">מושלם</div>
-            </motion.div>
-
+          <div className="grid grid-cols-2 gap-4 pt-4">
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -118,12 +105,6 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
             <ArrowRight className="w-5 h-5" />
           </button>
 
-          {stats.failed > 0 && (
-            <div className="text-center text-sm text-gray-600">
-              <Target className="w-4 h-4 inline-block mr-1" />
-              תראה את {stats.failed} המילה{stats.failed > 1 ? 'ות' : ''} לחזרה שוב מחר
-            </div>
-          )}
         </motion.div>
 
         {/* Encouragement */}

@@ -127,7 +127,7 @@ async def forgot_password(data: ForgotPasswordRequest, db: AsyncSession = Depend
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {resend_key}"},
             json={
-                "from": "Mila <onboarding@resend.dev>",
+                "from": "Mila <noreply@milawords.site>",
                 "to": [user.email],
                 "subject": "איפוס סיסמה – Mila",
                 "html": f"""

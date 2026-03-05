@@ -4,6 +4,8 @@ Initializes the database and sets up routes.
 """
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator

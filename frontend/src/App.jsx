@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -38,6 +38,14 @@ const AuthenticatedFeedback = () => {
   return <FeedbackWidget />;
 };
 
+const ConditionalBackground = () => {
+  const { pathname } = useLocation();
+  const studyRoutes = ['/filter', '/review', '/quiz', '/triage'];
+  const isStudySession = studyRoutes.some(r => pathname.endsWith(r)) || pathname === '/triage';
+  if (isStudySession) return null;
+  return <FloatingWordsBackground />;
+};
+
 function App() {
   return (
     <ThemeProvider>
@@ -45,7 +53,7 @@ function App() {
       <LanguageProvider>
       <AuthProvider>
         <Router>
-          <FloatingWordsBackground />
+          <ConditionalBackground />
           <AuthenticatedFeedback />
           <OnboardingTour />
           <InstallPWA />

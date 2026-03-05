@@ -16,6 +16,9 @@ const InstallPWA = () => {
     // Already running as installed app — hide button
     if (isStandalone) return;
 
+    // Already installed previously — hide button
+    if (localStorage.getItem('pwa-installed')) return;
+
     // Android/Chrome: capture the install prompt
     const handler = (e) => {
       e.preventDefault();
@@ -29,6 +32,7 @@ const InstallPWA = () => {
 
     // Hide after user installs
     window.addEventListener('appinstalled', () => {
+      localStorage.setItem('pwa-installed', '1');
       setIsVisible(false);
       setIsInstalled(true);
     });
@@ -44,7 +48,10 @@ const InstallPWA = () => {
     if (!installPrompt) return;
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') setIsVisible(false);
+    if (outcome === 'accepted') {
+      localStorage.setItem('pwa-installed', '1');
+      setIsVisible(false);
+    }
   };
 
   if (!isVisible || isInstalled) return null;
