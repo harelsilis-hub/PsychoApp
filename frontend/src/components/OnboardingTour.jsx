@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import Joyride, { ACTIONS, EVENTS, STATUS } from 'react-joyride';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, MessageSquarePlus, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const tourKey = (userId) => `mila_tour_done_${userId}`;
+const welcomeKey = (userId) => `mila_welcome_done_${userId}`;
 const TOTAL = 6;
 
 const Dots = ({ current }) => (
@@ -185,12 +188,86 @@ const locale = {
   skip: 'דלג',
 };
 
+const WelcomeModal = ({ onClose }) => (
+  <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[20000] flex items-center justify-center p-4"
+      style={{ background: 'rgba(15,10,40,0.65)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88, y: 24 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.88, y: 24 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+        className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        dir="rtl"
+      >
+        {/* Purple gradient top bar */}
+        <div className="h-2 w-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500" />
+
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 left-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="px-7 pt-6 pb-7 text-right">
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center">
+              <Sparkles className="w-8 h-8 text-violet-600" />
+            </div>
+          </div>
+
+          <h2 className="text-xl font-black text-gray-900 mb-3 leading-snug">
+            ברוכים הבאים! 🎉
+          </h2>
+
+          <p className="text-sm text-gray-600 leading-relaxed mb-4">
+            האתר שלנו עדיין צעיר, ואנחנו בונים אותו עם המון אהבה ותשוקה — צעד אחד קדימה בכל יום.
+          </p>
+
+          <p className="text-sm text-gray-600 leading-relaxed mb-5">
+            יש לכם רעיון לשיפור או ראיתם משהו שלא עובד כמו שצריך?{' '}
+            <span className="font-bold text-violet-700">נשמח לשמוע!</span> לחצו על הכפתור הסגול בפינה השמאלית התחתונה של המסך:
+          </p>
+
+          {/* Feedback button preview */}
+          <div className="flex items-center gap-3 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-2xl p-3.5 mb-5">
+            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <MessageSquarePlus className="w-4.5 h-4.5 text-white w-[18px] h-[18px]" />
+            </div>
+            <p className="text-xs text-gray-700 font-medium leading-snug">
+              כפתור המשוב — דווח על באג, שתף רעיון, או פשוט תגיד שלום 👋
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-2xl text-sm font-bold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-200"
+          >
+            בואו נתחיל ללמוד! 🚀
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  </AnimatePresence>
+);
+
 const OnboardingTour = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   // On mobile (<640px) the desktop streak element is display:none but appears
   // first in the DOM — Joyride finds the hidden one and breaks. Skip streak on mobile.
@@ -243,23 +320,34 @@ const OnboardingTour = () => {
       if (user) localStorage.setItem(tourKey(user.id), 'true');
       setRun(false);
       if (location.pathname !== '/') navigate('/');
+      if (status === STATUS.FINISHED && user && !localStorage.getItem(welcomeKey(user.id))) {
+        setShowWelcome(true);
+      }
     }
   };
 
   return (
-    <Joyride
-      steps={buildSteps(isMobile())}
-      run={run}
-      stepIndex={stepIndex}
-      continuous
-      showSkipButton
-      disableOverlayClose
-      scrollToFirstStep
-      scrollOffset={80}
-      callback={handleCallback}
-      styles={tourStyles}
-      locale={locale}
-    />
+    <>
+      <Joyride
+        steps={buildSteps(isMobile())}
+        run={run}
+        stepIndex={stepIndex}
+        continuous
+        showSkipButton
+        disableOverlayClose
+        scrollToFirstStep
+        scrollOffset={80}
+        callback={handleCallback}
+        styles={tourStyles}
+        locale={locale}
+      />
+      {showWelcome && (
+        <WelcomeModal onClose={() => {
+          if (user) localStorage.setItem(welcomeKey(user.id), 'true');
+          setShowWelcome(false);
+        }} />
+      )}
+    </>
   );
 };
 

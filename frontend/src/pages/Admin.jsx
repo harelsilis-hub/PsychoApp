@@ -233,6 +233,16 @@ const Admin = () => {
     }
   };
 
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Delete user "${user.email}"? This will permanently remove all their data.`)) return;
+    try {
+      await adminAPI.deleteUser(user.id);
+      setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Error deleting user');
+    }
+  };
+
   const removeFlagged = (id) => {
     setFlagged((prev) => prev.filter((w) => w.id !== id));
     setStats((s) => s ? { ...s, flagged_count: Math.max(0, s.flagged_count - 1) } : s);
@@ -312,7 +322,8 @@ const Admin = () => {
                   <th className="pb-2 pr-4">Joined</th>
                   <th className="pb-2 pr-4">Streak</th>
                   <th className="pb-2 pr-4">Today</th>
-                  <th className="pb-2">Last Active</th>
+                  <th className="pb-2 pr-4">Last Active</th>
+                  <th className="pb-2"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
@@ -329,7 +340,16 @@ const Admin = () => {
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 tabular-nums">{u.daily_words_reviewed}</td>
-                    <td className="py-2.5 text-xs text-gray-400">{u.last_active_date || '—'}</td>
+                    <td className="py-2.5 pr-4 text-xs text-gray-400">{u.last_active_date || '—'}</td>
+                    <td className="py-2.5">
+                      <button
+                        onClick={() => handleDeleteUser(u)}
+                        className="flex items-center gap-1 px-2 py-1 text-xs text-red-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+                        title="Delete user"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

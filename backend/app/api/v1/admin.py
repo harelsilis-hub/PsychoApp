@@ -60,6 +60,25 @@ async def get_users(
     }
 
 
+# ── Delete user ───────────────────────────────────────────────────────────────
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    current_admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Permanently delete a user and all their data."""
+    if user_id == current_admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    await db.delete(user)
+    await db.commit()
+    return {"success": True, "deleted_id": user_id}
+
+
 # ── User-facing: flag a word as having a mistake ──────────────────────────────
 
 @router.post("/flag/{word_id}")

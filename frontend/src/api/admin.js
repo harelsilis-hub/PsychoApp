@@ -6,6 +6,11 @@ export const adminAPI = {
     return res.data;
   },
 
+  deleteUser: async (userId) => {
+    const res = await apiClient.delete(`/v1/admin/users/${userId}`);
+    return res.data;
+  },
+
   getStats: async () => {
     const res = await apiClient.get('/v1/admin/stats');
     return res.data;
