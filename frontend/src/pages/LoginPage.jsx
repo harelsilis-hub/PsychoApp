@@ -1,21 +1,28 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Brain, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, BookOpen, Trophy, Brain, Star } from 'lucide-react';
+
+const FEATURES = [
+  { icon: Brain,    title: 'המערכת שיודעת מתי אתם עומדים לשכוח – ובוחנת אתכם בדיוק אז.',    desc: '' },
+  { icon: BookOpen, title: '5,445 מילים',          desc: '20 יחידות לימוד · עברית ואנגלית' },
+  { icon: Trophy,   title: 'גיימיפיקציה',          desc: 'ניקוד, רמות ולוח מובילים' },
+];
+
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, register } = useAuth();
 
-  const [mode, setMode]                   = useState('login');   // 'login' | 'register'
-  const [email, setEmail]                 = useState('');
-  const [password, setPassword]           = useState('');
+  const [mode, setMode]                       = useState('login');
+  const [email, setEmail]                     = useState('');
+  const [password, setPassword]               = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [displayName, setDisplayName]     = useState('');
-  const [showPassword, setShowPassword]   = useState(false);
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [error, setError]                 = useState('');
-  const [loading, setLoading]             = useState(false);
+  const [displayName, setDisplayName]         = useState('');
+  const [showPassword, setShowPassword]       = useState(false);
+  const [agreedToTerms, setAgreedToTerms]     = useState(false);
+  const [error, setError]                     = useState('');
+  const [loading, setLoading]                 = useState(false);
 
   const switchMode = (m) => {
     setMode(m);
@@ -28,37 +35,17 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!email.trim() || !email.includes('@')) {
-      setError('נא להזין כתובת אימייל תקינה.');
-      return;
-    }
-    if (!password) {
-      setError('נא להזין סיסמה.');
-      return;
-    }
+    if (!email.trim() || !email.includes('@')) { setError('נא להזין כתובת אימייל תקינה.'); return; }
+    if (!password)                              { setError('נא להזין סיסמה.'); return; }
     if (mode === 'register') {
-      if (password.length < 6) {
-        setError('הסיסמה חייבת להכיל לפחות 6 תווים.');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError('הסיסמאות אינן תואמות.');
-        return;
-      }
-      if (!agreedToTerms) {
-        setError('יש לאשר את תנאי השימוש כדי להירשם.');
-        return;
-      }
+      if (password.length < 6)              { setError('הסיסמה חייבת להכיל לפחות 6 תווים.'); return; }
+      if (password !== confirmPassword)     { setError('הסיסמאות אינן תואמות.'); return; }
+      if (!agreedToTerms)                   { setError('יש לאשר את תנאי השימוש כדי להירשם.'); return; }
     }
-
     setLoading(true);
     try {
-      if (mode === 'login') {
-        await login(email.trim(), password);
-      } else {
-        await register(email.trim(), password, displayName.trim() || null);
-      }
+      if (mode === 'login') await login(email.trim(), password);
+      else await register(email.trim(), password, displayName.trim() || null);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const detail = err.response?.data?.detail;
@@ -68,178 +55,247 @@ const LoginPage = () => {
     }
   };
 
+  const inputClass = `w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-sm text-white
+    placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-violet-400
+    transition backdrop-blur-sm`;
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 flex" dir="rtl">
 
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-8">
-        <img src="/mila_logo.png" alt="Mila" className="w-12 h-12 object-contain" />
-        <div>
-          <p className="text-xl font-black text-gray-900 tracking-tight leading-none">Mila</p>
-          <p className="text-xs text-gray-400 font-medium mt-0.5">אוצר מילים פסיכומטרי</p>
-        </div>
+      {/* Background orbs */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none select-none">
+        <div className="absolute top-1/4 right-1/3 w-[500px] h-[500px] bg-violet-600/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute top-2/3 right-1/2 w-72 h-72 bg-purple-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '3s' }} />
+        {/* Grid overlay */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
       </div>
 
-      {/* Card */}
-      <div className="w-full max-w-sm bg-white/80 backdrop-blur-xl border border-gray-200/70 rounded-2xl shadow-xl shadow-gray-200/50 overflow-hidden">
+      {/* ── Hero (desktop only) ── */}
+      <div className="hidden lg:flex flex-col justify-center px-16 flex-1 relative z-10 max-w-xl">
 
-        {/* Tab toggle */}
-        <div className="flex border-b border-gray-100">
-          <button
-            type="button"
-            onClick={() => switchMode('login')}
-            className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
-              mode === 'login'
-                ? 'bg-white text-gray-900 border-b-2 border-violet-600'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
-            }`}
-          >
-            כניסה
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMode('register')}
-            className={`flex-1 py-3.5 text-sm font-semibold transition-colors ${
-              mode === 'register'
-                ? 'bg-white text-gray-900 border-b-2 border-violet-600'
-                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50/50'
-            }`}
-          >
-            הרשמה
-          </button>
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-8">
+          <div className="relative">
+            <div className="absolute inset-0 bg-violet-500/40 rounded-xl blur-lg" />
+            <img src="/mila_logo.png" alt="Mila" className="relative w-12 h-12 object-contain rounded-xl" />
+          </div>
+          <div>
+            <p className="text-2xl font-black text-white tracking-tight">Mila</p>
+            <p className="text-xs text-violet-300/80 font-medium">אוצר מילים פסיכומטרי</p>
+          </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-7 space-y-3">
+        {/* Headline */}
+        <h1 className="text-5xl font-black text-white leading-[1.1] mb-3 tracking-tight">
+          שלוט<br />בפסיכומטרי.
+        </h1>
+        <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-l from-violet-400 via-purple-300 to-indigo-300 mb-3">
+          5,000 מילים. מערכת אחת.
+        </p>
+        <p className="text-sm text-white/50 mb-8 leading-relaxed max-w-sm">
+          המערכת מסתגלת לקצב שלך ומבטיחה שכל מילה תישאר בזיכרון לאורך זמן.
+        </p>
 
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                שם תצוגה
-              </label>
-              <input
-                type="text"
-                maxLength={30}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="כיצד תופיע בלוח המובילים"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
-              />
+        {/* Feature list */}
+        <div className="space-y-3 mb-8">
+          {FEATURES.map(({ icon: Icon, title, desc }) => (
+            <div key={title} className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500/30 to-indigo-500/20 border border-violet-400/20 flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4 text-violet-300" />
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">{title}</p>
+                <p className="text-white/40 text-xs">{desc}</p>
+              </div>
             </div>
-          )}
+          ))}
+        </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              אימייל
-            </label>
-            <input
-              type="email"
-              dir="ltr"
-              autoFocus
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
-            />
+      </div>
+
+      {/* ── Form side ── */}
+      <div className="flex-1 flex items-center justify-center p-5 relative z-10">
+
+        {/* Mobile logo */}
+        <div className="absolute top-6 right-6 flex items-center gap-2.5 lg:hidden">
+          <img src="/mila_logo.png" alt="Mila" className="w-9 h-9 rounded-xl object-contain" />
+          <p className="text-white font-black text-xl tracking-tight">Mila</p>
+        </div>
+
+        <div className="w-full max-w-sm lg:max-w-md">
+
+          {/* Mobile headline */}
+          <div className="lg:hidden text-center mb-6 mt-14">
+            <h2 className="text-2xl font-black text-white mb-1">שלוט בפסיכומטרי</h2>
+            <p className="text-white/50 text-xs">המערכת שיודעת מתי אתם עומדים לשכוח – ובוחנת אתכם בדיוק אז.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-              סיסמה
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                dir="ltr"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={mode === 'register' ? 'לפחות 6 תווים' : '••••••••'}
-                className="w-full px-4 py-3 pl-11 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
-              />
+          {/* Card */}
+          <div className="bg-white/10 backdrop-blur-2xl border border-white/15 rounded-3xl shadow-2xl overflow-hidden">
+
+            {/* Tabs */}
+            <div className="flex gap-1.5 p-2 bg-black/20">
+              {[['login', 'כניסה'], ['register', 'הרשמה']].map(([m, label]) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => switchMode(m)}
+                  className={`flex-1 py-2.5 text-sm font-bold rounded-2xl transition-all duration-200 ${
+                    mode === m
+                      ? 'bg-white text-violet-900 shadow-lg'
+                      : 'text-white/50 hover:text-white/80'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-5 space-y-3">
+
+              {mode === 'register' && (
+                <div>
+                  <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">
+                    שם תצוגה
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={30}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="כיצד תופיע בלוח המובילים"
+                    className={inputClass}
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">
+                  אימייל
+                </label>
+                <input
+                  type="email"
+                  dir="ltr"
+                  autoFocus
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">
+                  סיסמה
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    dir="ltr"
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={mode === 'register' ? 'לפחות 6 תווים' : '••••••••'}
+                    className={`${inputClass} pl-11`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {mode === 'register' && (
+                <div>
+                  <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">
+                    אימות סיסמה
+                  </label>
+                  <input
+                    type="password"
+                    dir="ltr"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={inputClass}
+                  />
+                </div>
+              )}
+
+              {mode === 'register' && (
+                <label className="flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-0.5 accent-violet-400 w-4 h-4 shrink-0"
+                  />
+                  <span className="text-xs text-white/40 leading-relaxed">
+                    קראתי ואני מסכים/ה ל
+                    <Link to="/terms" target="_blank" className="text-violet-400 hover:text-violet-300 underline font-bold mx-1">
+                      תנאי השימוש
+                    </Link>
+                  </span>
+                </label>
+              )}
+
+              {mode === 'login' && (
+                <div className="flex justify-start">
+                  <Link to="/forgot-password" className="text-xs text-violet-400 hover:text-violet-300 font-semibold transition-colors">
+                    שכחתי סיסמה?
+                  </Link>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-500/20 border border-red-400/30 rounded-xl px-4 py-2.5">
+                  <p className="text-xs text-red-300 font-medium">{error}</p>
+                </div>
+              )}
+
               <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                tabIndex={-1}
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-l from-violet-600 to-indigo-500 text-white py-3.5 rounded-2xl
+                           text-sm font-black tracking-wide hover:from-violet-500 hover:to-indigo-400
+                           disabled:opacity-40 transition-all shadow-xl shadow-indigo-900/60
+                           hover:shadow-violet-800/50 hover:scale-[1.01] active:scale-[0.99] mt-1"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    רגע...
+                  </span>
+                ) : mode === 'login' ? 'כניסה' : 'יצירת חשבון'}
               </button>
-            </div>
+            </form>
           </div>
 
-          {mode === 'register' && (
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                אימות סיסמה
-              </label>
-              <input
-                type="password"
-                dir="ltr"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 focus:border-transparent transition"
-              />
-            </div>
-          )}
-
-          {mode === 'register' && (
-            <label className="flex items-start gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="mt-0.5 accent-violet-600 w-4 h-4 shrink-0"
-              />
-              <span className="text-xs text-gray-500 leading-relaxed">
-                קראתי ואני מסכים/ה ל
-                <Link to="/terms" target="_blank" className="text-violet-600 hover:text-violet-800 underline font-semibold mx-1">
-                  תנאי השימוש
-                </Link>
+          {/* Mobile feature pills */}
+          <div className="lg:hidden flex flex-wrap justify-center gap-2 mt-6">
+            {['המערכת שיודעת מתי אתם עומדים לשכוח – ובוחנת אתכם בדיוק אז.', 'לוח מובילים', '5,445 מילים'].map((f) => (
+              <span key={f} className="flex items-center gap-1.5 px-3 py-1.5 bg-white/8 border border-white/10 rounded-full text-xs text-white/50">
+                <Star className="w-3 h-3 text-violet-400" />
+                {f}
               </span>
-            </label>
-          )}
+            ))}
+          </div>
 
-          {mode === 'login' && (
-            <div className="flex justify-end">
-              <Link
-                to="/forgot-password"
-                className="text-sm text-violet-600 hover:text-violet-800 font-semibold transition-colors"
-              >
-                שכחתי סיסמה?
-              </Link>
-            </div>
-          )}
-
-          {error && (
-            <p className="text-xs text-red-500 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white py-3 rounded-xl text-sm font-bold
-                       hover:from-violet-700 hover:to-indigo-700 disabled:opacity-50 transition-all
-                       shadow-md shadow-indigo-200/50 hover:shadow-lg hover:shadow-indigo-200/60 mt-1"
-          >
-            {loading ? 'רגע...' : mode === 'login' ? 'כניסה' : 'יצירת חשבון'}
-          </button>
-        </form>
+          <p className="text-center mt-5">
+            <Link to="/terms" className="text-xs text-white/20 hover:text-white/40 underline transition-colors">
+              תנאי שימוש
+            </Link>
+          </p>
+        </div>
       </div>
-
-      <p className="mt-5 text-xs text-gray-400 text-center">
-        למד 5,442 מילים פסיכומטריות בשיטת החזרות המרווחות.
-      </p>
-      <p className="mt-2 text-xs text-gray-400 text-center">
-        <Link to="/terms" className="hover:text-gray-600 underline transition-colors">
-          תנאי שימוש
-        </Link>
-      </p>
     </div>
   );
 };

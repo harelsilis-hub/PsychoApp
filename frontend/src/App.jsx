@@ -42,7 +42,7 @@ const ConditionalBackground = () => {
   const { pathname } = useLocation();
   const studyRoutes = ['/filter', '/review', '/quiz', '/triage'];
   const isStudySession = studyRoutes.some(r => pathname.endsWith(r)) || pathname === '/triage';
-  if (isStudySession) return null;
+  if (isStudySession || pathname === '/home') return null;
   return <FloatingWordsBackground />;
 };
 
