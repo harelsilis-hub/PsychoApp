@@ -5,6 +5,7 @@ import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
 import apiClient from '../api/client';
 import { reviewAPI } from '../api/review';
+import { customWordsAPI } from '../api/customWords';
 import FlashCard from '../components/FlashCard';
 import StudyCard from '../components/StudyCard';
 import SessionComplete from '../components/SessionComplete';
@@ -48,7 +49,8 @@ const ReviewSession = () => {
   const stateWords = location.state?.words;
   const isStudyMode = false; // always use FlashCard
 
-  const backPath = unitId ? `/unit/${unitId}` : '/';
+  const isMyWords = unitId === 'my-words';
+  const backPath = isMyWords ? '/my-words' : unitId ? `/unit/${unitId}` : '/';
 
   useEffect(() => { loadSession(); }, []);
 
@@ -66,7 +68,20 @@ const ReviewSession = () => {
         return;
       }
 
-      // ② Unit route mode: /unit/:id/review with no state → show only LEARNING (unknown) words
+      // ② My Words mode: /unit/my-words/review
+      if (isMyWords) {
+        const data = await customWordsAPI.getReviewWords();
+        const reviewWords = data.words || [];
+        if (reviewWords.length === 0) {
+          setNoUnknowns(true);
+          return;
+        }
+        setSessionWords(reviewWords);
+        setSessionTotal(reviewWords.length);
+        return;
+      }
+
+      // ③ Unit route mode: /unit/:id/review with no state → show only LEARNING (unknown) words
       const unit = unitId ? parseInt(unitId, 10) : parseInt(searchParams.get('unit') || '0', 10);
       if (unit > 0) {
         const data = await reviewAPI.getAllLearningWords(language);
@@ -117,7 +132,8 @@ const ReviewSession = () => {
     setIsSubmitting(false);
 
     // Fire-and-forget API call in background
-    reviewAPI.submitReview(currentWord.word_id, quality)
+    const submitFn = isMyWords ? customWordsAPI.submitReview : reviewAPI.submitReview;
+    submitFn(currentWord.word_id, quality)
       .then((result) => {
         if (result.goal_reached) {
           setGoalReached(true);

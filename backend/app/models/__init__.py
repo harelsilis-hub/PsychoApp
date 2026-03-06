@@ -9,6 +9,7 @@ from app.models.user_feedback import UserFeedback
 from app.models.password_reset_token import PasswordResetToken
 from app.models.user_badge import UserBadge
 from app.models.point_event import PointEvent
+from app.models.custom_word import CustomWord
 
 __all__ = [
     "User",
@@ -22,4 +23,5 @@ __all__ = [
     "PasswordResetToken",
     "UserBadge",
     "PointEvent",
+    "CustomWord",
 ]

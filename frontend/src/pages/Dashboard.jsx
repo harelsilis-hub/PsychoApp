@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
+import { customWordsAPI } from '../api/customWords';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -88,6 +89,7 @@ const Dashboard = () => {
   const { soundEnabled, toggleSound } = useSound();
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
+  const [myWordsStats, setMyWordsStats] = useState({ total: 0, learned: 0, percent: 0 });
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -106,6 +108,9 @@ const Dashboard = () => {
     progressAPI.getUserStats()
       .then(setUserStats)
       .catch((err) => console.error('Failed to load user stats:', err));
+    customWordsAPI.getStats()
+      .then(setMyWordsStats)
+      .catch((err) => console.error('Failed to load my-words stats:', err));
   }, [location.key, language]);
 
   const getUnitData = (unitNum) => {
@@ -527,6 +532,66 @@ const Dashboard = () => {
         </motion.div>
 
         {/* ג"€ג"€ Unit grid ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ג"€ */}
+        {/* ─── My Words tile ──────────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-2 sm:mb-3"
+        >
+          <button
+            onClick={() => navigate('/my-words')}
+            className="w-full flex items-center gap-4 p-3.5 sm:p-4
+                       bg-white/90 backdrop-blur-xl
+                       border border-gray-200/70
+                       rounded-[22px]
+                       shadow-md shadow-gray-200/40
+                       hover:shadow-xl hover:shadow-pink-200/50
+                       hover:-translate-y-0.5 hover:bg-white
+                       hover:ring-2 hover:ring-pink-300/30
+                       active:scale-[0.98]
+                       transition-all duration-300 text-right group"
+          >
+            <div className="w-11 h-11 shrink-0 rounded-xl
+                            bg-gradient-to-br from-rose-500 to-pink-500
+                            flex items-center justify-center
+                            shadow-lg shadow-pink-300/40
+                            group-hover:scale-105 transition-transform duration-300">
+              <span className="text-white text-lg">📌</span>
+            </div>
+            <div className="flex-1 min-w-0 text-right">
+              <p className="text-sm font-black text-gray-900">המילים שלי</p>
+              <p className="text-xs font-medium text-gray-500 mt-0.5">
+                {myWordsStats.total > 0
+                  ? `${myWordsStats.total} מילים · ${myWordsStats.learned} נלמדו`
+                  : 'הוסף מילים משלך ועקוב אחרי ההתקדמות'}
+              </p>
+            </div>
+            {myWordsStats.total > 0 && (
+              <div className="shrink-0 w-28 hidden sm:block">
+                <div className="flex justify-end text-[10px] font-bold mb-1">
+                  <span className="text-rose-500">{myWordsStats.percent}%</span>
+                </div>
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${myWordsStats.percent}%` }}
+                    transition={{ duration: 0.9, ease: 'easeOut' }}
+                    className="h-full rounded-full bg-gradient-to-r from-rose-400 to-pink-500"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="shrink-0 px-3 py-1.5 rounded-xl
+                            text-[11px] font-black text-white uppercase tracking-wider
+                            bg-gradient-to-r from-rose-500 to-pink-500
+                            shadow-sm shadow-pink-200/60
+                            group-hover:shadow-md transition-shadow duration-300">
+              {myWordsStats.total === 0 ? 'התחל' : 'פתח'} ←
+            </div>
+          </button>
+        </motion.div>
+
         <div className="grid grid-cols-2 landscape:grid-cols-5 md:grid-cols-3 lg:grid-cols-5 lg:flex-1 lg:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
           {availableUnits.map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);

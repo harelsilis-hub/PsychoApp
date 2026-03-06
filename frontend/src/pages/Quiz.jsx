@@ -4,6 +4,7 @@ import { ArrowRight, Brain, CheckCircle, XCircle, Trophy, ChevronRight } from 'l
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
+import { customWordsAPI } from '../api/customWords';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
 
@@ -54,7 +55,7 @@ function buildQuestions(learnedWords, distractorPool, recentIds = new Set()) {
       ...distractors.map((d) => ({ hebrew: d.hebrew, isCorrect: false })),
     ]);
 
-    questions.push({ word_id: correct.word_id, english: correct.english, correct: correct.hebrew, options });
+    questions.push({ word_id: correct.word_id, english: correct.english, correct: correct.hebrew, options, isCustom: correct.isCustom || false });
   }
 
   return questions;
@@ -120,6 +121,7 @@ const QuizResult = ({ score, skipped, total, onRetry, onBack }) => {
 const Quiz = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const isMyWords = id === 'my-words';
   const unitNum = parseInt(id, 10);
   const { language } = useLanguage();
   const { playCorrect, playWrong, playDontKnow } = useSound();
@@ -150,8 +152,13 @@ const Quiz = () => {
     setError(null);
 
     try {
-      const res = await reviewAPI.getAllLearnedWords(language);
-      const learnedWords = res.words || [];
+      const [regularRes, customRes] = await Promise.all([
+        reviewAPI.getAllLearnedWords(language),
+        customWordsAPI.getQuizWords(),
+      ]);
+      const regularWords = regularRes.words || [];
+      const customWords  = (customRes.words || []).map(w => ({ ...w, isCustom: true }));
+      const learnedWords = [...regularWords, ...customWords];
 
       if (learnedWords.length === 0) {
         setNoWords(true);
@@ -172,7 +179,7 @@ const Quiz = () => {
     }
   };
 
-  useEffect(() => { loadQuiz(); }, [unitNum]);
+  useEffect(() => { loadQuiz(); }, [id]);
 
   const currentQ = questions[qIndex];
   const selected = answers[qIndex] ?? null;
@@ -185,7 +192,8 @@ const Quiz = () => {
     if (opt.isCorrect) setScore((s) => s + 1);
     // Submit to SM-2: correct → quality 4 (good recall), wrong → quality 1 (failed)
     try {
-      const result = await reviewAPI.submitReview(currentQ.word_id, opt.isCorrect ? 4 : 1);
+      const submitFn = currentQ.isCustom ? customWordsAPI.submitReview : reviewAPI.submitReview;
+      const result = await submitFn(currentQ.word_id, opt.isCorrect ? 4 : 1);
       if (opt.isCorrect && result?.xp_earned > 0) {
       }
     } catch (err) {
@@ -200,7 +208,8 @@ const Quiz = () => {
     setSkipped((s) => s + 1);
     // quality 0 = complete blackout — hardest penalty, resets interval
     try {
-      await reviewAPI.submitReview(currentQ.word_id, 0);
+      const submitFn = currentQ.isCustom ? customWordsAPI.submitReview : reviewAPI.submitReview;
+      await submitFn(currentQ.word_id, 0);
     } catch (err) {
       console.error('SM-2 update failed:', err);
     }
@@ -272,7 +281,7 @@ const Quiz = () => {
             הבוחן בוחן מילים שסימנת כ<strong>ידועות</strong> בסשן חזרה. עבור דרך סינון מילים ← סשן חזרה וסמן מילים כ"ידועות" — הן יופיעו כאן.
           </p>
           <button
-            onClick={() => navigate(`/unit/${unitNum}`)}
+            onClick={() => navigate(isMyWords ? '/my-words' : `/unit/${unitNum}`)}
             className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-xl font-semibold"
           >
             חזרה ליחידה
@@ -290,7 +299,7 @@ const Quiz = () => {
         skipped={skipped}
         total={questions.length}
         onRetry={loadQuiz}
-        onBack={() => navigate(`/unit/${unitNum}`)}
+        onBack={() => navigate(isMyWords ? '/my-words' : `/unit/${unitNum}`)}
       />
     );
   }
@@ -304,11 +313,13 @@ const Quiz = () => {
       {/* Header */}
       <div className="bg-white/80 backdrop-blur border-b border-gray-100 sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(`/unit/${unitNum}`)} className="text-gray-500 hover:text-gray-900 transition-colors">
+          <button onClick={() => navigate(isMyWords ? '/my-words' : `/unit/${unitNum}`)} className="text-gray-500 hover:text-gray-900 transition-colors">
             <ArrowRight className="w-5 h-5" />
           </button>
           <Brain className="w-4 h-4 text-green-600" />
-          <span className="font-semibold text-gray-800 flex-1">בוחן תרגול — יחידה {unitNum}</span>
+          <span className="font-semibold text-gray-800 flex-1">
+            {isMyWords ? 'בוחן תרגול — המילים שלי' : `בוחן תרגול — יחידה ${unitNum}`}
+          </span>
           <span className="text-sm text-gray-500 font-medium">
             {qIndex + 1} / {questions.length}
           </span>

@@ -22,6 +22,7 @@ import WordList from './pages/WordList';
 import Admin from './pages/Admin';
 import TermsOfUsePage from './pages/TermsOfUsePage';
 import LeaderboardPage from './pages/LeaderboardPage';
+import MyWordsDetail from './pages/MyWordsDetail';
 import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
 import InstallPWA from './components/InstallPWA';
@@ -83,6 +84,9 @@ function App() {
 
             {/* Legacy review route */}
             <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />
+
+            {/* My Words — custom vocabulary unit */}
+            <Route path="/my-words" element={<ProtectedRoute><MyWordsDetail /></ProtectedRoute>} />
 
             {/* Leaderboard */}
             <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />

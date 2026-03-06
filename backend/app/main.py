@@ -14,8 +14,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.db.session import engine, Base, DIALECT
-from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router
+from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router
 
 
 @asynccontextmanager
@@ -227,6 +227,12 @@ app.include_router(
     tts_router,
     prefix="/api/v1",
     tags=["Text-to-Speech"],
+)
+
+app.include_router(
+    custom_words_router,
+    prefix="/api/v1/my-words",
+    tags=["My Words - Custom Vocabulary"],
 )
 
 # TODO: Add additional route modules here
