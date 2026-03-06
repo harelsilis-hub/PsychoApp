@@ -206,16 +206,9 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
               animate={{ rotateY: 0, opacity: 1 }}
               exit={{ rotateY: -90, opacity: 0 }}
               transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="relative bg-white rounded-3xl shadow-xl p-3 md:p-5"
+              onClick={handleFlip}
+              className="relative bg-white rounded-3xl shadow-xl p-3 md:p-5 cursor-pointer select-none"
             >
-              {/* Flip back button */}
-              <button
-                onClick={handleFlip}
-                title="חזרה לצד הקדמי"
-                className="absolute top-3 left-3 w-7 h-7 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-400 hover:text-gray-600 rounded-full transition-colors"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-              </button>
 
               {/* Hebrew answer */}
               <div className="text-center pb-2 mb-2 md:pb-4 md:mb-4 border-b border-gray-100">
