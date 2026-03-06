@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://frontend-one-mu-68.vercel.app/sitemap.xml
