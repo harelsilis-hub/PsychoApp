@@ -51,6 +51,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS daily_words_reviewed INTEGER DEFAULT 0",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_date DATE DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS display_name VARCHAR(30) DEFAULT NULL",
+                "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL",
                 # Ensure admin account
                 "UPDATE users SET is_admin = true WHERE email = 'harel.silis@gmail.com'",
                 # Fix Hebrew words truncated by unescaped gershayim

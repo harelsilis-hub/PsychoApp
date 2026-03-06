@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, BookOpen, Trophy, Brain, Star } from 'lucide-react';
 
 const FEATURES = [
@@ -12,7 +13,7 @@ const FEATURES = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, googleLogin } = useAuth();
 
   const [mode, setMode]                       = useState('login');
   const [email, setEmail]                     = useState('');
@@ -276,6 +277,34 @@ const LoginPage = () => {
                   </span>
                 ) : mode === 'login' ? 'כניסה' : 'יצירת חשבון'}
               </button>
+
+              {/* Google Sign-In */}
+              <div className="relative flex items-center gap-3 my-1">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs text-white/30 font-medium shrink-0">או</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+              <div className="flex justify-center">
+                <GoogleLogin
+                  onSuccess={async ({ credential }) => {
+                    setLoading(true);
+                    setError('');
+                    try {
+                      await googleLogin(credential);
+                      navigate('/dashboard', { replace: true });
+                    } catch {
+                      setError('שגיאה בהתחברות עם Google. נסה שוב.');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  onError={() => setError('שגיאה בהתחברות עם Google.')}
+                  theme="filled_black"
+                  shape="pill"
+                  locale="he"
+                  text={mode === 'login' ? 'signin_with' : 'signup_with'}
+                />
+              </div>
             </form>
           </div>
 

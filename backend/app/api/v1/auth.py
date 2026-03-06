@@ -9,12 +9,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel
 from passlib.context import CryptContext
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_requests
 
 from app.db.session import get_db
 from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
 from app.auth.jwt import create_access_token
 from app.auth.dependencies import get_current_user
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -66,10 +70,16 @@ async def login(data: LoginRequest, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(User).where(User.email == data.email.strip().lower()))
     user = result.scalar_one_or_none()
 
-    if not user or not pwd_context.verify(data.password.strip(), user.hashed_password):
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="אימייל או סיסמה שגויים.")
+
+    if not user.hashed_password:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="חשבון זה מחובר עם Google. אנא התחבר עם Google.")
+
+    if not pwd_context.verify(data.password.strip(), user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password."
+            detail="אימייל או סיסמה שגויים."
         )
 
     token = create_access_token(user.id, user.email)
@@ -85,6 +95,47 @@ async def me(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         is_admin=current_user.is_admin,
         display_name=current_user.display_name,
+    )
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token
+
+
+@router.post("/google", response_model=AuthResponse)
+async def google_auth(data: GoogleAuthRequest, db: AsyncSession = Depends(get_db)):
+    """Sign in or register with a Google ID token."""
+    if not GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=500, detail="Google OAuth is not configured.")
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            data.credential,
+            google_requests.Request(),
+            GOOGLE_CLIENT_ID,
+        )
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid Google token.")
+
+    email = idinfo["email"].strip().lower()
+    name = idinfo.get("name", "")
+    display_name = name[:30] if name else None
+
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        user = User(email=email, hashed_password="", display_name=display_name)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    token = create_access_token(user.id, user.email)
+    return AuthResponse(
+        access_token=token,
+        user_id=user.id,
+        email=user.email,
+        is_admin=user.is_admin,
+        display_name=user.display_name,
     )
 
 

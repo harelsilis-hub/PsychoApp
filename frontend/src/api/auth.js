@@ -29,4 +29,9 @@ export const authAPI = {
     const response = await apiClient.post('/v1/auth/reset-password', { token, password });
     return response.data;
   },
+
+  googleAuth: async (credential) => {
+    const response = await apiClient.post('/v1/auth/google', { credential });
+    return response.data;
+  },
 };

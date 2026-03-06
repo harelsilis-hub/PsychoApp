@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -48,6 +49,7 @@ const ConditionalBackground = () => {
 
 function App() {
   return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
     <ThemeProvider>
       <SoundProvider>
       <LanguageProvider>
@@ -93,6 +95,7 @@ function App() {
       </LanguageProvider>
       </SoundProvider>
     </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
 
