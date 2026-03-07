@@ -61,7 +61,7 @@ const LoginPage = () => {
     transition backdrop-blur-sm`;
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 flex" dir="rtl">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-slate-950 via-indigo-950 to-violet-950 flex" dir="rtl">
 
       {/* Background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none select-none">
@@ -117,7 +117,7 @@ const LoginPage = () => {
       </div>
 
       {/* ── Form side ── */}
-      <div className="flex-1 flex items-center justify-center p-5 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-5 relative z-10 py-10">
 
         {/* Mobile logo */}
         <div className="absolute top-6 right-6 flex items-center gap-2.5 lg:hidden">
