@@ -31,6 +31,10 @@ anyio==4.2.0
 # Email
 httpx==0.26.0
 
+# Push Notifications
+pywebpush==2.0.0
+apscheduler==3.10.4
+
 # Google OAuth
 google-auth==2.28.0
 

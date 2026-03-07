@@ -12,10 +12,13 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 from app.db.session import engine, Base, DIALECT
-from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router
+from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord, PushSubscription
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router, push_router
+from app.api.v1.push import send_streak_reminders
 
 
 @asynccontextmanager
@@ -89,6 +92,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     print("[OK] Database tables ready.")
 
+    # ── Streak reminder scheduler ─────────────────────────────────────────────
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(
+        send_streak_reminders,
+        CronTrigger(hour=20, minute=0, timezone="Asia/Jerusalem"),
+        id="streak_reminders",
+        replace_existing=True,
+    )
+    scheduler.start()
+    print("[OK] Scheduler started — streak reminders at 20:00 Israel time.")
+
     # ── Auto-seed words if the table is empty ─────────────────────────────────
     async with engine.begin() as conn:
         result = await conn.execute(text("SELECT COUNT(*) FROM words"))
@@ -121,6 +135,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
+    scheduler.shutdown()
     # Cleanup on shutdown
     await engine.dispose()
     print("[OK] Database connection closed.")
@@ -233,6 +248,12 @@ app.include_router(
     custom_words_router,
     prefix="/api/v1/my-words",
     tags=["My Words - Custom Vocabulary"],
+)
+
+app.include_router(
+    push_router,
+    prefix="/api/v1/push",
+    tags=["Push Notifications"],
 )
 
 # TODO: Add additional route modules here

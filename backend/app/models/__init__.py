@@ -10,6 +10,7 @@ from app.models.password_reset_token import PasswordResetToken
 from app.models.user_badge import UserBadge
 from app.models.point_event import PointEvent
 from app.models.custom_word import CustomWord
+from app.models.push_subscription import PushSubscription
 
 __all__ = [
     "User",
@@ -24,4 +25,5 @@ __all__ = [
     "UserBadge",
     "PointEvent",
     "CustomWord",
+    "PushSubscription",
 ]

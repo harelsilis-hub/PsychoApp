@@ -4,6 +4,7 @@ import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu } from '
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { customWordsAPI } from '../api/customWords';
+import { subscribeToPush } from '../api/push';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -99,6 +100,10 @@ const Dashboard = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    subscribeToPush();
   }, []);
 
   useEffect(() => {
