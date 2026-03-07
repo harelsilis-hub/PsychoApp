@@ -13,7 +13,7 @@ from pywebpush import webpush, WebPushException
 from app.db.session import get_db, AsyncSessionLocal
 from app.models.push_subscription import PushSubscription
 from app.models.user import User
-from app.auth.dependencies import get_current_user
+from app.auth.dependencies import get_current_user, require_admin
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -68,6 +68,42 @@ async def unsubscribe(
     )
     await db.commit()
     return {"ok": True}
+
+
+@router.post("/test", dependencies=[Depends(require_admin)])
+async def test_push(current_user: User = Depends(get_current_user)):
+    """Admin-only: send a test push to the current admin user."""
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(PushSubscription).where(PushSubscription.user_id == current_user.id)
+        )
+        subs = result.scalars().all()
+
+    if not subs:
+        return {"ok": False, "detail": "No subscription found for your account. Enable notifications first."}
+
+    payload = json.dumps({
+        "title": "Mila",
+        "body": "הרצף שלך עומד להתאפס! 🔥 היכנס עכשיו כדי לשמור על הרצף",
+        "icon": "/mila_logo.png",
+        "url": "/",
+    })
+
+    sent = 0
+    for sub in subs:
+        try:
+            await asyncio.to_thread(
+                webpush,
+                subscription_info={"endpoint": sub.endpoint, "keys": {"p256dh": sub.p256dh, "auth": sub.auth}},
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS,
+            )
+            sent += 1
+        except WebPushException as e:
+            logger.warning(f"[Push] Test failed: {e}")
+
+    return {"ok": True, "sent": sent}
 
 
 async def send_streak_reminders():

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell } from 'lucide-react';
 import { adminAPI } from '../api/admin';
+import { testPushNotification, subscribeToPush } from '../api/push';
 
 // ─── Inline editable word row ─────────────────────────────────────────────────
 
@@ -178,6 +179,7 @@ const Admin = () => {
   const [newUnit, setNewUnit]       = useState('1');
   const [adding, setAdding]         = useState(false);
   const [addToast, setAddToast]     = useState(null);
+  const [pushStatus, setPushStatus] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -271,6 +273,42 @@ const Admin = () => {
         <h1 className="text-3xl font-black text-gray-900 tracking-tight">Admin Panel</h1>
         <p className="text-sm text-gray-500 mt-1">Word database management — local testing mode</p>
       </div>
+
+      {/* ── Push Notifications Test ──────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/70 backdrop-blur border border-gray-200/70 rounded-2xl shadow-sm p-5 flex items-center gap-4"
+      >
+        <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
+          <Bell className="w-6 h-6 text-violet-700" />
+        </div>
+        <div className="flex-1">
+          <p className="font-black text-gray-900">Push Notifications</p>
+          <p className="text-xs text-gray-500 mt-0.5">{pushStatus || 'Send a test streak reminder to yourself'}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => { await subscribeToPush(); setPushStatus('Subscribed!'); }}
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
+          >
+            Enable
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const res = await testPushNotification();
+                setPushStatus(res.ok ? `Sent to ${res.sent} device(s)` : res.detail);
+              } catch {
+                setPushStatus('Error — are you subscribed?');
+              }
+            }}
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-700 text-white transition-colors"
+          >
+            Test Send
+          </button>
+        </div>
+      </motion.div>
 
       {/* ── Section 1: Stats ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu } from 'lucide-react';
+import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { customWordsAPI } from '../api/customWords';
@@ -102,9 +102,12 @@ const Dashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    subscribeToPush();
-  }, []);
+  const [notifEnabled, setNotifEnabled] = useState(Notification.permission === 'granted');
+
+  const handleEnableNotifications = async () => {
+    await subscribeToPush();
+    setNotifEnabled(Notification.permission === 'granted');
+  };
 
   useEffect(() => {
     progressAPI.getUnitStats(language)
@@ -338,6 +341,19 @@ const Dashboard = () => {
                       ? <Volume2 className="w-4 h-4 text-violet-500 shrink-0" />
                       : <VolumeX className="w-4 h-4 text-gray-300 shrink-0" />}
                     <span>{soundEnabled ? 'כבה צלילים' : 'הפעל צלילים'}</span>
+                  </button>
+
+                  {/* Notifications */}
+                  <button
+                    onClick={() => { handleEnableNotifications(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-gray-700 hover:bg-gray-50
+                               transition-colors duration-150 text-right"
+                  >
+                    {notifEnabled
+                      ? <Bell className="w-4 h-4 text-violet-500 shrink-0" />
+                      : <BellOff className="w-4 h-4 text-gray-300 shrink-0" />}
+                    <span>{notifEnabled ? 'התראות פעילות' : 'הפעל התראות'}</span>
                   </button>
 
                   {/* Dark mode */}
