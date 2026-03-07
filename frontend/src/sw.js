@@ -13,8 +13,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Mila';
   const options = {
     body: data.body || 'הרצף שלך עומד להתאפס! 🔥',
-    icon: '/mila_logo.png',
-    badge: '/mila_logo.png',
+    icon: '/logo.jpg',
+    badge: '/logo.jpg',
     data: { url: data.url || '/' },
     dir: 'rtl',
     lang: 'he',

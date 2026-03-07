@@ -80,7 +80,7 @@ const LoginPage = () => {
         <div className="flex items-center gap-3 mb-8">
           <div className="relative">
             <div className="absolute inset-0 bg-violet-500/40 rounded-xl blur-lg" />
-            <img src="/mila_logo.png" alt="Mila" className="relative w-12 h-12 object-contain rounded-xl" />
+            <img src="/logo.jpg" alt="Mila" className="relative w-12 h-12 object-contain rounded-xl" />
           </div>
           <div>
             <p className="text-2xl font-black text-white tracking-tight">Mila</p>
@@ -121,7 +121,7 @@ const LoginPage = () => {
 
         {/* Mobile logo */}
         <div className="absolute top-6 right-6 flex items-center gap-2.5 lg:hidden">
-          <img src="/mila_logo.png" alt="Mila" className="w-9 h-9 rounded-xl object-contain" />
+          <img src="/logo.jpg" alt="Mila" className="w-9 h-9 rounded-xl object-contain" />
           <p className="text-white font-black text-xl tracking-tight">Mila</p>
         </div>
 

@@ -32,7 +32,7 @@ const HomePage = () => {
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <img src="/mila_logo.png" alt="Mila" className="w-8 h-8 object-contain" />
+            <img src="/logo.jpg" alt="Mila" className="w-8 h-8 object-contain" />
             <span className="font-black text-lg tracking-tight">Mila</span>
           </div>
           <button
@@ -171,7 +171,7 @@ const HomePage = () => {
       <footer className="border-t border-gray-100 py-8 px-5">
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <img src="/mila_logo.png" alt="Mila" className="w-5 h-5 object-contain" />
+            <img src="/logo.jpg" alt="Mila" className="w-5 h-5 object-contain" />
             <span className="font-black text-sm text-gray-700">Mila</span>
             <span className="text-gray-300 text-sm">· אוצר מילים פסיכומטרי</span>
           </div>

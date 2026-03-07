@@ -174,7 +174,7 @@ const Dashboard = () => {
                        rounded-[20px] sm:rounded-[24px] px-4 sm:px-5 py-3 sm:py-4
                        shadow-xl shadow-violet-200/30"
           >
-            <img src="/mila_logo.png" alt="Mila" className="hidden sm:block w-12 h-12 shrink-0 object-contain" />
+            <img src="/logo.jpg" alt="Mila" className="hidden sm:block w-12 h-12 shrink-0 object-contain" />
             <div className="min-w-0">
               <p className="hidden sm:block text-[11px] font-bold text-gray-600 uppercase tracking-[0.14em]">
                 אוצר מילים פסיכומטרי

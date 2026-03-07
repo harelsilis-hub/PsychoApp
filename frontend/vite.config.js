@@ -27,12 +27,12 @@ export default defineConfig({
         dir: 'rtl',
         icons: [
           {
-            src: 'mila_logo.png',
+            src: 'logo.jpg',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: 'mila_logo.png',
+            src: 'logo.jpg',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
