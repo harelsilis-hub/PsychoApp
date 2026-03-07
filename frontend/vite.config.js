@@ -12,7 +12,6 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        navigateFallbackDenylist: [/^\/sitemap\.xml$/, /^\/robots\.txt$/],
       },
       manifest: {
         name: 'Mila - לימוד מילים',
