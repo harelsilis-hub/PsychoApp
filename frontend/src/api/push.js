@@ -24,6 +24,7 @@ export async function subscribeToPush() {
   const reg = await navigator.serviceWorker.register('/sw.js');
   await navigator.serviceWorker.ready;
 
+  if (typeof Notification === 'undefined') throw new Error('Notifications not supported in this browser');
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('Permission denied');
 

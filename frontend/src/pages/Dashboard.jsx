@@ -102,7 +102,9 @@ const Dashboard = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const [notifEnabled, setNotifEnabled] = useState(Notification.permission === 'granted');
+  const [notifEnabled, setNotifEnabled] = useState(
+    typeof Notification !== 'undefined' && Notification.permission === 'granted'
+  );
 
   const handleEnableNotifications = async () => {
     try {
