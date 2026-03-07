@@ -115,6 +115,13 @@ const Dashboard = () => {
     }
   };
 
+  // Auto-prompt for notification permission on first visit
+  useEffect(() => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+      handleEnableNotifications();
+    }
+  }, []);
+
   useEffect(() => {
     progressAPI.getUnitStats(language)
       .then(setUnitStats)
