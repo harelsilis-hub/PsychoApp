@@ -289,7 +289,14 @@ const Admin = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={async () => { await subscribeToPush(); setPushStatus('Subscribed!'); }}
+            onClick={async () => {
+              try {
+                await subscribeToPush();
+                setPushStatus('Subscribed!');
+              } catch (err) {
+                setPushStatus(`Error: ${err.message}`);
+              }
+            }}
             className="px-3 py-2 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
           >
             Enable

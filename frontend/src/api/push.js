@@ -13,30 +13,28 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 export async function subscribeToPush() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-
-  try {
-    const { data } = await apiClient.get('/v1/push/vapid-public-key');
-    const publicKey = data.publicKey;
-    if (!publicKey) return;
-
-    const reg = await navigator.serviceWorker.register('/sw.js');
-    await navigator.serviceWorker.ready;
-
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
-
-    let subscription = await reg.pushManager.getSubscription();
-    if (!subscription) {
-      subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
-      });
-    }
-
-    const { endpoint, keys } = subscription.toJSON();
-    await apiClient.post('/v1/push/subscribe', { endpoint, keys });
-  } catch (err) {
-    console.warn('[Push] Subscribe failed:', err);
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    throw new Error('Push not supported in this browser');
   }
+
+  const { data } = await apiClient.get('/v1/push/vapid-public-key');
+  const publicKey = data.publicKey;
+  if (!publicKey) throw new Error('VAPID public key not configured on server');
+
+  const reg = await navigator.serviceWorker.register('/sw.js');
+  await navigator.serviceWorker.ready;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') throw new Error('Permission denied');
+
+  let subscription = await reg.pushManager.getSubscription();
+  if (!subscription) {
+    subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+  }
+
+  const { endpoint, keys } = subscription.toJSON();
+  await apiClient.post('/v1/push/subscribe', { endpoint, keys });
 }

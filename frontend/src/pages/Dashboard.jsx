@@ -105,8 +105,12 @@ const Dashboard = () => {
   const [notifEnabled, setNotifEnabled] = useState(Notification.permission === 'granted');
 
   const handleEnableNotifications = async () => {
-    await subscribeToPush();
-    setNotifEnabled(Notification.permission === 'granted');
+    try {
+      await subscribeToPush();
+      setNotifEnabled(true);
+    } catch (err) {
+      console.warn('[Push]', err.message);
+    }
   };
 
   useEffect(() => {
