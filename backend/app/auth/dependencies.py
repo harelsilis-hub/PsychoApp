@@ -1,9 +1,9 @@
 """FastAPI authentication dependencies."""
-from datetime import datetime, timezone
+from datetime import datetime
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.db.session import get_db
 from app.models.user import User
@@ -35,8 +35,14 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
 
-    user.last_seen = datetime.now(timezone.utc)
+    # Update last_seen via raw SQL to avoid interfering with the request's session state
+    await db.execute(
+        text("UPDATE users SET last_seen = :now WHERE id = :id"),
+        {"now": datetime.utcnow(), "id": user.id},
+    )
     await db.commit()
+    # Refresh so the returned user object reflects the committed state
+    await db.refresh(user)
 
     return user
 

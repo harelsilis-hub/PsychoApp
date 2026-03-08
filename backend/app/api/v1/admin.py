@@ -1,7 +1,7 @@
 """
 Admin panel endpoints — completely open, no authentication required.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -108,7 +108,7 @@ async def get_online_count(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return number of users active in the last 5 minutes."""
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+    cutoff = datetime.utcnow() - timedelta(minutes=5)
     count = await db.scalar(
         select(func.count()).select_from(User).where(User.last_seen >= cutoff)
     )
