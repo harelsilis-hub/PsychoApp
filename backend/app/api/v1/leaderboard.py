@@ -14,10 +14,15 @@ from app.auth.dependencies import get_current_user
 router = APIRouter()
 
 
-def _get_monday_utc() -> datetime:
+def _get_sunday_utc() -> datetime:
     today = datetime.utcnow().date()
-    monday = today - timedelta(days=today.weekday())
-    return datetime.combine(monday, datetime.min.time())
+    # weekday(): Monday=0 ... Sunday=6; shift so Sunday=0
+    sunday = today - timedelta(days=(today.weekday() + 1) % 7)
+    return datetime.combine(sunday, datetime.min.time())
+
+
+def _get_today_utc() -> datetime:
+    return datetime.combine(datetime.utcnow().date(), datetime.min.time())
 
 
 def _user_entry(u: User, rank: int, weekly_xp: int | None = None) -> dict:
@@ -38,15 +43,15 @@ def _user_entry(u: User, rank: int, weekly_xp: int | None = None) -> dict:
 
 @router.get("")
 async def get_leaderboard(
-    type: str = Query(default="alltime", description="'weekly' or 'alltime'"),
+    type: str = Query(default="alltime", description="'daily', 'weekly' or 'alltime'"),
     limit: int = Query(default=20, ge=1, le=50),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Return ranked leaderboard plus the calling user's own rank."""
 
-    if type == "weekly":
-        monday = _get_monday_utc()
+    if type in ("weekly", "daily"):
+        monday = _get_today_utc() if type == "daily" else _get_sunday_utc()
 
         # Fetch ALL users (ordered by total XP as tiebreaker)
         all_users_result = await db.execute(select(User).order_by(User.xp.desc()).limit(limit))
@@ -81,7 +86,7 @@ async def get_leaderboard(
         if user_entry is None:
             user_entry = _user_entry(current_user, len(entries) + 1, weekly_xp=weekly_map.get(current_user.id, 0))
 
-        return {"entries": entries, "user_entry": user_entry, "type": "weekly"}
+        return {"entries": entries, "user_entry": user_entry, "type": type}
 
     else:  # alltime
         top_result = await db.execute(

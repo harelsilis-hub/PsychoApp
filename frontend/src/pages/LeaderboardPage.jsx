@@ -106,7 +106,7 @@ const LeaderRow = ({ entry, isMe, type }) => (
     {/* XP + streak */}
     <div className="text-right shrink-0">
       <p className="text-sm font-black text-gray-800 tabular-nums">
-        {(type === 'weekly' ? (entry.weekly_xp ?? 0) : entry.xp).toLocaleString()}
+        {(type !== 'alltime' ? (entry.weekly_xp ?? 0) : entry.xp).toLocaleString()}
         <span className="text-xs font-semibold text-gray-400 ml-1">XP</span>
       </p>
       {entry.streak > 0 && (
@@ -158,9 +158,9 @@ const LeaderboardPage = () => {
           <Trophy className="w-5 h-5 text-yellow-500" />
           <span className="font-black text-gray-900 flex-1">לוח המובילים</span>
 
-          {/* Weekly / All-time toggle */}
+          {/* Daily / Weekly / All-time toggle */}
           <div className="flex bg-gray-100 rounded-xl p-0.5 gap-0.5">
-            {['alltime', 'weekly'].map((t) => (
+            {['daily', 'weekly', 'alltime'].map((t) => (
               <button
                 key={t}
                 onClick={() => setType(t)}
@@ -170,7 +170,7 @@ const LeaderboardPage = () => {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {t === 'alltime' ? 'כל הזמנים' : 'שבועי'}
+                {t === 'alltime' ? 'כל הזמנים' : t === 'weekly' ? 'שבועי' : 'היום'}
               </button>
             ))}
           </div>
