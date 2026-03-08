@@ -19,6 +19,11 @@ code {
     monospace;
 }
 
+/* UserWay accessibility widget — hidden floating button, opened via menu */
+#userwayAccessibilityIcon {
+  display: none !important;
+}
+
 /* ── Dark mode CSS variables ─────────────────────────────── */
 :root {
   --fw-bg: white;

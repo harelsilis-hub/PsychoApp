@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff } from 'lucide-react';
+import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff, Accessibility } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { customWordsAPI } from '../api/customWords';
@@ -397,6 +397,18 @@ const Dashboard = () => {
                       </button>
                     </>
                   )}
+
+                  {/* Accessibility */}
+                  <div className="h-px bg-gray-100 mx-3" />
+                  <button
+                    onClick={() => { setMenuOpen(false); document.getElementById('userwayAccessibilityIcon')?.click(); }}
+                    className="w-full flex items-center gap-3 px-4 py-3
+                               text-sm font-medium text-gray-700 hover:bg-gray-50
+                               transition-colors duration-150 text-right"
+                  >
+                    <Accessibility className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>נגישות</span>
+                  </button>
 
                   {/* Logout */}
                   <div className="h-px bg-gray-100 mx-3" />
