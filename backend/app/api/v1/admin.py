@@ -1,6 +1,7 @@
 """
 Admin panel endpoints — completely open, no authentication required.
 """
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -97,6 +98,21 @@ async def flag_word(
     username = current_user.display_name or current_user.email
     await notify_admins(db, "דיווח חדש על מילה 🚩", f"User {username} reported: {word.english}.")
     return {"success": True, "word_id": word_id}
+
+
+# ── Online users count ────────────────────────────────────────────────────────
+
+@router.get("/online-count")
+async def get_online_count(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return number of users active in the last 5 minutes."""
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+    count = await db.scalar(
+        select(func.count()).select_from(User).where(User.last_seen >= cutoff)
+    )
+    return {"online": count or 0}
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────

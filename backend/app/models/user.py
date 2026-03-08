@@ -41,6 +41,7 @@ class User(Base):
     last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     last_goal_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    last_seen: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
     # Relationships
     progress: Mapped[List["UserWordProgress"]] = relationship(

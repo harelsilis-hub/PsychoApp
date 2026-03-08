@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -180,9 +180,15 @@ const Admin = () => {
   const [adding, setAdding]         = useState(false);
   const [addToast, setAddToast]     = useState(null);
   const [pushStatus, setPushStatus] = useState(null);
+  const [onlineCount, setOnlineCount] = useState(null);
 
   useEffect(() => {
     loadData();
+    // Poll online count immediately then every 30s
+    const fetchOnline = () => adminAPI.getOnlineCount().then((d) => setOnlineCount(d.online)).catch(() => {});
+    fetchOnline();
+    const interval = setInterval(fetchOnline, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadData = async () => {
@@ -318,7 +324,7 @@ const Admin = () => {
       </motion.div>
 
       {/* ── Section 1: Stats ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -349,6 +355,23 @@ const Admin = () => {
               {stats ? stats.flagged_count : '—'}
             </p>
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-0.5">Flagged</p>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="bg-white/70 backdrop-blur border border-gray-200/70 rounded-2xl shadow-sm p-5 flex items-center gap-4"
+        >
+          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+            <Radio className="w-6 h-6 text-green-600" />
+          </div>
+          <div>
+            <p className="text-3xl font-black text-gray-900 tabular-nums">
+              {onlineCount !== null ? onlineCount : '—'}
+            </p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mt-0.5">Online Now</p>
           </div>
         </motion.div>
       </div>

@@ -16,6 +16,11 @@ export const adminAPI = {
     return res.data;
   },
 
+  getOnlineCount: async () => {
+    const res = await apiClient.get('/v1/admin/online-count');
+    return res.data;
+  },
+
   getFlagged: async () => {
     const res = await apiClient.get('/v1/admin/flagged');
     return res.data;

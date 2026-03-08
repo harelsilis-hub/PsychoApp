@@ -1,4 +1,5 @@
 """FastAPI authentication dependencies."""
+from datetime import datetime, timezone
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,6 +34,9 @@ async def get_current_user(
     user = result.scalar_one_or_none()
     if user is None:
         raise credentials_exception
+
+    user.last_seen = datetime.now(timezone.utc)
+    await db.commit()
 
     return user
 
