@@ -1,7 +1,7 @@
 """
 Admin panel endpoints — completely open, no authentication required.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -44,7 +44,7 @@ async def get_users(
     """Return all registered users with online users first."""
     result = await db.execute(select(User).order_by(User.id))
     users = result.scalars().all()
-    online_cutoff = datetime.utcnow() - timedelta(minutes=5)
+    online_cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
 
     def is_online(u: User) -> bool:
         return bool(u.last_seen and u.last_seen >= online_cutoff)
