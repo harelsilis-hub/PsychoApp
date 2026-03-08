@@ -17,6 +17,7 @@ from app.models.association import Association
 from app.models.point_event import PointEvent
 from app.services.gamification import get_level_info
 from app.auth.dependencies import get_current_user, require_admin
+from app.api.v1.push import notify_admins
 
 router = APIRouter()
 
@@ -84,7 +85,7 @@ async def delete_user(
 @router.post("/flag/{word_id}")
 async def flag_word(
     word_id: int,
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Flag a word as potentially containing a mistake."""
@@ -93,6 +94,8 @@ async def flag_word(
         raise HTTPException(status_code=404, detail="Word not found")
     word.is_flagged = True
     await db.commit()
+    username = current_user.display_name or current_user.email
+    await notify_admins(db, "דיווח חדש על מילה 🚩", f"User {username} reported: {word.english}.")
     return {"success": True, "word_id": word_id}
 
 
@@ -252,6 +255,8 @@ async def submit_feedback(
     )
     db.add(fb)
     await db.commit()
+    username = current_user.display_name or current_user.email
+    await notify_admins(db, "פידבק חדש התקבל 💬", f"User {username} sent new feedback.")
     return {"success": True}
 
 

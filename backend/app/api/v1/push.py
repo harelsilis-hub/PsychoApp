@@ -162,3 +162,27 @@ async def send_streak_reminders():
             )
             await db.commit()
         logger.info(f"[Push] Cleaned up {len(stale_endpoints)} stale subscriptions.")
+
+
+async def notify_admins(db: AsyncSession, title: str, body: str) -> None:
+    """Send a push notification to all admin users."""
+    result = await db.execute(
+        select(PushSubscription)
+        .join(User, User.id == PushSubscription.user_id)
+        .where(User.is_admin == True)  # noqa: E712
+    )
+    subs = result.scalars().all()
+    if not subs:
+        return
+    payload = json.dumps({"title": title, "body": body, "icon": "/mila_logo.png", "url": "/"})
+    for sub in subs:
+        try:
+            await asyncio.to_thread(
+                webpush,
+                subscription_info={"endpoint": sub.endpoint, "keys": {"p256dh": sub.p256dh, "auth": sub.auth}},
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS,
+            )
+        except WebPushException as e:
+            logger.warning(f"[Push] Admin notify failed: {e}")

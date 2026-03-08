@@ -17,6 +17,7 @@ from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
 from app.auth.jwt import create_access_token
 from app.auth.dependencies import get_current_user
+from app.api.v1.push import notify_admins
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
@@ -60,6 +61,8 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     await db.commit()
     await db.refresh(user)
 
+    username = user.display_name or user.email
+    await notify_admins(db, "משתמש חדש נרשם! 🎉", f"User {username} just joined.")
     token = create_access_token(user.id, user.email)
     return AuthResponse(access_token=token, user_id=user.id, email=user.email, is_admin=user.is_admin, display_name=user.display_name)
 
