@@ -39,6 +39,7 @@ class User(Base):
     current_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     daily_words_reviewed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     last_active_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    last_goal_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
 
     # Relationships

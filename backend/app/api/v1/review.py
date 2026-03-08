@@ -115,37 +115,38 @@ async def submit_review_result(
         goal_reached = False
 
         # ── Lazy streak reset ──────────────────────────────────────────────
-        # No background job exists, so we reset a broken streak on the user's
-        # next interaction: if they were last active before yesterday, streak = 0.
+        # Reset streak if the user didn't reach their goal yesterday.
         if (
             current_user.current_streak > 0
-            and current_user.last_active_date is not None
-            and current_user.last_active_date < yesterday
+            and current_user.last_goal_date is not None
+            and current_user.last_goal_date < yesterday
         ):
             current_user.current_streak = 0
-
-        # Capture before any writes so streak comparison is always correct
-        old_active_date = current_user.last_active_date
 
         # Only count words that graduated LEARNING → REVIEW
         # (marked Don't Know in Filter, then marked Know in Review session)
         if result_info['graduated']:
-            if old_active_date != today:
+            # Reset the daily count when a new day starts
+            if current_user.last_active_date != today:
                 current_user.daily_words_reviewed = 0
+            current_user.last_active_date = today
+
             daily_before = current_user.daily_words_reviewed
             current_user.daily_words_reviewed += 1
-            current_user.last_active_date = today
 
             # Goal crossed for the first time today
             if daily_before < DAILY_GOAL and current_user.daily_words_reviewed >= DAILY_GOAL:
                 goal_reached = True
-                if old_active_date == yesterday:
-                    # Studied yesterday too — extend streak
+                # Use last_goal_date (not last_active_date) so consecutive-day
+                # check isn't confused by earlier words in today's session.
+                if current_user.last_goal_date == yesterday:
+                    # Reached goal yesterday too — extend streak
                     current_user.current_streak += 1
-                elif old_active_date != today:
-                    # Gap of more than one day (or very first goal ever)
+                elif current_user.last_goal_date != today:
+                    # Gap of more than one day, or very first goal ever
                     current_user.current_streak = 1
-                # old_active_date == today: already active today, streak unchanged
+                # last_goal_date == today: goal already reached today, streak unchanged
+                current_user.last_goal_date = today
 
         # ── Award XP ─────────────────────────────────────────────────────────
         quality = review_data.quality
