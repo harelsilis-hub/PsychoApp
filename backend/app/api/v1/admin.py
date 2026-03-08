@@ -41,9 +41,17 @@ async def get_users(
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """Return all registered users ordered by registration date."""
+    """Return all registered users with online users first."""
     result = await db.execute(select(User).order_by(User.id))
     users = result.scalars().all()
+    online_cutoff = datetime.utcnow() - timedelta(minutes=5)
+
+    def is_online(u: User) -> bool:
+        return bool(u.last_seen and u.last_seen >= online_cutoff)
+
+    # Sort: online users first, then by id
+    sorted_users = sorted(users, key=lambda u: (0 if is_online(u) else 1, u.id))
+
     return {
         "users": [
             {
@@ -55,8 +63,9 @@ async def get_users(
                 "last_active_date": u.last_active_date.isoformat() if u.last_active_date else None,
                 "xp": u.xp,
                 "level": u.level,
+                "is_online": is_online(u),
             }
-            for u in users
+            for u in sorted_users
         ],
         "count": len(users),
     }

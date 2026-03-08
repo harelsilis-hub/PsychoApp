@@ -386,6 +386,7 @@ const Admin = () => {
               <thead>
                 <tr className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
                   <th className="pb-2 pr-4">#</th>
+                  <th className="pb-2 pr-2"></th>
                   <th className="pb-2 pr-4">Email</th>
                   <th className="pb-2 pr-4">Joined</th>
                   <th className="pb-2 pr-4">Streak</th>
@@ -396,8 +397,16 @@ const Admin = () => {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {users.map((u) => (
-                  <tr key={u.id} className="text-gray-700 hover:bg-gray-50/50">
+                  <tr key={u.id} className={`text-gray-700 hover:bg-gray-50/50 ${u.is_online ? 'bg-green-50/40' : ''}`}>
                     <td className="py-2.5 pr-4 font-mono text-xs text-gray-300">{u.id}</td>
+                    <td className="py-2.5 pr-2">
+                      {u.is_online && (
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                      )}
+                    </td>
                     <td className="py-2.5 pr-4 font-medium">{u.email}</td>
                     <td className="py-2.5 pr-4 text-xs text-gray-400">
                       {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
