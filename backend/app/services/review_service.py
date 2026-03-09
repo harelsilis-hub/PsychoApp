@@ -311,6 +311,7 @@ class ReviewService:
             .where(Word.unit == unit_number)
             .where(Word.language == language)
             .where(UserWordProgress.learning_state == "learning")
+            .where(UserWordProgress.status == WordStatus.REVIEW)
             .order_by(Word.id)
         )
         result = await db.execute(stmt)

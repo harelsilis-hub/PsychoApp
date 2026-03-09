@@ -64,8 +64,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",
                 # Phase 1/2 learning_state column
                 "ALTER TABLE user_word_progress ADD COLUMN IF NOT EXISTS learning_state VARCHAR(20) DEFAULT 'learning' NOT NULL",
-                "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status IN ('Review', 'Mastered')",
-                "UPDATE user_word_progress SET learning_state = 'learning' WHERE status IN ('New', 'Learning')",
+                # Only Mastered words (marked 'known' in FilterMode) are pre-graduated.
+                # Review words may still be waiting for the acquisition quiz.
+                "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status = 'Mastered' AND learning_state = 'learning'",
             ]
             for migration_sql in migrations:
                 try:
@@ -93,8 +94,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "UPDATE words SET hebrew = '\u05e2\u05d5\u05d1\u05e8' WHERE english = 'embryo'  AND length(hebrew) <= 2",
                 # Phase 1/2 learning_state column
                 "ALTER TABLE user_word_progress ADD COLUMN learning_state VARCHAR(20) DEFAULT 'learning' NOT NULL",
-                "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status IN ('Review', 'Mastered')",
-                "UPDATE user_word_progress SET learning_state = 'learning' WHERE status IN ('New', 'Learning')",
+                # Only Mastered words (marked 'known' in FilterMode) are pre-graduated.
+                # Review words may still be waiting for the acquisition quiz.
+                "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status = 'Mastered' AND learning_state = 'learning'",
             ]
             for migration_sql in migrations:
                 try:

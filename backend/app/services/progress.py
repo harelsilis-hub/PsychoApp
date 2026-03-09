@@ -47,9 +47,11 @@ class ProgressService:
             # Update existing record
             if is_known:
                 progress.status = WordStatus.MASTERED
+                progress.learning_state = "graduated"  # skip acquisition quiz
                 message = "Word marked as Mastered!"
             else:
                 progress.status = WordStatus.LEARNING
+                progress.learning_state = "learning"
                 progress.next_review = func.now()
                 message = "Word added to Learning queue!"
         else:
@@ -59,6 +61,7 @@ class ProgressService:
                 user_id=user_id,
                 word_id=word_id,
                 status=status,
+                learning_state="graduated" if is_known else "learning",
                 next_review=func.now() if not is_known else None,
                 srs_data={
                     "repetition_number": 0,
