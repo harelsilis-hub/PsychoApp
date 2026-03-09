@@ -511,7 +511,7 @@ const Dashboard = () => {
           <div className="flex items-baseline justify-between mb-3">
             <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
             <p className="text-sm text-gray-600 font-medium">
-              {totalLearned.toLocaleString()} / {totalWords.toLocaleString()} נלמדו
+              {totalWords.toLocaleString()} / {totalLearned.toLocaleString()} נלמדו
             </p>
           </div>
 

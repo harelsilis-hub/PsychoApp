@@ -1,5 +1,6 @@
 """Leaderboard endpoints — weekly and all-time rankings."""
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,14 +16,21 @@ router = APIRouter()
 
 
 def _get_sunday_utc() -> datetime:
-    today = datetime.utcnow().date()
+    """Start of this week's Sunday at 00:00 Israel time, converted to UTC."""
+    il = ZoneInfo("Asia/Jerusalem")
+    now_il = datetime.now(il)
     # weekday(): Monday=0 ... Sunday=6; shift so Sunday=0
-    sunday = today - timedelta(days=(today.weekday() + 1) % 7)
-    return datetime.combine(sunday, datetime.min.time())
+    days_since_sunday = (now_il.weekday() + 1) % 7
+    sunday_il = now_il.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=days_since_sunday)
+    return sunday_il.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
 
 def _get_today_utc() -> datetime:
-    return datetime.combine(datetime.utcnow().date(), datetime.min.time())
+    """Start of today in Israel time, converted to UTC (handles DST automatically)."""
+    il = ZoneInfo("Asia/Jerusalem")
+    now_il = datetime.now(il)
+    midnight_il = now_il.replace(hour=0, minute=0, second=0, microsecond=0)
+    return midnight_il.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
 
 
 def _user_entry(u: User, rank: int, weekly_xp: int | None = None) -> dict:
