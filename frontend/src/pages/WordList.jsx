@@ -88,7 +88,7 @@ const WordList = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-3xl mx-auto
-                     bg-white/90 backdrop-blur-2xl border border-gray-200/70
+                     bg-white border border-gray-200/70
                      rounded-2xl px-4 py-3
                      shadow-xl shadow-gray-300/30
                      flex items-center gap-4"
@@ -159,7 +159,7 @@ const WordList = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35 }}
-              className="bg-white/90 backdrop-blur-xl border border-gray-200/70
+              className="bg-white border border-gray-200/70
                          rounded-2xl shadow-xl shadow-gray-200/60 overflow-hidden"
             >
               {/* Count bar + filter tabs */}

@@ -29,16 +29,40 @@ LEVELS = [
 
 # ── Base point values ──────────────────────────────────────────────────────────
 POINTS = {
+    # Triage (filter mode)
     "triage_known":          30,
     "triage_unknown":        10,
+
+    # Phase 1 – Unit Acquisition Quiz (lower weight; just building the queue)
+    "acquisition_correct":   75,   # per word graduated into the daily queue
+
+    # Legacy review session (ReviewSession / flashcards)
     "review_q1":             10,
     "review_q2":             10,
     "review_q3":             50,
     "review_q4":             80,
     "review_q5":            120,
-    "graduation_review":    150,
-    "graduation_mastered":  300,
-    "daily_goal":           200,
+    "graduation_review":    150,   # legacy LEARNING→REVIEW graduation
+    "graduation_mastered":  300,   # word reaches MASTERED status
+
+    # Phase 2 – Daily Review Quiz (3× weight; the core habit to incentivise)
+    "daily_review_q0":       30,   # blackout — still showed up, keep going
+    "daily_review_q1":       30,   # wrong answer
+    "daily_review_q2":       30,
+    "daily_review_q3":      150,   # correct (3× review_q3)
+    "daily_review_q4":      240,   # good recall (3× review_q4)
+    "daily_review_q5":      360,   # perfect recall (3× review_q5)
+
+    # Cram Mode – stateless extra practice (meaningful but less than daily review)
+    "cram_q0":               10,   # blackout
+    "cram_q1":               10,   # wrong
+    "cram_q2":               15,   # almost
+    "cram_q3":               40,   # correct
+    "cram_q4":               55,   # good recall
+    "cram_q5":               75,   # perfect recall
+
+    # Milestones
+    "daily_goal":           200,   # completing 15 daily-review words in one day
     "placement_complete":   500,
     "association_posted":    50,
     "association_liked":     20,
@@ -144,25 +168,28 @@ async def check_and_award_badges(db: AsyncSession, user) -> list[str]:
     )
     earned = set(result.scalars().all())
 
-    # Interaction event count
-    event_count = await db.scalar(
-        select(func.count(WordInteractionEvent.id)).where(
-            WordInteractionEvent.user_id == user.id
-        )
-    ) or 0
-
-    # Mastered word count
-    mastered_count = await db.scalar(
-        select(func.count(UserWordProgress.id)).where(
-            UserWordProgress.user_id == user.id,
-            UserWordProgress.status == WordStatus.MASTERED,
-        )
-    ) or 0
-
-    # Association count
-    assoc_count = await db.scalar(
-        select(func.count(Association.id)).where(Association.user_id == user.id)
-    ) or 0
+    # All three counts in one query using scalar subqueries
+    event_sub = (
+        select(func.count(WordInteractionEvent.id))
+        .where(WordInteractionEvent.user_id == user.id)
+        .scalar_subquery()
+    )
+    mastered_sub = (
+        select(func.count(UserWordProgress.id))
+        .where(UserWordProgress.user_id == user.id, UserWordProgress.status == WordStatus.MASTERED)
+        .scalar_subquery()
+    )
+    assoc_sub = (
+        select(func.count(Association.id))
+        .where(Association.user_id == user.id)
+        .scalar_subquery()
+    )
+    counts_row = (await db.execute(
+        select(event_sub.label("ev"), mastered_sub.label("ma"), assoc_sub.label("as_"))
+    )).one()
+    event_count   = counts_row.ev or 0
+    mastered_count = counts_row.ma or 0
+    assoc_count   = counts_row.as_ or 0
 
     badge_conditions = {
         "first_review":    event_count >= 1,

@@ -2,7 +2,7 @@
 from typing import TYPE_CHECKING, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum as PyEnum
-from sqlalchemy import Integer, ForeignKey, DateTime, JSON, Enum as SQLEnum
+from sqlalchemy import Integer, ForeignKey, DateTime, JSON, Enum as SQLEnum, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -21,6 +21,13 @@ class WordStatus(str, PyEnum):
     MASTERED = "Mastered"
 
 
+class LearningState(str, PyEnum):
+    """Two-phase learning state for the acquisition/review flow."""
+
+    LEARNING = "learning"    # Phase 1: word not yet acquired
+    GRADUATED = "graduated"  # Phase 2: word in spaced-repetition queue
+
+
 class UserWordProgress(Base):
     """
     UserWordProgress model representing a user's progress on a specific word.
@@ -31,6 +38,7 @@ class UserWordProgress(Base):
         user_id: Foreign key to User.
         word_id: Foreign key to Word.
         status: Current learning status (New, Learning, Review, Mastered).
+        learning_state: Two-phase state ('learning' = Phase 1, 'graduated' = Phase 2 SM-2).
         next_review: Timestamp for when the word should be reviewed next.
         srs_data: JSON field storing SM-2 algorithm data:
             - repetition_number: Number of successful reviews
@@ -49,6 +57,12 @@ class UserWordProgress(Base):
         SQLEnum(WordStatus, values_callable=lambda obj: [e.value for e in obj]),
         default=WordStatus.NEW,
         nullable=False,
+    )
+    learning_state: Mapped[str] = mapped_column(
+        String(20),
+        default="learning",
+        nullable=False,
+        server_default="learning",
     )
     next_review: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     srs_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(

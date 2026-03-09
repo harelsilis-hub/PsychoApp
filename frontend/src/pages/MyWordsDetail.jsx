@@ -219,7 +219,7 @@ const MyWordsDetail = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-5xl mx-auto
-                     bg-white/90 backdrop-blur-2xl border border-gray-200/70
+                     bg-white border border-gray-200/70
                      rounded-2xl px-4 py-3
                      shadow-xl shadow-gray-300/30
                      flex items-center gap-4"
@@ -296,7 +296,7 @@ const MyWordsDetail = () => {
                 onClick={action.disabled ? undefined : action.onClick}
                 disabled={action.disabled}
                 className={`flex flex-col text-right w-full
-                           bg-white/90 backdrop-blur-xl border border-gray-200/70
+                           bg-white border border-gray-200/70
                            rounded-[24px] overflow-hidden
                            shadow-lg shadow-gray-200/60
                            transition-all duration-300 group
@@ -337,7 +337,7 @@ const MyWordsDetail = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.28, duration: 0.4 }}
-            className="bg-white/90 backdrop-blur-xl border border-gray-200/70
+            className="bg-white border border-gray-200/70
                        rounded-[24px] shadow-lg shadow-gray-200/40 overflow-hidden"
           >
             {/* List header */}

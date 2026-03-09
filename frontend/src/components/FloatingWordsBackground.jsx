@@ -87,17 +87,17 @@ const sr = (seed) => {
 
 /* ג”€ג”€ג”€ Build particle config list from a word array ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
 const buildParticles = (words) =>
-  Array.from({ length: Math.min(38, words.length) }, (_, i) => ({
+  Array.from({ length: Math.min(20, words.length) }, (_, i) => ({
     id:           i,
     wordPair:     words[i % words.length],
-    startX:       15 + sr(i * 13 + 0) * 120,  // 15ג€“135 vw
-    startY:      -20 + sr(i * 13 + 1) * 95,   // -20ג€“75 vh
-    duration:     30 + sr(i * 13 + 2) * 35,   // 30ג€“65 s
+    startX:       15 + sr(i * 13 + 0) * 120,  // 15–135 vw
+    startY:      -20 + sr(i * 13 + 1) * 95,   // -20–75 vh
+    duration:     40 + sr(i * 13 + 2) * 35,   // 40–75 s (slower = less CPU)
     delay:       -(sr(i * 13 + 3) * 60),       // 0 to -60 s
-    fontSize:     10 + sr(i * 13 + 4) * 14,   // 10ג€“24 px
-    opacity:      0.12 + sr(i * 13 + 5) * 0.13, // 0.12ג€“0.25
+    fontSize:     10 + sr(i * 13 + 4) * 14,   // 10–24 px
+    opacity:      0.12 + sr(i * 13 + 5) * 0.13, // 0.12–0.25
     initialFace:  sr(i * 13 + 6) > 0.5 ? 'en' : 'he',
-    firstFlipMs:  sr(i * 13 + 7) * 6000,      // 0ג€“6 s before first flip
+    firstFlipMs:  sr(i * 13 + 7) * 8000,      // 0–8 s before first flip
   }));
 
 /* ג”€ג”€ג”€ Single word particle ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ג”€ */
@@ -113,7 +113,7 @@ const WordParticle = ({ wordPair, config }) => {
       await new Promise((r) => setTimeout(r, config.firstFlipMs));
 
       while (!cancelRef.current) {
-        const wait = 2000 + Math.random() * 5000;
+        const wait = 5000 + Math.random() * 8000;
         await new Promise((r) => setTimeout(r, wait));
         if (cancelRef.current) break;
 
@@ -153,6 +153,7 @@ const WordParticle = ({ wordPair, config }) => {
         animation:     `fw-drift ${config.duration}s linear ${config.delay}s infinite`,
         pointerEvents: 'none',
         userSelect:    'none',
+        willChange:    'transform',
       }}
     >
       <motion.span

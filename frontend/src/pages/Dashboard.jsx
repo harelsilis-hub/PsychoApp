@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff, Accessibility } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
+import { reviewAPI } from '../api/review';
 import { customWordsAPI } from '../api/customWords';
 import { subscribeToPush } from '../api/push';
 import { useAuth } from '../context/AuthContext';
@@ -91,6 +92,7 @@ const Dashboard = () => {
   const [unitStats, setUnitStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [myWordsStats, setMyWordsStats] = useState({ total: 0, learned: 0, percent: 0 });
+  const [dailyDueCount, setDailyDueCount] = useState(null); // null = loading
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
@@ -132,6 +134,9 @@ const Dashboard = () => {
     customWordsAPI.getStats()
       .then(setMyWordsStats)
       .catch((err) => console.error('Failed to load my-words stats:', err));
+    reviewAPI.getDailyCount(language)
+      .then((data) => setDailyDueCount(data.count ?? 0))
+      .catch(() => setDailyDueCount(0));
   }, [location.key, language]);
 
   const getUnitData = (unitNum) => {
@@ -156,11 +161,10 @@ const Dashboard = () => {
   const levelInfo      = getLevelInfo(xp);
 
   return (
-    <div className="h-[100dvh] flex flex-col relative"
-         style={{ background: 'transparent' }}>
+    <div className="h-[100dvh] flex flex-col relative bg-gray-50">
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <div className="shrink-0 z-20 sticky top-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-2 sm:pb-3">
+      <div className="shrink-0 z-20 sticky top-0 bg-gray-50 px-4 sm:px-5 pt-2 sm:pt-3 pb-1.5 sm:pb-2">
         <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
           {/* ג"€ג"€ Module 1: Greeting ג"€ג"€ */}
@@ -169,9 +173,9 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             className="flex-1 min-w-0 flex items-center gap-3 sm:gap-4
-                       bg-white/55 backdrop-blur-2xl
+                       bg-white
                        border border-gray-200/70
-                       rounded-[20px] sm:rounded-[24px] px-4 sm:px-5 py-3 sm:py-4
+                       rounded-[20px] sm:rounded-[24px] px-4 sm:px-5 py-2.5 sm:py-3
                        shadow-xl shadow-violet-200/30"
           >
             <img src="/logo.jpg" alt="Mila" className="hidden sm:block w-12 h-12 shrink-0 object-contain" />
@@ -194,21 +198,21 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.07, ease: [0.22, 1, 0.36, 1] }}
-            className="tour-streak hidden sm:flex items-center gap-3.5
-                       bg-white/55 backdrop-blur-2xl
+            className="tour-streak hidden sm:flex items-center gap-2.5
+                       bg-white
                        border border-gray-200/70
-                       rounded-[24px] px-6 py-4
+                       rounded-[24px] px-4 py-3
                        shadow-xl shadow-orange-200/30"
           >
             {/* Glowing fire */}
             <div className="relative shrink-0">
-              <div className="absolute inset-0 bg-orange-400/40 rounded-full blur-2xl scale-[2]" />
-              <span className="relative text-[42px] leading-none drop-shadow-[0_0_12px_rgba(251,146,60,0.7)]">
+              <div className="absolute inset-0 bg-orange-400/30 rounded-full blur-xl scale-[1.5]" />
+              <span className="relative text-[28px] leading-none drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]">
                 🔥
               </span>
             </div>
             <div className="leading-none">
-              <p className="text-5xl font-black text-gray-900 tabular-nums">{streak}</p>
+              <p className="text-3xl font-black text-gray-900 tabular-nums">{streak}</p>
               <p className="text-[10px] font-bold text-orange-400 uppercase tracking-[0.14em] mt-1">
                 ימי רצף
               </p>
@@ -220,10 +224,10 @@ const Dashboard = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden sm:flex items-center gap-4
-                       bg-white/55 backdrop-blur-2xl
+            className="hidden sm:flex items-center gap-3
+                       bg-white
                        border border-gray-200/70
-                       rounded-[24px] px-6 py-4
+                       rounded-[24px] px-4 py-3
                        shadow-xl shadow-violet-200/30"
           >
             {/* Daily goal ring */}
@@ -267,7 +271,7 @@ const Dashboard = () => {
             onClick={() => navigate('/leaderboard')}
             title="לוח המובילים"
             className="hidden sm:flex items-center gap-2.5
-                       bg-white/55 backdrop-blur-2xl
+                       bg-white
                        border border-gray-200/70
                        rounded-[24px] px-4 py-3
                        shadow-xl shadow-violet-200/30
@@ -305,7 +309,7 @@ const Dashboard = () => {
           >
             <button
               onClick={() => setMenuOpen(o => !o)}
-              className="h-full bg-white/55 backdrop-blur-2xl border border-gray-200/70
+              className="h-full bg-white border border-gray-200/70
                          rounded-[20px] sm:rounded-[24px] px-4
                          flex items-center justify-center
                          text-gray-500 hover:text-gray-900
@@ -323,7 +327,7 @@ const Dashboard = () => {
                   exit={{ opacity: 0, scale: 0.95, y: -6 }}
                   transition={{ duration: 0.15 }}
                   className="absolute left-0 top-[calc(100%+8px)] w-52 z-50
-                             bg-white/95 backdrop-blur-2xl
+                             bg-white
                              border border-gray-200/70
                              rounded-2xl shadow-2xl shadow-gray-300/40
                              overflow-hidden"
@@ -437,7 +441,7 @@ const Dashboard = () => {
         >
           {/* Streak */}
           <div className="tour-streak-mobile flex-1 flex items-center gap-1
-                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          bg-white border border-gray-200/70
                           rounded-xl px-2 py-2 shadow-md shadow-orange-200/20">
             <span className="text-base leading-none shrink-0">🔥</span>
             <div className="leading-none min-w-0">
@@ -448,7 +452,7 @@ const Dashboard = () => {
 
           {/* Daily */}
           <div className="flex-1 flex items-center gap-1
-                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          bg-white border border-gray-200/70
                           rounded-xl px-2 py-2 shadow-md shadow-orange-200/10">
             <div className="relative shrink-0">
               <Ring pct={goalPct} size={26} stroke={2.5} gradient={['#fb923c', '#fbbf24']} />
@@ -464,7 +468,7 @@ const Dashboard = () => {
 
           {/* Mastery */}
           <div className="flex-1 flex items-center gap-1
-                          bg-white/55 backdrop-blur-2xl border border-gray-200/70
+                          bg-white border border-gray-200/70
                           rounded-xl px-2 py-2 shadow-md shadow-violet-200/20">
             <div className="relative shrink-0">
               <Ring pct={overallPercent} size={26} stroke={2.5} gradient={['#7c3aed', '#6366f1']} />
@@ -482,7 +486,7 @@ const Dashboard = () => {
           <button
             onClick={() => navigate('/leaderboard')}
             className="flex-1 flex items-center gap-1
-                        bg-yellow-50/80 backdrop-blur-2xl
+                        bg-yellow-50
                         border border-yellow-300/60
                         rounded-xl px-2 py-2 shadow-md shadow-yellow-200/30
                         active:scale-95 transition-transform duration-100"
@@ -499,78 +503,119 @@ const Dashboard = () => {
       </div>
 
       {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• BODY ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
-      <main className="relative z-10 flex-1 min-h-0 overflow-y-auto max-w-6xl mx-auto w-full px-4 sm:px-5 pt-3 pb-6 sm:pb-4 flex flex-col">
+      <main className="relative z-10 flex-1 min-h-0 overflow-y-auto max-w-6xl mx-auto w-full px-4 sm:px-5 pt-2 pb-2 flex flex-col gap-2">
+
+        {/* ── Daily Review banner ──────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+          className="shrink-0"
+        >
+          {dailyDueCount === null ? (
+            <div className="w-full h-11 rounded-[16px] bg-white/60 animate-pulse" />
+          ) : dailyDueCount > 0 ? (
+            <button
+              onClick={() => navigate('/daily-review')}
+              className="relative w-full flex items-center gap-3 px-4 py-2.5 text-right
+                         bg-gradient-to-r from-violet-600 to-indigo-600
+                         rounded-[16px] overflow-hidden
+                         shadow-lg shadow-indigo-300/40
+                         hover:-translate-y-0.5 active:scale-[0.98]
+                         transition-all duration-200 group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0
+                              translate-x-[-100%] group-hover:translate-x-[100%]
+                              transition-transform duration-700 ease-in-out" />
+              <div className="relative shrink-0">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-white/40 animate-ping" />
+                <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 text-base">📅</span>
+              </div>
+              <p className="flex-1 min-w-0 text-sm font-black text-white text-right">
+                חזרה יומית — {dailyDueCount} מילים מחכות
+              </p>
+              <span className="shrink-0 px-3 py-1 rounded-lg bg-white text-violet-700 text-xs font-black">
+                {dailyDueCount} מילים ←
+              </span>
+            </button>
+          ) : (
+            <div className="space-y-1.5">
+              <div className="w-full flex items-center gap-2.5 px-4 py-2 text-right
+                              bg-emerald-50/90 border border-emerald-200/70 rounded-[16px]">
+                <span className="text-sm shrink-0">✅</span>
+                <p className="text-sm font-black text-emerald-700">חזרה יומית הושלמה — כל הכבוד!</p>
+              </div>
+              <button
+                onClick={() => navigate('/cram')}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2
+                           bg-gradient-to-r from-amber-500 to-orange-500
+                           text-white text-sm font-black rounded-[16px]
+                           shadow-md shadow-amber-200/50
+                           hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+              >
+                🔥 מצב חרישה — תרגול אקסטרה לחיזוק מילים קשות
+              </button>
+            </div>
+          )}
+        </motion.div>
 
         {/* Section title + Language selector */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, delay: 0.25 }}
-          className="mb-3 shrink-0"
+          className="shrink-0"
         >
-          <div className="flex items-baseline justify-between mb-3">
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">היחידות שלך</h1>
-            <p className="text-sm text-gray-600 font-medium">
-              {totalWords.toLocaleString()} / {totalLearned.toLocaleString()} נלמדו
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-gray-400 font-medium tabular-nums">
+              {totalLearned.toLocaleString()} / {totalWords.toLocaleString()} נלמדו
             </p>
+            <h1 className="text-sm font-black text-gray-800 tracking-tight">היחידות שלך</h1>
           </div>
 
-          {/* ── Bold language selector ── */}
-          <div className="tour-language grid grid-cols-2 gap-2.5">
-            {/* English option */}
+          <div className="tour-language grid grid-cols-2 gap-2">
             <motion.button
               onClick={() => switchLanguage('en')}
               whileTap={{ scale: 0.97 }}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all duration-250 text-right ${
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all duration-200 text-right ${
                 language === 'en'
-                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-xl shadow-indigo-300/50 text-white'
-                  : 'bg-white/80 border-gray-200 text-gray-500 hover:border-violet-300 hover:bg-white'
+                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-lg shadow-indigo-300/40'
+                  : 'bg-white border-gray-200 hover:border-violet-300'
               }`}
             >
-              {language === 'en' && (
-                <motion.div
-                  layoutId="lang-active-bg"
-                  className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 -z-10"
-                />
-              )}
-              <span className="text-2xl leading-none">🔤</span>
-              <div className="leading-tight text-right flex-1">
-                <p className={`text-sm font-black tracking-tight ${language === 'en' ? 'text-white' : 'text-gray-800'}`}>
-                  אנגלית
-                </p>
-                <p className={`text-[11px] font-semibold mt-0.5 ${language === 'en' ? 'text-white/75' : 'text-gray-400'}`}>
-                  English &larr; עברית &nbsp;·&nbsp; {language === 'en' ? totalWords.toLocaleString() : '3,742'} מילים
+              <span className="text-base leading-none shrink-0">🔤</span>
+              <div className="leading-tight text-right flex-1 min-w-0">
+                <p className={`text-xs font-black ${language === 'en' ? 'text-white' : 'text-gray-800'}`}>אנגלית</p>
+                <p className={`text-[10px] font-medium mt-0.5 truncate ${language === 'en' ? 'text-white/75' : 'text-gray-400'}`}>
+                  English ← עברית · {language === 'en' ? totalWords.toLocaleString() : '3,742'} מילים
                 </p>
               </div>
               {language === 'en' && (
-                <span className="shrink-0 w-5 h-5 rounded-full bg-white/25 flex items-center justify-center">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                <span className="shrink-0 w-4 h-4 rounded-full bg-white/25 flex items-center justify-center">
+                  <span className="w-2 h-2 rounded-full bg-white" />
                 </span>
               )}
             </motion.button>
 
-            {/* Hebrew option */}
             <motion.button
               onClick={() => switchLanguage('he')}
               whileTap={{ scale: 0.97 }}
-              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl border-2 transition-all duration-250 text-right ${
+              className={`relative flex items-center gap-2 px-3 py-2 rounded-xl border-2 transition-all duration-200 text-right ${
                 language === 'he'
-                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-xl shadow-indigo-300/50 text-white'
-                  : 'bg-white/80 border-gray-200 text-gray-500 hover:border-violet-300 hover:bg-white'
+                  ? 'bg-gradient-to-br from-violet-500 to-indigo-600 border-transparent shadow-lg shadow-indigo-300/40'
+                  : 'bg-white border-gray-200 hover:border-violet-300'
               }`}
             >
-              <span className="text-2xl leading-none">📖</span>
-              <div className="leading-tight text-right flex-1">
-                <p className={`text-sm font-black tracking-tight ${language === 'he' ? 'text-white' : 'text-gray-800'}`}>
-                  עברית
-                </p>
-                <p className={`text-[11px] font-semibold mt-0.5 ${language === 'he' ? 'text-white/75' : 'text-gray-400'}`}>
-                  מילה &larr; הגדרה &nbsp;·&nbsp; {language === 'he' ? totalWords.toLocaleString() : '1,703'} מילים
+              <span className="text-base leading-none shrink-0">📖</span>
+              <div className="leading-tight text-right flex-1 min-w-0">
+                <p className={`text-xs font-black ${language === 'he' ? 'text-white' : 'text-gray-800'}`}>עברית</p>
+                <p className={`text-[10px] font-medium mt-0.5 truncate ${language === 'he' ? 'text-white/75' : 'text-gray-400'}`}>
+                  מילה ← הגדרה · {language === 'he' ? totalWords.toLocaleString() : '1,703'} מילים
                 </p>
               </div>
               {language === 'he' && (
-                <span className="shrink-0 w-5 h-5 rounded-full bg-white/25 flex items-center justify-center">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white" />
+                <span className="shrink-0 w-4 h-4 rounded-full bg-white/25 flex items-center justify-center">
+                  <span className="w-2 h-2 rounded-full bg-white" />
                 </span>
               )}
             </motion.button>
@@ -583,42 +628,35 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.22, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-2 sm:mb-3"
+          className="shrink-0"
         >
           <button
             onClick={() => navigate('/my-words')}
-            className="w-full flex items-center gap-4 p-3.5 sm:p-4
-                       bg-white/90 backdrop-blur-xl
-                       border border-gray-200/70
-                       rounded-[22px]
-                       shadow-md shadow-gray-200/40
-                       hover:shadow-xl hover:shadow-pink-200/50
-                       hover:-translate-y-0.5 hover:bg-white
-                       hover:ring-2 hover:ring-pink-300/30
-                       active:scale-[0.98]
-                       transition-all duration-300 text-right group"
+            className="w-full flex items-center gap-2.5 px-3 py-2
+                       bg-white border border-gray-200/70 rounded-[14px]
+                       shadow-sm hover:shadow-md hover:border-pink-200
+                       hover:-translate-y-0.5 active:scale-[0.98]
+                       transition-all duration-200 text-right group"
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl
+            <div className="w-8 h-8 shrink-0 rounded-lg
                             bg-gradient-to-br from-rose-500 to-pink-500
-                            flex items-center justify-center
-                            shadow-lg shadow-pink-300/40
-                            group-hover:scale-105 transition-transform duration-300">
-              <span className="text-white text-lg">📌</span>
+                            flex items-center justify-center shadow-sm">
+              <span className="text-white text-sm">📌</span>
             </div>
             <div className="flex-1 min-w-0 text-right">
-              <p className="text-sm font-black text-gray-900">המילים שלי</p>
-              <p className="text-xs font-medium text-gray-500 mt-0.5">
+              <p className="text-xs font-black text-gray-900">המילים שלי</p>
+              <p className="text-[10px] font-medium text-gray-400 mt-0.5">
                 {myWordsStats.total > 0
                   ? `${myWordsStats.total} מילים · ${myWordsStats.learned} נלמדו`
                   : 'הוסף מילים משלך ועקוב אחרי ההתקדמות'}
               </p>
             </div>
             {myWordsStats.total > 0 && (
-              <div className="shrink-0 w-28 hidden sm:block">
-                <div className="flex justify-end text-[10px] font-bold mb-1">
+              <div className="shrink-0 w-20 hidden sm:block">
+                <div className="flex justify-end text-[10px] font-bold mb-0.5">
                   <span className="text-rose-500">{myWordsStats.percent}%</span>
                 </div>
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${myWordsStats.percent}%` }}
@@ -628,105 +666,83 @@ const Dashboard = () => {
                 </div>
               </div>
             )}
-            <div className="shrink-0 px-3 py-1.5 rounded-xl
-                            text-[11px] font-black text-white uppercase tracking-wider
-                            bg-gradient-to-r from-rose-500 to-pink-500
-                            shadow-sm shadow-pink-200/60
-                            group-hover:shadow-md transition-shadow duration-300">
+            <div className="shrink-0 px-2.5 py-1 rounded-lg
+                            text-[10px] font-black text-white
+                            bg-gradient-to-r from-rose-500 to-pink-500">
               {myWordsStats.total === 0 ? 'התחל' : 'פתח'} ←
             </div>
           </button>
         </motion.div>
 
-        <div className="grid grid-cols-2 landscape:grid-cols-5 md:grid-cols-3 lg:grid-cols-5 lg:flex-1 lg:min-h-0 lg:grid-rows-2 gap-2 sm:gap-3">
+        <div className="grid grid-cols-2 landscape:grid-cols-5 md:grid-cols-3 lg:grid-cols-5 lg:flex-1 lg:min-h-0 lg:grid-rows-2 gap-2 sm:gap-2">
           {availableUnits.map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
             const started   = learned > 0;
             const completed = percent >= 100;
 
             const btnLabel  = completed ? `חזרה ${unit}` : started ? `המשך ${unit}` : `התחל ${unit}`;
-            const numColor  = completed
-              ? 'text-emerald-500'
-              : started
-              ? 'text-violet-600'
-              : 'text-gray-400';
+            const numColor  = completed ? 'text-emerald-500' : 'text-violet-600';
             const barGrad   = completed
               ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
               : 'bg-gradient-to-r from-violet-500 to-indigo-600';
             const btnClass  = completed
-              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white shadow-sm shadow-emerald-200/60'
+              ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white'
               : started
-              ? 'bg-gradient-to-r from-violet-500 to-indigo-600 text-white shadow-sm shadow-indigo-200/60'
-              : 'bg-white border-2 border-violet-300 text-violet-500';
+              ? 'bg-gradient-to-r from-violet-500 to-indigo-600 text-white'
+              : 'bg-white border border-violet-300 text-violet-600';
 
             return (
               <motion.div
                 key={unit}
-                initial={{ opacity: 0, y: 24 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ delay: idx * 0.035, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="group lg:h-full"
               >
                 <button
                   onClick={() => navigate(`/unit/${unit}`)}
-                  className="w-full lg:h-full text-left flex flex-col gap-1.5 p-3 sm:p-4
-                             bg-white/90 backdrop-blur-xl
-                             border border-gray-200/70
-                             rounded-[22px] overflow-visible
-                             shadow-md shadow-gray-200/40
-                             hover:shadow-xl hover:shadow-violet-200/50
-                             hover:-translate-y-1
-                             hover:bg-white
-                             hover:ring-2 hover:ring-violet-400/25
-                             active:scale-[0.97]
-                             transition-all duration-300"
+                  className="w-full h-full flex flex-col gap-1.5 p-3 sm:p-3
+                             bg-white border border-gray-200/70 rounded-[18px]
+                             shadow-sm hover:shadow-md hover:border-violet-200
+                             hover:-translate-y-0.5 active:scale-[0.97]
+                             transition-all duration-200"
                 >
-                  {/* Gradient unit number */}
+                  {/* Number FIRST in JSX → RIGHT in RTL */}
                   <div className="flex items-start justify-between leading-none">
-                    <span
-                      className={`text-[32px] landscape:text-[22px] sm:text-[40px] md:text-[52px] font-black leading-tight tracking-tighter ${numColor}`}
-                    >
+                    <span className={`text-[32px] sm:text-[28px] lg:text-[32px] font-black leading-none tabular-nums ${numColor}`}>
                       {unit}
                     </span>
-                    {completed && (
-                      <span className="text-lg mt-1">✅</span>
-                    )}
+                    {completed && <span className="text-sm mt-0.5">✅</span>}
                   </div>
 
-                  {/* Unit label */}
-                  <div className="-mt-1">
-                    <p className="text-sm font-bold text-gray-600 uppercase tracking-[0.14em]">
+                  <div className="-mt-1 text-right">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest leading-tight">
                       יחידה {unit}
                     </p>
-                    <p className="text-sm text-gray-500 font-medium mt-0.5">{total} מילים</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{total} מילים</p>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="space-y-1 mt-auto">
+                  <div className="mt-auto space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-600">{learned} נלמדו</span>
-                      <span className={`text-sm font-black tabular-nums
+                      <span className="text-xs font-medium text-gray-400">{learned} נלמדו</span>
+                      <span className={`text-xs font-black tabular-nums
                         ${completed ? 'text-emerald-500' : 'text-violet-600'}`}>
                         {percent}%
                       </span>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${percent}%` }}
-                        transition={{ duration: 0.9, delay: idx * 0.04 + 0.2, ease: 'easeOut' }}
+                        transition={{ duration: 0.9, delay: idx * 0.035 + 0.2, ease: 'easeOut' }}
                         className={`h-full rounded-full ${barGrad}`}
                       />
                     </div>
                   </div>
 
-                  {/* CTA button */}
-                  <div
-                    className={`w-full py-2 rounded-xl text-center
-                                text-sm font-black uppercase tracking-[0.12em]
-                                ${btnClass}
-                                group-hover:shadow-md transition-shadow duration-300`}
-                  >
+                  <div className={`w-full py-2 rounded-xl text-center
+                                  text-sm font-black
+                                  ${btnClass}`}>
                     {btnLabel}
                   </div>
                 </button>

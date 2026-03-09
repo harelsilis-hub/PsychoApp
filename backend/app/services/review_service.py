@@ -254,22 +254,16 @@ class ReviewService:
         if new_repetition >= 8 and new_interval >= 180:
             progress.status = WordStatus.MASTERED
 
-        # Commit the core progress update first — this MUST succeed
+        # Log the interaction event in the same transaction as progress update
+        db.add(WordInteractionEvent(
+            user_id=user_id,
+            word_id=word_id,
+            interaction_type="review",
+            outcome=str(quality),
+        ))
+
         await db.commit()
         await db.refresh(progress)
-
-        # Log the raw interaction event (best-effort, non-fatal)
-        try:
-            db.add(WordInteractionEvent(
-                user_id=user_id,
-                word_id=word_id,
-                interaction_type="review",
-                outcome=str(quality),
-            ))
-            await db.commit()
-        except Exception as exc:
-            await db.rollback()
-            print(f"[WARN] interaction event not saved: {exc}")
 
         # Prepare result info
         status_change = progress.status != old_status
@@ -295,6 +289,108 @@ class ReviewService:
         }
 
         return progress, result_info
+
+    @staticmethod
+    async def get_acquisition_words(
+        db: AsyncSession,
+        user_id: int,
+        unit_number: int,
+        language: str = "en",
+    ) -> list[tuple["UserWordProgress", "Word"]]:
+        """
+        Phase 1 – Unit Acquisition: return all words in a unit that still have
+        learning_state = 'learning' for this user.
+
+        These are words the user has previously flagged as "don't know" in
+        FilterMode but has not yet successfully answered in the unit quiz.
+        """
+        stmt = (
+            select(UserWordProgress, Word)
+            .join(Word, UserWordProgress.word_id == Word.id)
+            .where(UserWordProgress.user_id == user_id)
+            .where(Word.unit == unit_number)
+            .where(Word.language == language)
+            .where(UserWordProgress.learning_state == "learning")
+            .order_by(Word.id)
+        )
+        result = await db.execute(stmt)
+        return result.all()
+
+    @staticmethod
+    async def graduate_word(
+        db: AsyncSession,
+        user_id: int,
+        word_id: int,
+        quality: int,
+    ) -> tuple["UserWordProgress", bool]:
+        """
+        Phase 1 – Unit Acquisition submit.
+
+        Correct answer (quality >= 3):
+          • learning_state → 'graduated'
+          • status         → REVIEW
+          • srs_data       → rep=1, ef=2.5, interval=1
+          • next_review    → tomorrow (UTC)
+
+        Incorrect answer (quality < 3):
+          • No changes; word stays in 'learning' so it re-appears next session.
+
+        Returns (progress, graduated_flag).
+        Raises ValueError if no progress record exists.
+        """
+        stmt = select(UserWordProgress).where(
+            UserWordProgress.user_id == user_id,
+            UserWordProgress.word_id == word_id,
+        )
+        result = await db.execute(stmt)
+        progress = result.scalar_one_or_none()
+
+        if not progress:
+            raise ValueError(f"No progress record found for word_id={word_id}. "
+                             "Word must be added via FilterMode before the unit quiz.")
+
+        graduated = False
+        if quality >= 3 and progress.learning_state == "learning":
+            progress.learning_state = "graduated"
+            progress.status = WordStatus.REVIEW
+            progress.srs_data = {
+                "repetition_number": 1,
+                "easiness_factor": 2.5,
+                "interval_days": 1,
+            }
+            progress.next_review = datetime.utcnow() + timedelta(days=1)
+            graduated = True
+
+        await db.commit()
+        await db.refresh(progress)
+        return progress, graduated
+
+    @staticmethod
+    async def get_daily_review_words(
+        db: AsyncSession,
+        user_id: int,
+        limit: int = 20,
+        language: str = "en",
+    ) -> list[tuple["UserWordProgress", "Word"]]:
+        """
+        Phase 2 – Global Daily Review: return graduated words whose next_review
+        date is today or in the past (i.e. they are due).
+
+        Does NOT filter by unit — this is the global SM-2 queue.
+        Ordered earliest-due first.
+        """
+        stmt = (
+            select(UserWordProgress, Word)
+            .join(Word, UserWordProgress.word_id == Word.id)
+            .where(UserWordProgress.user_id == user_id)
+            .where(Word.language == language)
+            .where(UserWordProgress.learning_state == "graduated")
+            .where(UserWordProgress.next_review <= func.now())
+            .order_by(UserWordProgress.next_review.asc())
+            .limit(limit)
+        )
+        result = await db.execute(stmt)
+        return result.all()
 
     @staticmethod
     async def get_review_stats(

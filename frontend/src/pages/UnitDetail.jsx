@@ -41,7 +41,7 @@ const ActionCard = ({ action, delay }) => (
     transition={{ delay, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
     onClick={action.onClick}
     className={`flex flex-col text-right w-full ${action.tourClass ?? ''}
-               bg-white/90 backdrop-blur-xl border border-gray-200/70
+               bg-white border border-gray-200/70
                rounded-[24px] overflow-hidden
                shadow-lg shadow-gray-200/60
                hover:shadow-2xl hover:shadow-gray-300/60
@@ -165,13 +165,13 @@ const UnitDetail = () => {
       iconShadow: 'shadow-emerald-300/60',
       topBar:     'from-emerald-400 to-teal-500',
       tourClass:  'tour-quiz',
-      title:      'בוחן ומעקב',
-      subtitle:   'רגע האמת של הזיכרון.',
-      detail:     'תרגול חכם מבוסס אלגוריתם למידה: מילים שהתקשיתם בהן יחזרו מהר כדי לעזור לכם לזכור, ומילים שכבר למדתם יופיעו במרווחים גדולים יותר לטווח הארוך.',
-      cta:        'התחל בוחן',
+      title:      'מבחן לאחר שינון',
+      subtitle:   'בדיקה אמיתית של מה שנכנס לראש.',
+      detail:     'הגיע הזמן לבדוק מה באמת נכנס לראש. תשובה נכונה מעבירה את המילה לאלגוריתם החזרה היומית. טעות? המילה תחזור שוב בסוף הבוחן. ממשיכים לתרגל עד שכל המילים ביחידה מקבלות וי ירוק.',
+      cta:        'התחל מבחן ←',
       btnGrad:    'from-emerald-400 to-teal-500',
       btnShadow:  'shadow-emerald-200/60',
-      onClick:    () => navigate(`/unit/${unitNum}/quiz`),
+      onClick:    () => navigate(`/unit/${unitNum}/acquisition`),
     },
   ];
 
@@ -256,7 +256,7 @@ const UnitDetail = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="max-w-5xl mx-auto
-                     bg-white/90 backdrop-blur-2xl border border-gray-200/70
+                     bg-white border border-gray-200/70
                      rounded-2xl px-4 py-3
                      shadow-xl shadow-gray-300/30
                      flex items-center gap-4"
@@ -362,7 +362,7 @@ const UnitDetail = () => {
                 border="border-emerald-300"
                 stepLabel="שלב 3"
                 icon={<Target className="w-3 h-3" />}
-                title="תרגול ובחינה"
+                title="מבחן לאחר שינון"
                 delay={0.26}
               />
             </div>

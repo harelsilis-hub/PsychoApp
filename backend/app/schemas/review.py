@@ -50,6 +50,30 @@ class ReviewSubmitResponse(BaseModel):
     new_badges: list[str] = []
 
 
+class AcquisitionSubmitRequest(BaseModel):
+    """Request body for Phase 1 unit-quiz submission."""
+
+    word_id: int = Field(..., description="Word ID being answered")
+    quality: int = Field(..., ge=0, le=5, description="Answer quality 0-5 (≥3 = correct)")
+
+
+class AcquisitionSubmitResponse(BaseModel):
+    """Response after submitting a Phase 1 unit-quiz answer."""
+
+    success: bool
+    word_id: int
+    quality: int
+    graduated: bool = Field(..., description="True if the word moved to Phase 2")
+    learning_state: str = Field(..., description="'learning' or 'graduated'")
+    next_review: datetime | None = Field(None, description="Set when graduated, else None")
+    message: str
+    xp_earned: int = 0
+    new_xp: int = 0
+    level_up: bool = False
+    new_level_title: str | None = None
+    new_badges: list[str] = []
+
+
 class ReviewStatsResponse(BaseModel):
     """Review statistics for dashboard."""
 

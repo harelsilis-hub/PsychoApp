@@ -52,6 +52,7 @@ class ReviewResult(BaseModel):
     user_id: int | None = Field(None, description="User ID (ignored — taken from JWT token)")
     word_id: int = Field(..., description="Word ID being reviewed")
     quality: int = Field(..., ge=0, le=5, description="Quality of recall (0-5 for SM-2)")
+    is_daily: bool = Field(False, description="True when submitted from the Phase 2 Daily Review quiz")
 
 
 class TriageUpdate(BaseModel):
