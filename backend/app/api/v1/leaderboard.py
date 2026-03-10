@@ -61,11 +61,7 @@ async def get_leaderboard(
     if type in ("weekly", "daily"):
         monday = _get_today_utc() if type == "daily" else _get_sunday_utc()
 
-        # Fetch ALL users (ordered by total XP as tiebreaker)
-        all_users_result = await db.execute(select(User).order_by(User.xp.desc()).limit(limit))
-        all_users = all_users_result.scalars().all()
-
-        # Fetch weekly XP sums for users who have activity this week
+        # Fetch XP sums for the period, sorted desc, limited
         weekly_stmt = (
             select(
                 PointEvent.user_id,
@@ -73,14 +69,23 @@ async def get_leaderboard(
             )
             .where(PointEvent.created_at >= monday)
             .group_by(PointEvent.user_id)
+            .order_by(func.sum(PointEvent.final_points).desc(), PointEvent.user_id)
+            .limit(limit)
         )
         weekly_rows = (await db.execute(weekly_stmt)).all()
         weekly_map = {r.user_id: int(r.weekly_xp) for r in weekly_rows}
 
-        # Annotate each user with their weekly XP (0 if no activity this week)
-        # Re-sort by weekly XP desc, all-time XP as tiebreaker
+        if not weekly_rows:
+            return {"entries": [], "user_entry": _user_entry(current_user, 0, weekly_xp=0), "type": type}
+
+        # Fetch user objects for those user_ids
+        user_ids = [r.user_id for r in weekly_rows]
+        users_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+        users_by_id = {u.id: u for u in users_result.scalars().all()}
+
+        # Sort by weekly XP desc, total XP as tiebreaker (preserving period-XP order)
         scored = sorted(
-            all_users,
+            [users_by_id[uid] for uid in user_ids if uid in users_by_id],
             key=lambda u: (weekly_map.get(u.id, 0), u.xp),
             reverse=True,
         )
@@ -92,7 +97,23 @@ async def get_leaderboard(
 
         user_entry = next((e for e in entries if e["user_id"] == current_user.id), None)
         if user_entry is None:
-            user_entry = _user_entry(current_user, len(entries) + 1, weekly_xp=weekly_map.get(current_user.id, 0))
+            my_xp = weekly_map.get(current_user.id, 0)
+            # Count how many period users scored strictly higher
+            higher_count_stmt = (
+                select(func.count())
+                .select_from(
+                    select(
+                        PointEvent.user_id,
+                        func.sum(PointEvent.final_points).label("s"),
+                    )
+                    .where(PointEvent.created_at >= monday)
+                    .group_by(PointEvent.user_id)
+                    .having(func.sum(PointEvent.final_points) > my_xp)
+                    .subquery()
+                )
+            )
+            higher_count = await db.scalar(higher_count_stmt) or 0
+            user_entry = _user_entry(current_user, higher_count + 1, weekly_xp=my_xp)
 
         return {"entries": entries, "user_entry": user_entry, "type": type}
 
