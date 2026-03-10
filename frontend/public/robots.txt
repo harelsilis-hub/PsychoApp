@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://frontend-one-mu-68.vercel.app/sitemap.xml
+Sitemap: https://www.milawords.site/sitemap.xml
