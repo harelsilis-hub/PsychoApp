@@ -169,13 +169,12 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     speakWord(word.english, language === 'he' ? 'he-IL' : 'en-US');
   };
 
-  const myText = savedAssociation.trim();
   const topOtherTip = [...communityTips]
-    .filter(t => t.text !== myText)
+    .filter(t => !t.is_mine)
     .sort((a, b) => (b.likes ?? 0) - (a.likes ?? 0))[0];
   const sortedTips = [...communityTips].sort((a, b) => {
-    if (myText && a.text === myText) return -1;
-    if (myText && b.text === myText) return 1;
+    if (a.is_mine) return -1;
+    if (b.is_mine) return 1;
     return (b.likes ?? 0) - (a.likes ?? 0);
   });
 
@@ -331,7 +330,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
         {communityTips.length > 0 ? (
           <div className="overflow-y-auto max-h-40 space-y-1.5">
             {sortedTips.map((tip) => {
-              const isMine = myText && tip.text === myText;
+              const isMine = tip.is_mine;
               const isTop = topOtherTip && tip.id === topOtherTip.id;
               return (
                 <div

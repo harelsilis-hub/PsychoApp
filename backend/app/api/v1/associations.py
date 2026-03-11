@@ -43,6 +43,7 @@ class CommunityAssociationItem(BaseModel):
     text: str
     likes: int
     user_label: str
+    is_mine: bool
 
 
 def generate_ai_association(english: str, hebrew: str) -> str:
@@ -92,6 +93,7 @@ async def get_community_associations(
             text=a.text,
             likes=a.likes,
             user_label=f"User #{a.user_id}",
+            is_mine=a.user_id == current_user.id,
         )
         for a in associations
     ]
@@ -173,12 +175,20 @@ async def get_word_associations(
         await db.commit()
         await db.refresh(word)
 
+    # Fetch this user's personal association from the per-user Association table
+    user_assoc_stmt = select(Association).where(
+        Association.word_id == word_id,
+        Association.user_id == current_user.id,
+    ).order_by(Association.id.desc()).limit(1)
+    user_assoc_result = await db.execute(user_assoc_stmt)
+    user_assoc = user_assoc_result.scalar_one_or_none()
+
     return AssociationResponse(
         word_id=word.id,
         english=word.english,
         hebrew=word.hebrew,
         ai_association=word.ai_association,
-        user_association=word.user_association
+        user_association=user_assoc.text if user_assoc else None,
     )
 
 
@@ -205,23 +215,30 @@ async def save_user_association(
 
     text = association_data.user_association.strip() if association_data.user_association else None
 
-    # Update the word-level field
-    word.user_association = text
-
     # Generate AI association if not present
     if not word.ai_association:
         word.ai_association = generate_ai_association(word.english, word.hebrew)
 
-    # Always insert a new community association so all submissions are visible
+    # Save/update this user's association in the per-user Association table
     if text:
-        db.add(Association(
-            word_id=word_id,
-            user_id=current_user.id,
-            text=text,
-            likes=0,
-        ))
-        await award_xp(db, current_user, "association_posted", POINTS["association_posted"])
-        await check_and_award_badges(db, current_user)
+        existing_stmt = select(Association).where(
+            Association.word_id == word_id,
+            Association.user_id == current_user.id,
+        ).order_by(Association.id.desc()).limit(1)
+        existing_result = await db.execute(existing_stmt)
+        existing = existing_result.scalar_one_or_none()
+
+        if existing:
+            existing.text = text
+        else:
+            db.add(Association(
+                word_id=word_id,
+                user_id=current_user.id,
+                text=text,
+                likes=0,
+            ))
+            await award_xp(db, current_user, "association_posted", POINTS["association_posted"])
+            await check_and_award_badges(db, current_user)
 
     await db.commit()
     await db.refresh(word)
@@ -231,5 +248,5 @@ async def save_user_association(
         english=word.english,
         hebrew=word.hebrew,
         ai_association=word.ai_association,
-        user_association=word.user_association
+        user_association=text,
     )
