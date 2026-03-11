@@ -3,7 +3,7 @@ Admin panel endpoints — completely open, no authentication required.
 """
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 from pydantic import BaseModel
@@ -47,7 +47,10 @@ async def get_users(
     online_cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
 
     def is_online(u: User) -> bool:
-        return bool(u.last_seen and u.last_seen >= online_cutoff)
+        if not u.last_seen:
+            return False
+        last_seen = u.last_seen if u.last_seen.tzinfo else u.last_seen.replace(tzinfo=timezone.utc)
+        return last_seen >= online_cutoff
 
     # Sort: online users first, then by id
     sorted_users = sorted(users, key=lambda u: (0 if is_online(u) else 1, u.id))
@@ -92,9 +95,14 @@ async def delete_user(
 
 # ── User-facing: flag a word as having a mistake ──────────────────────────────
 
+class FlagWordBody(BaseModel):
+    reason: Optional[str] = None
+
+
 @router.post("/flag/{word_id}")
 async def flag_word(
     word_id: int,
+    body: Optional[FlagWordBody] = Body(default=None),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -102,11 +110,17 @@ async def flag_word(
     word = await db.get(Word, word_id)
     if not word:
         raise HTTPException(status_code=404, detail="Word not found")
-    word.is_flagged = True
+    reason = (body.reason.strip() if body and body.reason else None)
+    word_english = word.english
+    await db.execute(
+        text("UPDATE words SET is_flagged = true, flag_reason = :reason WHERE id = :word_id"),
+        {"reason": reason, "word_id": word_id},
+    )
     await db.commit()
     username = current_user.display_name or current_user.email
-    await notify_admins(db, "דיווח חדש על מילה 🚩", f"User {username} reported: {word.english}.")
-    return {"success": True, "word_id": word_id}
+    reason_part = f"\nסיבה: {reason}" if reason else ""
+    await notify_admins(db, "דיווח חדש על מילה 🚩", f"User {username} reported: {word_english}.{reason_part}")
+    return {"success": True, "word_id": word_id, "flag_reason": reason}
 
 
 # ── Online users count ────────────────────────────────────────────────────────
@@ -153,7 +167,7 @@ async def get_flagged_words(
     words = result.scalars().all()
     return {
         "words": [
-            {"id": w.id, "english": w.english, "hebrew": w.hebrew, "unit": w.unit}
+            {"id": w.id, "english": w.english, "hebrew": w.hebrew, "unit": w.unit, "flag_reason": w.flag_reason}
             for w in words
         ],
         "count": len(words),
@@ -210,6 +224,7 @@ async def edit_word(
     if body.hebrew is not None:
         word.hebrew = body.hebrew.strip()
     word.is_flagged = False
+    word.flag_reason = None
     await db.commit()
     await db.refresh(word)
     return {"success": True, "id": word.id, "english": word.english, "hebrew": word.hebrew, "unit": word.unit}

@@ -47,6 +47,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             # Use IF NOT EXISTS as a safety net, then run data patches.
             migrations = [
                 "ALTER TABLE words ADD COLUMN IF NOT EXISTS is_flagged BOOLEAN DEFAULT false NOT NULL",
+                "ALTER TABLE words ADD COLUMN IF NOT EXISTS flag_reason VARCHAR(500) DEFAULT NULL",
                 "ALTER TABLE words ADD COLUMN IF NOT EXISTS global_difficulty_level INTEGER DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false NOT NULL",
@@ -77,6 +78,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             # SQLite: raises OperationalError when column already exists — safe to ignore.
             migrations = [
                 "ALTER TABLE words ADD COLUMN is_flagged INTEGER DEFAULT 0 NOT NULL",
+                "ALTER TABLE words ADD COLUMN flag_reason VARCHAR(500) DEFAULT NULL",
                 "ALTER TABLE words ADD COLUMN global_difficulty_level INTEGER DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN created_at DATETIME NULL",
                 "UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL",

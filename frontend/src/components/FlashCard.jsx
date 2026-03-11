@@ -20,6 +20,8 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
   const [isSavingSentence, setIsSavingSentence] = useState(false);
   const [sentenceSaved, setSentenceSaved] = useState(false);
   const [flagToast, setFlagToast] = useState(false);
+  const [flagExpanded, setFlagExpanded] = useState(false);
+  const [flagReason, setFlagReason] = useState('');
   const [communityTips, setCommunityTips] = useState([]);
   const [likedTipIds, setLikedTipIds] = useState(() => {
     try {
@@ -136,16 +138,29 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     }
   };
 
-  const handleFlag = async (e) => {
+  const handleFlag = (e) => {
     e.stopPropagation();
     if (flagToast) return;
+    setFlagExpanded(true);
+  };
+
+  const handleFlagSubmit = async (e) => {
+    e.stopPropagation();
     try {
-      await reviewAPI.flagWord(wordId);
+      await reviewAPI.flagWord(wordId, flagReason.trim() || null);
+      setFlagExpanded(false);
+      setFlagReason('');
       setFlagToast(true);
       setTimeout(() => setFlagToast(false), 2500);
     } catch (err) {
       console.error('Flag failed:', err);
     }
+  };
+
+  const handleFlagCancel = (e) => {
+    e.stopPropagation();
+    setFlagExpanded(false);
+    setFlagReason('');
   };
 
   const handleSpeak = (e) => {
@@ -399,16 +414,43 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
                 </div>
               </button>
             </div>
-            <div className="flex justify-center">
-              <button
-                onClick={handleFlag}
-                className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
-                  flagToast ? 'bg-red-50 text-red-500 font-medium' : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
-                }`}
-              >
-                <Flag className="w-3 h-3" />
-                {flagToast ? 'דווח — תודה!' : 'דיווח על שגיאה'}
-              </button>
+            <div className="flex flex-col items-center gap-1.5">
+              {flagExpanded ? (
+                <div className="flex flex-col items-center gap-2 w-full max-w-xs" onClick={e => e.stopPropagation()}>
+                  <textarea
+                    className="w-full text-xs rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-gray-700 resize-none focus:outline-none focus:ring-1 focus:ring-red-300"
+                    rows={2}
+                    placeholder="מה השגיאה? (אופציונלי)"
+                    value={flagReason}
+                    onChange={e => setFlagReason(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleFlagSubmit}
+                      className="text-xs px-3 py-1.5 rounded-full bg-red-100 text-red-600 font-medium hover:bg-red-200 transition-colors"
+                    >
+                      שלח דיווח
+                    </button>
+                    <button
+                      onClick={handleFlagCancel}
+                      className="text-xs px-3 py-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors"
+                    >
+                      ביטול
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleFlag}
+                  className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full transition-colors ${
+                    flagToast ? 'bg-red-50 text-red-500 font-medium' : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
+                  }`}
+                >
+                  <Flag className="w-3 h-3" />
+                  {flagToast ? 'דווח — תודה!' : 'דיווח על שגיאה'}
+                </button>
+              )}
             </div>
           </motion.div>
         )}

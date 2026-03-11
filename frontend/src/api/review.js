@@ -45,8 +45,8 @@ export const reviewAPI = {
     return response.data;
   },
 
-  flagWord: async (wordId) => {
-    const response = await apiClient.post(`/v1/admin/flag/${wordId}`);
+  flagWord: async (wordId, reason) => {
+    const response = await apiClient.post(`/v1/admin/flag/${wordId}`, { reason: reason || null });
     return response.data;
   },
 

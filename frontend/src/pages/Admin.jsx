@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -56,68 +56,78 @@ const WordRow = ({ word, onSaved, onDeleted, showFlag = false }) => {
       initial={{ opacity: 0, y: -4 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex flex-wrap items-center gap-2 p-3 bg-white border border-gray-100 rounded-xl shadow-sm"
+      className="flex flex-col gap-1.5 p-3 bg-white border border-gray-100 rounded-xl shadow-sm"
     >
-      <span className="text-xs font-mono text-gray-300 w-10 shrink-0">#{word.id}</span>
-      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">Unit {word.unit}</span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-mono text-gray-300 w-10 shrink-0">#{word.id}</span>
+        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">Unit {word.unit}</span>
 
-      {showFlag && word.is_flagged && (
-        <span className="text-xs bg-red-50 text-red-400 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-          <Flag className="w-2.5 h-2.5" /> flagged
-        </span>
+        {showFlag && word.is_flagged && (
+          <span className="text-xs bg-red-50 text-red-400 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+            <Flag className="w-2.5 h-2.5" /> flagged
+          </span>
+        )}
+      </div>
+
+      {showFlag && word.flag_reason && (
+        <div className="text-xs text-red-600 bg-red-50 border border-red-100 px-2.5 py-1.5 rounded-lg">
+          💬 <span className="font-medium">סיבה:</span> {word.flag_reason}
+        </div>
       )}
 
-      {editing ? (
-        <>
-          <input
-            value={english}
-            onChange={(e) => setEnglish(e.target.value)}
-            className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
-            placeholder="English"
-          />
-          <input
-            value={hebrew}
-            onChange={(e) => setHebrew(e.target.value)}
-            dir="rtl"
-            className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
-            placeholder="Hebrew"
-          />
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
-          >
-            <Save className="w-3 h-3" />
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button
-            onClick={handleCancel}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-          >
-            <X className="w-3 h-3" /> Cancel
-          </button>
-          {toast && <span className="text-xs text-violet-500 font-medium">{toast}</span>}
-        </>
-      ) : (
-        <>
-          <span className="flex-1 min-w-[100px] text-sm font-medium text-gray-800">{word.english}</span>
-          <span className="flex-1 min-w-[100px] text-sm text-gray-700" dir="rtl">{word.hebrew}</span>
-          <button
-            onClick={() => setEditing(true)}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-violet-50 hover:text-violet-600 transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            {deleting ? '…' : 'Delete'}
-          </button>
-        </>
-      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {editing ? (
+          <>
+            <input
+              value={english}
+              onChange={(e) => setEnglish(e.target.value)}
+              className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
+              placeholder="English"
+            />
+            <input
+              value={hebrew}
+              onChange={(e) => setHebrew(e.target.value)}
+              dir="rtl"
+              className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
+              placeholder="Hebrew"
+            />
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+            >
+              <Save className="w-3 h-3" />
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              <X className="w-3 h-3" /> Cancel
+            </button>
+            {toast && <span className="text-xs text-violet-500 font-medium">{toast}</span>}
+          </>
+        ) : (
+          <>
+            <span className="flex-1 min-w-[100px] text-sm font-medium text-gray-800">{word.english}</span>
+            <span className="flex-1 min-w-[100px] text-sm text-gray-700" dir="rtl">{word.hebrew}</span>
+            <button
+              onClick={() => setEditing(true)}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-violet-50 hover:text-violet-600 transition-colors"
+            >
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              {deleting ? '…' : 'Delete'}
+            </button>
+          </>
+        )}
+      </div>
     </motion.div>
   );
 };
@@ -249,6 +259,11 @@ const Admin = () => {
     } catch (err) {
       alert(err?.response?.data?.detail || 'Error deleting user');
     }
+  };
+
+  const refreshFlagged = async () => {
+    const f = await adminAPI.getFlagged().catch(() => ({ words: [] }));
+    setFlagged(f.words || []);
   };
 
   const removeFlagged = (id) => {
@@ -441,12 +456,22 @@ const Admin = () => {
           <p className="text-sm text-gray-400 text-center py-6">No flagged words — inbox is clean ✓</p>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-gray-400 mb-3">
-              Edit the translation to fix and auto-unflag, or delete the word entirely.
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">
+                Edit the translation to fix and auto-unflag, or delete the word entirely.
+              </p>
+              <button
+                onClick={refreshFlagged}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-violet-600 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw className="w-3 h-3" /> Refresh
+              </button>
+            </div>
             <AnimatePresence>
               {flagged.map((w) => (
                 <WordRow
+                  showFlag
                   key={w.id}
                   word={w}
                   onSaved={updateFlaggedWord}

@@ -42,6 +42,7 @@ class Word(Base):
 
     # Crowdsourced error reporting — users can flag words with mistakes
     is_flagged: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+    flag_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
 
     # Relationships
     associations: Mapped[List["Association"]] = relationship(
