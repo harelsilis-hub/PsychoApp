@@ -20,6 +20,7 @@ class CustomWord(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    language: Mapped[str] = mapped_column(String(10), index=True, nullable=False, default="en", server_default="en")
     english_word: Mapped[str] = mapped_column(String(255), nullable=False)
     hebrew_translation: Mapped[str] = mapped_column(String(1000), nullable=False)
     status: Mapped[WordStatus] = mapped_column(

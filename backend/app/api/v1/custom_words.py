@@ -2,7 +2,7 @@
 Custom Words API — user-owned vocabulary cards with full SM-2 spaced repetition.
 """
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ router = APIRouter()
 class CreateCustomWordRequest(BaseModel):
     english_word: str
     hebrew_translation: str
+    language: str = "en"
 
 
 class SubmitCustomReviewRequest(BaseModel):
@@ -34,6 +35,7 @@ def _word_to_dict(w: CustomWord) -> dict:
         "id": w.id,
         "english_word": w.english_word,
         "hebrew_translation": w.hebrew_translation,
+        "language": w.language,
         "status": w.status.value,
         "next_review": w.next_review.isoformat() if w.next_review else None,
         "created_at": w.created_at.isoformat(),
@@ -44,13 +46,15 @@ def _word_to_dict(w: CustomWord) -> dict:
 
 @router.get("")
 async def list_custom_words(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
-    """List all custom words for the current user."""
+    """List all custom words for the current user filtered by language."""
     stmt = (
         select(CustomWord)
         .where(CustomWord.user_id == current_user.id)
+        .where(CustomWord.language == language)
         .order_by(CustomWord.created_at.desc())
     )
     result = await db.execute(stmt)
@@ -72,6 +76,7 @@ async def create_custom_word(
 
     word = CustomWord(
         user_id=current_user.id,
+        language=data.language,
         english_word=english,
         hebrew_translation=hebrew,
         status=WordStatus.LEARNING,
@@ -108,15 +113,18 @@ async def delete_custom_word(
 
 @router.get("/stats")
 async def get_stats(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Stats for the 'My Words' unit tile on the dashboard."""
     total_stmt = select(func.count(CustomWord.id)).where(
-        CustomWord.user_id == current_user.id
+        CustomWord.user_id == current_user.id,
+        CustomWord.language == language,
     )
     learned_stmt = select(func.count(CustomWord.id)).where(
         CustomWord.user_id == current_user.id,
+        CustomWord.language == language,
         CustomWord.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]),
     )
     total   = (await db.execute(total_stmt)).scalar() or 0
@@ -129,6 +137,7 @@ async def get_stats(
 
 @router.get("/review")
 async def get_review_words(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -140,6 +149,7 @@ async def get_review_words(
     stmt = (
         select(CustomWord)
         .where(CustomWord.user_id == current_user.id)
+        .where(CustomWord.language == language)
         .where(
             or_(
                 CustomWord.status == WordStatus.LEARNING,
@@ -169,6 +179,7 @@ async def get_review_words(
 
 @router.get("/quiz")
 async def get_quiz_words(
+    language: str = Query(default="en", description="Language filter: 'en' or 'he'"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
@@ -176,6 +187,7 @@ async def get_quiz_words(
     stmt = (
         select(CustomWord)
         .where(CustomWord.user_id == current_user.id)
+        .where(CustomWord.language == language)
         .where(CustomWord.status.in_([WordStatus.REVIEW, WordStatus.MASTERED]))
         .order_by(CustomWord.next_review.asc().nullsfirst())
     )

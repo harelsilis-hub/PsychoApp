@@ -131,7 +131,7 @@ const Dashboard = () => {
     progressAPI.getUserStats()
       .then(setUserStats)
       .catch((err) => console.error('Failed to load user stats:', err));
-    customWordsAPI.getStats()
+    customWordsAPI.getStats(language)
       .then(setMyWordsStats)
       .catch((err) => console.error('Failed to load my-words stats:', err));
     reviewAPI.getDailyCount(language)

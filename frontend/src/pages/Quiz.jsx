@@ -154,7 +154,7 @@ const Quiz = () => {
     try {
       const [regularRes, customRes] = await Promise.all([
         reviewAPI.getAllLearnedWords(language),
-        customWordsAPI.getQuizWords(),
+        customWordsAPI.getQuizWords(language),
       ]);
       const regularWords = regularRes.words || [];
       const customWords  = (customRes.words || []).map(w => ({ ...w, isCustom: true }));

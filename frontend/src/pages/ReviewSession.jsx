@@ -70,7 +70,7 @@ const ReviewSession = () => {
 
       // ② My Words mode: /unit/my-words/review
       if (isMyWords) {
-        const data = await customWordsAPI.getReviewWords();
+        const data = await customWordsAPI.getReviewWords(language);
         const reviewWords = data.words || [];
         if (reviewWords.length === 0) {
           setNoUnknowns(true);

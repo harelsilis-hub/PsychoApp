@@ -4,6 +4,7 @@ import { ArrowRight, Plus, Trash2, BookOpen, Brain, X, Bookmark } from 'lucide-r
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate } from 'react-router-dom';
 import { customWordsAPI } from '../api/customWords';
+import { useLanguage } from '../context/LanguageContext';
 
 const STATUS_LABEL = {
   Learning: { text: 'לומד',   color: 'bg-amber-100 text-amber-700' },
@@ -14,6 +15,7 @@ const STATUS_LABEL = {
 
 const MyWordsDetail = () => {
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [words, setWords]         = useState([]);
   const [stats, setStats]         = useState({ total: 0, learned: 0, percent: 0 });
   const [loading, setLoading]     = useState(true);
@@ -23,10 +25,11 @@ const MyWordsDetail = () => {
   const [error, setError]         = useState('');
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const [wordsData, statsData] = await Promise.all([
-        customWordsAPI.listWords(),
-        customWordsAPI.getStats(),
+        customWordsAPI.listWords(language),
+        customWordsAPI.getStats(language),
       ]);
       setWords(wordsData.words);
       setStats(statsData);
@@ -37,7 +40,7 @@ const MyWordsDetail = () => {
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [language]);
 
   const handleAdd = async () => {
     if (!newWord.english.trim() || !newWord.hebrew.trim()) {
@@ -47,7 +50,7 @@ const MyWordsDetail = () => {
     setSaving(true);
     setError('');
     try {
-      const created = await customWordsAPI.createWord(newWord.english.trim(), newWord.hebrew.trim());
+      const created = await customWordsAPI.createWord(newWord.english.trim(), newWord.hebrew.trim(), language);
       setWords((prev) => [created, ...prev]);
       setStats((prev) => ({ ...prev, total: prev.total + 1 }));
       setNewWord({ english: '', hebrew: '' });
@@ -156,7 +159,7 @@ const MyWordsDetail = () => {
                     type="text"
                     value={newWord.english}
                     onChange={(e) => setNewWord((p) => ({ ...p, english: e.target.value }))}
-                    placeholder="לדוגמה: ephemeral"
+                    placeholder={language === 'he' ? 'לדוגמה: מלנכוליה' : 'לדוגמה: ephemeral'}
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200
                                focus:border-rose-400 focus:outline-none
                                text-gray-900 placeholder-gray-400 text-sm font-medium
@@ -173,7 +176,7 @@ const MyWordsDetail = () => {
                     type="text"
                     value={newWord.hebrew}
                     onChange={(e) => setNewWord((p) => ({ ...p, hebrew: e.target.value }))}
-                    placeholder="לדוגמה: ארעי, חולף"
+                    placeholder={language === 'he' ? 'לדוגמה: עצבות עמוקה וממושכת' : 'לדוגמה: ארעי, חולף'}
                     className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200
                                focus:border-rose-400 focus:outline-none
                                text-gray-900 placeholder-gray-400 text-sm font-medium
