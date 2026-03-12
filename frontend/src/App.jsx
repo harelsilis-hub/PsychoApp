@@ -29,6 +29,7 @@ import AcquisitionQuiz from './pages/AcquisitionQuiz';
 import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
 import InstallPWA from './components/InstallPWA';
+import UpdateBanner from './components/UpdateBanner';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -64,6 +65,7 @@ function App() {
       <AuthProvider>
         <Router>
           <ConditionalBackground />
+          <UpdateBanner />
           <AuthenticatedFeedback />
           <OnboardingTour />
           <InstallPWA />
