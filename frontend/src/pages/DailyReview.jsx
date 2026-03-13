@@ -4,8 +4,10 @@ import { ArrowRight, CalendarCheck, XCircle, Trophy } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
+import { authAPI } from '../api/auth';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
+import SuccessReferralCard from '../components/SuccessReferralCard';
 
 /** Fisher-Yates shuffle — returns a new shuffled array */
 function shuffle(arr) {
@@ -51,6 +53,11 @@ const DailyResult = ({ score, skipped, total, onRetry, onBack, onCram }) => {
   const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎯' : pct >= 50 ? '📚' : '💪';
   const msg   = pct >= 90 ? 'מצוין!' : pct >= 70 ? 'כל הכבוד!' : pct >= 50 ? 'מאמץ טוב!' : 'המשך להתאמן!';
 
+  const [referralLink, setReferralLink] = useState('');
+  useEffect(() => {
+    authAPI.getReferralStats().then(d => setReferralLink(d.referral_link)).catch(() => {});
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <motion.div
@@ -80,6 +87,12 @@ const DailyResult = ({ score, skipped, total, onRetry, onBack, onCram }) => {
             <div className="text-xs text-gray-500 mt-1">לא ידעתי</div>
           </div>
         </div>
+
+        {referralLink && (
+          <div className="mb-4">
+            <SuccessReferralCard referralLink={referralLink} />
+          </div>
+        )}
 
         <div className="space-y-3">
           <button

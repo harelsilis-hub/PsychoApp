@@ -58,6 +58,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_goal_date DATE DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMP WITH TIME ZONE DEFAULT NULL",
                 "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code VARCHAR(12) DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_user_id INTEGER DEFAULT NULL",
                 # Ensure admin account
                 "UPDATE users SET is_admin = true WHERE email = 'harel.silis@gmail.com'",
                 # Fix Hebrew words truncated by unescaped gershayim
@@ -90,6 +92,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 "ALTER TABLE users ADD COLUMN display_name VARCHAR(30) DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN last_goal_date DATE DEFAULT NULL",
                 "ALTER TABLE users ADD COLUMN last_seen DATETIME DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN referral_code VARCHAR(12) DEFAULT NULL",
+                "ALTER TABLE users ADD COLUMN referred_by_user_id INTEGER DEFAULT NULL",
                 # Fix Hebrew words truncated by unescaped gershayim (\" in original JSON)
                 "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'abroad'  AND hebrew = '\u05d7\u05d5'",
                 "UPDATE words SET hebrew = '\u05d7\u05d5\u05f4\u05dc' WHERE english = 'offshore' AND hebrew = '\u05d7\u05d5'",

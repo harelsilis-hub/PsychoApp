@@ -4,8 +4,10 @@ import { ArrowRight, Zap, CheckCircle, XCircle, Trophy } from 'lucide-react';
 import SoundToggle from '../components/SoundToggle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { reviewAPI } from '../api/review';
+import { authAPI } from '../api/auth';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
+import SuccessReferralCard from '../components/SuccessReferralCard';
 
 /** Fisher-Yates shuffle — returns a new shuffled array */
 function shuffle(arr) {
@@ -35,48 +37,61 @@ function buildOptions(currentWord, pool) {
 
 // ─── Session Complete screen ──────────────────────────────────────────────────
 
-const AcquisitionComplete = ({ graduated, total, onBack }) => (
-  <div className="min-h-screen flex items-center justify-center p-4">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
-    >
-      <div className="text-5xl mb-3">🎓</div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-1">סיימת את הבוחן!</h2>
-      <p className="text-gray-500 mb-6">
-        הסמכת{' '}
-        <span className="font-bold text-violet-600">{graduated}</span>{' '}
-        מתוך{' '}
-        <span className="font-bold text-gray-700">{total}</span>{' '}
-        מילים לחזרה היומית.
-      </p>
+const AcquisitionComplete = ({ graduated, total, onBack }) => {
+  const [referralLink, setReferralLink] = useState('');
+  useEffect(() => {
+    authAPI.getReferralStats().then(d => setReferralLink(d.referral_link)).catch(() => {});
+  }, []);
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-green-50 rounded-2xl p-4">
-          <div className="text-2xl font-bold text-green-600">{graduated}</div>
-          <div className="text-xs text-gray-500 mt-1">הוסמכו לחזרה</div>
-        </div>
-        <div className="bg-amber-50 rounded-2xl p-4">
-          <div className="text-2xl font-bold text-amber-500">{total - graduated}</div>
-          <div className="text-xs text-gray-500 mt-1">נשארו בתור</div>
-        </div>
-      </div>
-
-      <p className="text-xs text-gray-400 mb-6 leading-relaxed">
-        המילים שהוסמכו יופיעו בחזרה היומית מחר.
-        המילים שלא הוסמכו יחכו לך בבוחן הבא.
-      </p>
-
-      <button
-        onClick={onBack}
-        className="w-full bg-gradient-to-r from-violet-500 to-indigo-600 text-white py-3 rounded-xl font-semibold"
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-sm w-full bg-white rounded-3xl shadow-2xl p-8 text-center"
       >
-        חזרה ליחידה ←
-      </button>
-    </motion.div>
-  </div>
-);
+        <div className="text-5xl mb-3">🎓</div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">סיימת את הבוחן!</h2>
+        <p className="text-gray-500 mb-6">
+          הסמכת{' '}
+          <span className="font-bold text-violet-600">{graduated}</span>{' '}
+          מתוך{' '}
+          <span className="font-bold text-gray-700">{total}</span>{' '}
+          מילים לחזרה היומית.
+        </p>
+
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="bg-green-50 rounded-2xl p-4">
+            <div className="text-2xl font-bold text-green-600">{graduated}</div>
+            <div className="text-xs text-gray-500 mt-1">הוסמכו לחזרה</div>
+          </div>
+          <div className="bg-amber-50 rounded-2xl p-4">
+            <div className="text-2xl font-bold text-amber-500">{total - graduated}</div>
+            <div className="text-xs text-gray-500 mt-1">נשארו בתור</div>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+          המילים שהוסמכו יופיעו בחזרה היומית מחר.
+          המילים שלא הוסמכו יחכו לך בבוחן הבא.
+        </p>
+
+        {referralLink && (
+          <div className="mb-4 text-right">
+            <SuccessReferralCard referralLink={referralLink} />
+          </div>
+        )}
+
+        <button
+          onClick={onBack}
+          className="w-full bg-gradient-to-r from-violet-500 to-indigo-600 text-white py-3 rounded-xl font-semibold"
+        >
+          חזרה ליחידה ←
+        </button>
+      </motion.div>
+    </div>
+  );
+};
 
 // ─── Main AcquisitionQuiz ─────────────────────────────────────────────────────
 

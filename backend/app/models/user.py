@@ -1,7 +1,7 @@
 """User model definition."""
 from datetime import date, datetime
 from typing import List, Optional, TYPE_CHECKING
-from sqlalchemy import Boolean, DateTime, String, Integer, Date, func
+from sqlalchemy import Boolean, DateTime, String, Integer, Date, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 
@@ -42,6 +42,8 @@ class User(Base):
     last_goal_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
     display_name: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
     last_seen: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    referral_code: Mapped[Optional[str]] = mapped_column(String(12), unique=True, nullable=True, index=True)
+    referred_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # Relationships
     progress: Mapped[List["UserWordProgress"]] = relationship(

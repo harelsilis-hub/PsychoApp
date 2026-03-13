@@ -1,9 +1,17 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, TrendingUp, CheckCircle, XCircle, Target, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../api/auth';
+import SuccessReferralCard from './SuccessReferralCard';
 
 const SessionComplete = ({ stats, backPath = '/' }) => {
   const navigate = useNavigate();
+  const [referralLink, setReferralLink] = useState('');
+
+  useEffect(() => {
+    authAPI.getReferralStats().then(d => setReferralLink(d.referral_link)).catch(() => {});
+  }, []);
 
   const accuracy = stats.total > 0
     ? Math.round((stats.good / stats.total) * 100)
@@ -89,6 +97,18 @@ const SessionComplete = ({ stats, backPath = '/' }) => {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Referral card */}
+        {referralLink && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            className="mb-4"
+          >
+            <SuccessReferralCard referralLink={referralLink} />
+          </motion.div>
+        )}
 
         {/* Action Buttons */}
         <motion.div

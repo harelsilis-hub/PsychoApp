@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const googleLogin = async (credential) => {
-    const data = await authAPI.googleAuth(credential);
+  const googleLogin = async (credential, referralCode = null) => {
+    const data = await authAPI.googleAuth(credential, referralCode);
     const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false, display_name: data.display_name || null };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));
@@ -46,8 +46,8 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  const register = async (email, password, displayName = null) => {
-    const data = await authAPI.register(email, password, displayName);
+  const register = async (email, password, displayName = null, referralCode = null) => {
+    const data = await authAPI.register(email, password, displayName, referralCode);
     const userObj = { id: data.user_id, email: data.email, is_admin: data.is_admin || false, display_name: data.display_name || null };
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('auth_user', JSON.stringify(userObj));

@@ -66,6 +66,7 @@ POINTS = {
     "placement_complete":   500,
     "association_posted":    50,
     "association_liked":     20,
+    "referral_reward":     2500,   # per friend who registers with your referral link
 }
 
 # ── Badge definitions ──────────────────────────────────────────────────────────

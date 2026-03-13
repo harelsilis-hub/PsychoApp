@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, BookOpen, Trophy, Brain, Star } from 'lucide-react';
@@ -13,6 +13,7 @@ const FEATURES = [
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, register, googleLogin } = useAuth();
 
   const [mode, setMode]                       = useState('login');
@@ -24,6 +25,15 @@ const LoginPage = () => {
   const [agreedToTerms, setAgreedToTerms]     = useState(false);
   const [error, setError]                     = useState('');
   const [loading, setLoading]                 = useState(false);
+
+  // Capture referral code from URL and auto-switch to register
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) {
+      localStorage.setItem('pending_referral', ref);
+      setMode('register');
+    }
+  }, []);
 
   const switchMode = (m) => {
     setMode(m);
@@ -45,8 +55,13 @@ const LoginPage = () => {
     }
     setLoading(true);
     try {
-      if (mode === 'login') await login(email.trim(), password);
-      else await register(email.trim(), password, displayName.trim() || null);
+      if (mode === 'login') {
+        await login(email.trim(), password);
+      } else {
+        const pendingRef = localStorage.getItem('pending_referral');
+        await register(email.trim(), password, displayName.trim() || null, pendingRef);
+        localStorage.removeItem('pending_referral');
+      }
       navigate('/dashboard', { replace: true });
     } catch (err) {
       const detail = err.response?.data?.detail;
@@ -290,7 +305,9 @@ const LoginPage = () => {
                     setLoading(true);
                     setError('');
                     try {
-                      await googleLogin(credential);
+                      const pendingRef = localStorage.getItem('pending_referral');
+                      await googleLogin(credential, pendingRef);
+                      localStorage.removeItem('pending_referral');
                       navigate('/dashboard', { replace: true });
                     } catch {
                       setError('שגיאה בהתחברות עם Google. נסה שוב.');

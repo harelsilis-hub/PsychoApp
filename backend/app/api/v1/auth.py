@@ -12,12 +12,15 @@ from passlib.context import CryptContext
 from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
 
+from sqlalchemy import func as sqlfunc
 from app.db.session import get_db
 from app.models.user import User
 from app.models.password_reset_token import PasswordResetToken
+from app.models.point_event import PointEvent
 from app.auth.jwt import create_access_token
 from app.auth.dependencies import get_current_user
 from app.api.v1.push import notify_admins
+from app.services.gamification import award_xp, POINTS
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 
@@ -29,6 +32,7 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     display_name: str | None = None
+    referral_code: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -56,8 +60,28 @@ async def register(data: RegisterRequest, db: AsyncSession = Depends(get_db)):
         )
     hashed = pwd_context.hash(data.password.strip())
     display_name = data.display_name.strip()[:30] if data.display_name else None
-    user = User(email=data.email.strip().lower(), hashed_password=hashed, display_name=display_name)
+
+    # Generate unique referral code for new user
+    new_referral_code = None
+    for _ in range(10):
+        candidate = secrets.token_urlsafe(6)
+        existing = await db.execute(select(User).where(User.referral_code == candidate))
+        if not existing.scalar_one_or_none():
+            new_referral_code = candidate
+            break
+
+    user = User(email=data.email.strip().lower(), hashed_password=hashed, display_name=display_name, referral_code=new_referral_code)
     db.add(user)
+    await db.flush()  # get user.id before awarding referral XP
+
+    # Handle incoming referral code — award XP to referrer
+    if data.referral_code:
+        referrer_result = await db.execute(select(User).where(User.referral_code == data.referral_code.strip()))
+        referrer = referrer_result.scalar_one_or_none()
+        if referrer and referrer.id != user.id:
+            user.referred_by_user_id = referrer.id
+            await award_xp(db, referrer, "referral_reward", POINTS["referral_reward"])
+
     await db.commit()
     await db.refresh(user)
 
@@ -101,8 +125,44 @@ async def me(current_user: User = Depends(get_current_user)):
     )
 
 
+@router.get("/referral-stats")
+async def referral_stats(current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """Return the current user's referral code, link, and referral stats."""
+    # Lazily generate referral code if missing (e.g. existing users)
+    if not current_user.referral_code:
+        for _ in range(10):
+            candidate = secrets.token_urlsafe(6)
+            existing = await db.execute(select(User).where(User.referral_code == candidate))
+            if not existing.scalar_one_or_none():
+                current_user.referral_code = candidate
+                break
+        await db.commit()
+        await db.refresh(current_user)
+
+    referral_count_result = await db.execute(
+        select(sqlfunc.count(User.id)).where(User.referred_by_user_id == current_user.id)
+    )
+    referral_count = referral_count_result.scalar() or 0
+
+    xp_result = await db.execute(
+        select(sqlfunc.sum(PointEvent.final_points))
+        .where(PointEvent.user_id == current_user.id, PointEvent.source == "referral_reward")
+    )
+    referral_xp = xp_result.scalar() or 0
+
+    frontend_url = os.getenv("FRONTEND_URL", "https://psychoapp-il.vercel.app")
+    return {
+        "referral_code": current_user.referral_code,
+        "referral_link": f"{frontend_url}/login?ref={current_user.referral_code}",
+        "referral_count": referral_count,
+        "referral_xp": referral_xp,
+        "xp_per_referral": POINTS["referral_reward"],
+    }
+
+
 class GoogleAuthRequest(BaseModel):
     credential: str  # Google ID token
+    referral_code: str | None = None
 
 
 @router.post("/google", response_model=AuthResponse)
@@ -127,8 +187,25 @@ async def google_auth(data: GoogleAuthRequest, db: AsyncSession = Depends(get_db
     user = result.scalar_one_or_none()
 
     if not user:
-        user = User(email=email, hashed_password="", display_name=display_name)
+        # Generate unique referral code for new user
+        new_referral_code = None
+        for _ in range(10):
+            candidate = secrets.token_urlsafe(6)
+            existing = await db.execute(select(User).where(User.referral_code == candidate))
+            if not existing.scalar_one_or_none():
+                new_referral_code = candidate
+                break
+        user = User(email=email, hashed_password="", display_name=display_name, referral_code=new_referral_code)
         db.add(user)
+        await db.flush()
+
+        if data.referral_code:
+            referrer_result = await db.execute(select(User).where(User.referral_code == data.referral_code.strip()))
+            referrer = referrer_result.scalar_one_or_none()
+            if referrer and referrer.id != user.id:
+                user.referred_by_user_id = referrer.id
+                await award_xp(db, referrer, "referral_reward", POINTS["referral_reward"])
+
         await db.commit()
         await db.refresh(user)
 
