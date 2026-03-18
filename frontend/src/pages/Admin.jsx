@@ -433,12 +433,12 @@ const Admin = () => {
               </div>
               {timeline.map((d) => {
                 const label = timelineMode === '24h'
-                  ? new Date(d.bucket + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  ? new Date(d.bucket + 'Z').toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                   : new Date(d.bucket).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
                 const pct = Math.round((d.active_users / max) * 100);
                 return (
                   <div key={d.bucket} className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-24 shrink-0 text-right">{label}</span>
+                    <span className="text-xs text-gray-400 w-28 shrink-0 text-right">{label}</span>
                     <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
                       <div
                         className="h-full bg-violet-500 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
