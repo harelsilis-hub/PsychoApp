@@ -60,4 +60,9 @@ export const adminAPI = {
     const res = await apiClient.patch(`/v1/admin/feedback/${id}/read`);
     return res.data;
   },
+
+  getActivityTimeline: async (mode = 'week') => {
+    const res = await apiClient.get('/v1/admin/activity-timeline', { params: { mode } });
+    return res.data;
+  },
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -191,6 +191,9 @@ const Admin = () => {
   const [addToast, setAddToast]     = useState(null);
   const [pushStatus, setPushStatus] = useState(null);
   const [onlineCount, setOnlineCount] = useState(null);
+  const [timelineMode, setTimelineMode] = useState('week');
+  const [timeline, setTimeline] = useState([]);
+  const [timelineTotal, setTimelineTotal] = useState(0);
 
   useEffect(() => {
     loadData();
@@ -198,6 +201,7 @@ const Admin = () => {
     const fetchOnline = () => adminAPI.getOnlineCount().then((d) => setOnlineCount(d.online)).catch(() => {});
     fetchOnline();
     const interval = setInterval(fetchOnline, 30_000);
+    adminAPI.getActivityTimeline('week').then((d) => { setTimeline(d.timeline || []); setTimelineTotal(d.total_unique_users ?? 0); }).catch(() => {});
     return () => clearInterval(interval);
   }, []);
 
@@ -259,6 +263,11 @@ const Admin = () => {
     } catch (err) {
       alert(err?.response?.data?.detail || 'Error deleting user');
     }
+  };
+
+  const switchTimelineMode = (mode) => {
+    setTimelineMode(mode);
+    adminAPI.getActivityTimeline(mode).then((d) => { setTimeline(d.timeline || []); setTimelineTotal(d.total_unique_users ?? 0); }).catch(() => {});
   };
 
   const refreshFlagged = async () => {
@@ -390,6 +399,66 @@ const Admin = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* ── Activity Timeline ────────────────────────────────────────────────── */}
+      <Section icon={Activity} title="User Activity" color="violet">
+        {/* Toggle */}
+        <div className="flex gap-2 mb-4">
+          {['24h', 'week'].map((m) => (
+            <button
+              key={m}
+              onClick={() => switchTimelineMode(m)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+                timelineMode === m
+                  ? 'bg-violet-600 text-white'
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {m === '24h' ? 'Last 24 Hours' : 'Last 7 Days'}
+            </button>
+          ))}
+        </div>
+
+        {timeline.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">No activity data yet.</p>
+        ) : (() => {
+          const max = Math.max(...timeline.map((d) => d.active_users), 1);
+          return (
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="text-xs text-gray-400">
+                  {timelineMode === 'week' ? 'Unique users this week' : 'Unique users last 24h'}
+                </span>
+                <span className="text-2xl font-black text-violet-600 tabular-nums">{timelineTotal}</span>
+              </div>
+              {timeline.map((d) => {
+                const label = timelineMode === '24h'
+                  ? new Date(d.bucket + 'Z').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : new Date(d.bucket).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+                const pct = Math.round((d.active_users / max) * 100);
+                return (
+                  <div key={d.bucket} className="flex items-center gap-3">
+                    <span className="text-xs text-gray-400 w-24 shrink-0 text-right">{label}</span>
+                    <div className="flex-1 bg-gray-100 rounded-full h-5 overflow-hidden">
+                      <div
+                        className="h-full bg-violet-500 rounded-full flex items-center justify-end pr-2 transition-all duration-500"
+                        style={{ width: `${Math.max(pct, 4)}%` }}
+                      >
+                        {pct > 20 && (
+                          <span className="text-[10px] font-bold text-white">{d.active_users}</span>
+                        )}
+                      </div>
+                    </div>
+                    {pct <= 20 && (
+                      <span className="text-xs font-semibold text-gray-600 w-5">{d.active_users}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </Section>
 
       {/* ── Section 2: Users ─────────────────────────────────────────────────── */}
       <Section icon={Users} title="Registered Users" badge={users.length} color="violet">

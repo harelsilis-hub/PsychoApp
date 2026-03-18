@@ -425,6 +425,50 @@ async def recalculate_xp(
     return {"success": True, "users_updated": updated}
 
 
+# ── Activity timeline ─────────────────────────────────────────────────────────
+
+@router.get("/activity-timeline")
+async def get_activity_timeline(
+    mode: str = Query(default="week", pattern="^(24h|week)$"),
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return active user counts bucketed by hour (24h) or by day (week)."""
+    now = datetime.utcnow()
+    if mode == "24h":
+        since = now - timedelta(hours=24)
+        rows = await db.execute(
+            text("""
+                SELECT strftime('%Y-%m-%dT%H:00:00', created_at) AS bucket,
+                       COUNT(DISTINCT user_id) AS active_users
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY bucket
+                ORDER BY bucket ASC
+            """),
+            {"since": since},
+        )
+    else:
+        since = now - timedelta(days=7)
+        rows = await db.execute(
+            text("""
+                SELECT DATE(created_at) AS bucket, COUNT(DISTINCT user_id) AS active_users
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY bucket
+                ORDER BY bucket ASC
+            """),
+            {"since": since},
+        )
+    data = [{"bucket": str(row.bucket), "active_users": row.active_users} for row in rows]
+    total_result = await db.execute(
+        text("SELECT COUNT(DISTINCT user_id) FROM word_interaction_events WHERE created_at >= :since"),
+        {"since": since},
+    )
+    total_unique = total_result.scalar() or 0
+    return {"timeline": data, "mode": mode, "total_unique_users": total_unique}
+
+
 # ── ONE-TIME: strip trailing hyphens from english words ───────────────────────
 
 @router.post("/fix-hyphens")
