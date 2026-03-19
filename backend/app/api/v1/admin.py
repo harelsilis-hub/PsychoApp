@@ -2,6 +2,17 @@
 Admin panel endpoints — completely open, no authentication required.
 """
 from datetime import datetime, timedelta, timezone
+
+
+def _israel_tz_offset() -> str:
+    """Return SQLite modifier for Israel time, e.g. '+2 hours' or '+3 hours' (handles DST)."""
+    try:
+        from zoneinfo import ZoneInfo
+        offset_sec = datetime.now(timezone.utc).astimezone(ZoneInfo("Asia/Jerusalem")).utcoffset().total_seconds()
+        h = int(offset_sec / 3600)
+    except Exception:
+        h = 2  # fallback: Israel Standard Time
+    return f"+{h} hours" if h >= 0 else f"{h} hours"
 from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -429,34 +440,38 @@ async def recalculate_xp(
 
 @router.get("/activity-timeline")
 async def get_activity_timeline(
-    mode: str = Query(default="week", pattern="^(24h|week)$"),
+    mode: str = Query(default="week"),
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return active user counts bucketed by hour (24h) or by day (week)."""
-    now = datetime.utcnow()
+    if mode not in ("24h", "week"):
+        mode = "week"
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # naive UTC, matches stored timestamps
+    il = _israel_tz_offset()  # e.g. "+2 hours" or "+3 hours"
     if mode == "24h":
         since = now - timedelta(hours=24)
         rows = await db.execute(
-            text("""
-                SELECT strftime('%Y-%m-%dT%H:00:00', created_at) AS bucket,
+            text(f"""
+                SELECT strftime('%H:00', datetime(created_at, '{il}')) AS bucket,
                        COUNT(DISTINCT user_id) AS active_users
                 FROM word_interaction_events
                 WHERE created_at >= :since
-                GROUP BY bucket
-                ORDER BY bucket ASC
+                GROUP BY strftime('%Y-%m-%d %H', datetime(created_at, '{il}'))
+                ORDER BY strftime('%Y-%m-%d %H', datetime(created_at, '{il}')) ASC
             """),
             {"since": since},
         )
     else:
         since = now - timedelta(days=7)
         rows = await db.execute(
-            text("""
-                SELECT DATE(created_at) AS bucket, COUNT(DISTINCT user_id) AS active_users
+            text(f"""
+                SELECT DATE(datetime(created_at, '{il}')) AS bucket,
+                       COUNT(DISTINCT user_id) AS active_users
                 FROM word_interaction_events
                 WHERE created_at >= :since
-                GROUP BY bucket
-                ORDER BY bucket ASC
+                GROUP BY DATE(datetime(created_at, '{il}'))
+                ORDER BY DATE(datetime(created_at, '{il}')) ASC
             """),
             {"since": since},
         )

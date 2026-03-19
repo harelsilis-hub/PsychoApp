@@ -267,7 +267,12 @@ const Admin = () => {
 
   const switchTimelineMode = (mode) => {
     setTimelineMode(mode);
-    adminAPI.getActivityTimeline(mode).then((d) => { setTimeline(d.timeline || []); setTimelineTotal(d.total_unique_users ?? 0); }).catch(() => {});
+    setTimeline([]);
+    setTimelineTotal(0);
+    adminAPI.getActivityTimeline(mode).then((d) => {
+      setTimeline(d.timeline || []);
+      setTimelineTotal(d.total_unique_users ?? 0);
+    }).catch(() => {});
   };
 
   const refreshFlagged = async () => {
@@ -432,8 +437,9 @@ const Admin = () => {
                 <span className="text-2xl font-black text-violet-600 tabular-nums">{timelineTotal}</span>
               </div>
               {timeline.map((d) => {
+                // bucket is "HH:00" for 24h mode, "YYYY-MM-DD" for week mode
                 const label = timelineMode === '24h'
-                  ? new Date(d.bucket + 'Z').toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                  ? d.bucket
                   : new Date(d.bucket).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
                 const pct = Math.round((d.active_users / max) * 100);
                 return (
