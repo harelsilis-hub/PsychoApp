@@ -133,7 +133,7 @@ async def get_online_count(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Return number of users active in the last 5 minutes."""
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+    cutoff = datetime.utcnow() - timedelta(minutes=5)
     count = await db.scalar(
         select(func.count()).select_from(User).where(User.last_seen >= cutoff)
     )
@@ -438,7 +438,7 @@ async def get_activity_timeline(
     """Return active user counts bucketed by hour (24h) or by day (week)."""
     if mode not in ("24h", "week"):
         mode = "week"
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     if mode == "24h":
         since = now - timedelta(hours=24)
         rows = await db.execute(
