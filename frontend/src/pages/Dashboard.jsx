@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff, Accessibility } from 'lucide-react';
+import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff, Accessibility, Share2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { progressAPI } from '../api/progress';
 import { reviewAPI } from '../api/review';
@@ -298,6 +298,35 @@ const Dashboard = () => {
               </div>
             </div>
           </motion.button>
+
+          {/* ── Share button ── */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.55, delay: 0.19, ease: [0.22, 1, 0.36, 1] }}
+            className="shrink-0"
+          >
+            <button
+              onClick={async () => {
+                const url = window.location.origin;
+                if (navigator.share) {
+                  try { await navigator.share({ title: 'PsychoApp', url }); } catch {}
+                } else {
+                  await navigator.clipboard.writeText(url);
+                  alert('הקישור הועתק ללוח!');
+                }
+              }}
+              className="h-full bg-gradient-to-r from-violet-500 to-indigo-600
+                         rounded-[20px] sm:rounded-[24px] px-4
+                         flex items-center justify-center gap-2
+                         text-white font-black text-sm
+                         hover:opacity-90 transition-all duration-200
+                         shadow-xl shadow-violet-300/40"
+            >
+              <Share2 className="w-5 h-5" />
+              <span className="hidden sm:inline">שתף</span>
+            </button>
+          </motion.div>
 
           {/* ── Menu button ── */}
           <motion.div
