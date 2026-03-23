@@ -23,6 +23,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
   const [flagExpanded, setFlagExpanded] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [communityTips, setCommunityTips] = useState([]);
+  const [tipsOpen, setTipsOpen] = useState(false);
   const [likedTipIds, setLikedTipIds] = useState(() => {
     try {
       const stored = localStorage.getItem('liked_tip_ids');
@@ -43,6 +44,7 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
     setSentenceSaved(false);
     setFlagToast(false);
     setCommunityTips([]);
+    setTipsOpen(false);
     setSavedAssociation('');
 
     // Fetch personal associations independently
@@ -321,48 +323,72 @@ const FlashCard = ({ word, isNew, onRate, onAssociationSaved }) => {
         </AnimatePresence>
       </div>
 
-      {/* ── Community Tips — always open, always visible ── */}
+      {/* ── Community Tips — collapsed by default, click to expand ── */}
       <div className="rounded-2xl border border-purple-100 bg-purple-50 p-3">
-        <div className="flex items-center gap-1.5 mb-2">
-          <Users className="w-3.5 h-3.5 text-purple-500" />
-          <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">עזרי זיכרון מהקהילה</span>
-        </div>
-        {communityTips.length > 0 ? (
-          <div className="overflow-y-auto max-h-40 space-y-1.5">
-            {sortedTips.map((tip) => {
-              const isMine = tip.is_mine;
-              const isTop = topOtherTip && tip.id === topOtherTip.id;
-              return (
-                <div
-                  key={tip.id}
-                  className={`rounded-xl px-3 py-2 flex items-start gap-2 ${
-                    isMine ? 'bg-purple-50 border border-purple-200' : isTop ? 'bg-white border border-amber-200' : 'bg-white border border-gray-100'
-                  }`}
-                >
-                  {isMine
-                    ? <span className="text-xs font-bold text-purple-500 flex-shrink-0 mt-0.5">שלי</span>
-                    : isTop && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
-                  }
-                  <p className="text-sm text-gray-700 flex-1 leading-snug">"{tip.text}"</p>
-                  <button
-                    onClick={() => handleLikeTip(tip.id)}
-                    disabled={likedTipIds.has(tip.id)}
-                    className={`flex items-center gap-0.5 flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full transition-colors ${
-                      likedTipIds.has(tip.id)
-                        ? 'text-red-500 bg-red-50'
-                        : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
-                    }`}
-                  >
-                    <Heart className={`w-3 h-3 ${likedTipIds.has(tip.id) ? 'fill-red-400' : ''}`} />
-                    <span className="text-xs">{tip.likes}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="text-xs text-purple-400 text-center py-1">אין עדיין עזרי זיכרון — היה הראשון!</p>
-        )}
+        <button
+          onClick={() => setTipsOpen(o => !o)}
+          className="flex items-center gap-1.5 w-full text-right"
+        >
+          <Users className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+          <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide flex-1">
+            עזרי זיכרון מהקהילה
+            {communityTips.length > 0 && (
+              <span className="mr-1 text-purple-400 font-normal">({communityTips.length})</span>
+            )}
+          </span>
+          <span className={`text-purple-400 text-xs transition-transform duration-200 ${tipsOpen ? 'rotate-180' : ''}`}>▾</span>
+        </button>
+        <AnimatePresence initial={false}>
+          {tipsOpen && (
+            <motion.div
+              key="tips-body"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-2">
+                {communityTips.length > 0 ? (
+                  <div className="overflow-y-auto max-h-40 space-y-1.5">
+                    {sortedTips.map((tip) => {
+                      const isMine = tip.is_mine;
+                      const isTop = topOtherTip && tip.id === topOtherTip.id;
+                      return (
+                        <div
+                          key={tip.id}
+                          className={`rounded-xl px-3 py-2 flex items-start gap-2 ${
+                            isMine ? 'bg-purple-50 border border-purple-200' : isTop ? 'bg-white border border-amber-200' : 'bg-white border border-gray-100'
+                          }`}
+                        >
+                          {isMine
+                            ? <span className="text-xs font-bold text-purple-500 flex-shrink-0 mt-0.5">שלי</span>
+                            : isTop && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0 mt-0.5" />
+                          }
+                          <p className="text-sm text-gray-700 flex-1 leading-snug">"{tip.text}"</p>
+                          <button
+                            onClick={() => handleLikeTip(tip.id)}
+                            disabled={likedTipIds.has(tip.id)}
+                            className={`flex items-center gap-0.5 flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded-full transition-colors ${
+                              likedTipIds.has(tip.id)
+                                ? 'text-red-500 bg-red-50'
+                                : 'text-gray-400 hover:text-red-400 hover:bg-red-50'
+                            }`}
+                          >
+                            <Heart className={`w-3 h-3 ${likedTipIds.has(tip.id) ? 'fill-red-400' : ''}`} />
+                            <span className="text-xs">{tip.likes}</span>
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-xs text-purple-400 text-center py-1">אין עדיין עזרי זיכרון — היה הראשון!</p>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Actions ── */}
