@@ -135,7 +135,7 @@ const WordRow = ({ word, onSaved, onDeleted, showFlag = false }) => {
 // ─── Section wrapper ──────────────────────────────────────────────────────────
 
 const Section = ({ icon: Icon, title, badge, color = 'violet', children }) => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const colors = {
     violet: 'bg-violet-100 text-violet-700',
     red:    'bg-red-100 text-red-600',
