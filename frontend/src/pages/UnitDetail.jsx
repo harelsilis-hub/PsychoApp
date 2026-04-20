@@ -122,6 +122,8 @@ const UnitDetail = () => {
   const percent   = stats?.percent  ?? 0;
   const remaining = total - learned;
   const completed = percent >= 100;
+  const isExtraWords = unitNum === 11;
+  const unitLabel = isExtraWords ? 'מילים נוספות' : `יחידה ${unitNum}`;
 
   const barGrad = completed
     ? 'bg-gradient-to-r from-emerald-400 to-teal-500'
@@ -277,7 +279,7 @@ const UnitDetail = () => {
               <span className="text-white text-xs font-black">{unitNum}</span>
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-black text-gray-900">יחידה {unitNum}</p>
+              <p className="text-sm font-black text-gray-900">{unitLabel}</p>
               <p className="text-[10px] font-bold text-gray-600 uppercase tracking-wide">{total} מילים</p>
             </div>
           </div>

@@ -259,7 +259,7 @@ class ProgressService:
         Returns:
             Tuple of (Word, remaining_count).
         """
-        unit_number = max(1, min(10, user_level))
+        unit_number = max(1, min(100, user_level))
 
         stmt = select(UserWordProgress.word_id).where(
             UserWordProgress.user_id == user_id
@@ -301,7 +301,7 @@ class ProgressService:
         language: str = "en",
     ) -> tuple[list[Word], int]:
         """Return up to `count` random untriaged words + total remaining count."""
-        unit_number = max(1, min(10, user_level))
+        unit_number = max(1, min(100, user_level))
 
         stmt = select(UserWordProgress.word_id).where(UserWordProgress.user_id == user_id)
         result = await db.execute(stmt)

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LogOut, Moon, Sun, ShieldCheck, Volume2, VolumeX, Trophy, Menu, Bell, BellOff, Accessibility, Share2 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -149,6 +149,8 @@ const Dashboard = () => {
   // Derive available unit numbers from server data (supports any number of units)
   const availableUnits = unitStats?.units?.map((u) => u.unit) ??
     Array.from({ length: 10 }, (_, i) => i + 1);
+  const regularUnits = availableUnits.filter(u => u <= 10);
+  const extraUnits   = availableUnits.filter(u => u > 10);
 
   const overallPercent = unitStats?.overall_percent ?? 0;
   const totalLearned   = unitStats?.total_learned  ?? 0;
@@ -703,12 +705,11 @@ const Dashboard = () => {
           </button>
         </motion.div>
 
-        <div className="grid grid-cols-2 landscape:grid-cols-5 md:grid-cols-3 lg:grid-cols-5 lg:flex-1 lg:min-h-0 lg:grid-rows-2 gap-2 sm:gap-2">
-          {availableUnits.map((unit, idx) => {
+        <div className="grid grid-cols-2 landscape:grid-cols-5 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-2">
+          {regularUnits.map((unit, idx) => {
             const { learned, total, percent } = getUnitData(unit);
             const started   = learned > 0;
             const completed = percent >= 100;
-
             const btnLabel  = completed ? `חזרה ${unit}` : started ? `המשך ${unit}` : `התחל ${unit}`;
             const numColor  = completed ? 'text-emerald-500' : 'text-violet-600';
             const barGrad   = completed
@@ -736,7 +737,6 @@ const Dashboard = () => {
                              hover:-translate-y-0.5 active:scale-[0.97]
                              transition-all duration-200"
                 >
-                  {/* Number FIRST in JSX → RIGHT in RTL */}
                   <div className="flex items-start justify-between leading-none">
                     <span className={`text-[32px] sm:text-[28px] lg:text-[32px] font-black leading-none tabular-nums ${numColor}`}>
                       {unit}
@@ -779,6 +779,76 @@ const Dashboard = () => {
             );
           })}
         </div>
+
+        {/* ── Expansion Pack units (Unit 11+) — full-width premium banner ── */}
+        {extraUnits.map((unit, idx) => {
+          const { learned, total, percent } = getUnitData(unit);
+          const started   = learned > 0;
+          const completed = percent >= 100;
+          const btnLabel  = completed ? 'חזרה' : started ? 'המשך' : 'התחל';
+
+          return (
+            <motion.div
+              key={unit}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38 + idx * 0.07, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="shrink-0"
+            >
+              <button
+                onClick={() => navigate(`/unit/${unit}`)}
+                className="relative w-full overflow-hidden
+                           flex items-center gap-4 px-4 py-3.5
+                           rounded-[18px] text-right
+                           bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500
+                           shadow-lg shadow-orange-300/40
+                           hover:-translate-y-0.5 hover:shadow-xl hover:shadow-orange-300/50
+                           active:scale-[0.98] transition-all duration-200 group"
+              >
+                {/* Shimmer sweep */}
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0
+                                translate-x-[-100%] group-hover:translate-x-[100%]
+                                transition-transform duration-700 ease-in-out pointer-events-none" />
+
+                {/* Icon badge */}
+                <div className="shrink-0 w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm
+                                flex flex-col items-center justify-center shadow-inner">
+                  <span className="text-xl leading-none">✨</span>
+                  <span className="text-[10px] font-black text-white/90 leading-none mt-0.5">{unit}</span>
+                </div>
+
+                {/* Text block */}
+                <div className="flex-1 min-w-0 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <span className="text-[10px] font-black text-white/70 uppercase tracking-widest">EXPANSION PACK</span>
+                    <span className="text-xs font-black text-white bg-white/20 px-2 py-0.5 rounded-full">חדש</span>
+                  </div>
+                  <p className="text-base font-black text-white leading-tight">מילים נוספות</p>
+                  <p className="text-xs font-medium text-white/75 mt-0.5">{total} מילים · {learned} נלמדו</p>
+
+                  {/* Progress bar */}
+                  <div className="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden w-full">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${percent}%` }}
+                      transition={{ duration: 1.0, delay: 0.5, ease: 'easeOut' }}
+                      className="h-full rounded-full bg-white/80"
+                    />
+                  </div>
+                </div>
+
+                {/* Right: percent + CTA */}
+                <div className="shrink-0 flex flex-col items-center gap-2">
+                  <p className="text-2xl font-black text-white tabular-nums leading-none">{percent}%</p>
+                  <div className="px-4 py-1.5 bg-white text-orange-600 rounded-xl text-xs font-black
+                                  shadow-md shadow-black/10">
+                    {btnLabel} ←
+                  </div>
+                </div>
+              </button>
+            </motion.div>
+          );
+        })}
       </main>
     </div>
   );

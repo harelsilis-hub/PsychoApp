@@ -94,8 +94,8 @@ async def reset_unit_progress(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Delete all word progress records for a unit, resetting words to New status."""
-    if unit_number < 1 or unit_number > 10:
-        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+    if unit_number < 1 or unit_number > 100:
+        raise HTTPException(status_code=400, detail="Unit must be 1-100")
 
     try:
         word_ids_stmt = select(Word.id).where(Word.unit == unit_number).where(Word.language == language)
@@ -124,8 +124,8 @@ async def get_unit_pending_count(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Count words with LEARNING status in a unit — i.e. pending review backlog."""
-    if unit_number < 1 or unit_number > 10:
-        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+    if unit_number < 1 or unit_number > 100:
+        raise HTTPException(status_code=400, detail="Unit must be 1-100")
 
     stmt = (
         select(func.count(UserWordProgress.id))

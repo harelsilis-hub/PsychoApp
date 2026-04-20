@@ -237,10 +237,10 @@ async def get_unit_words(
     db: AsyncSession = Depends(get_db),
 ) -> ReviewSessionResponse:
     """Get words for a specific unit."""
-    if unit_number < 1 or unit_number > 10:
+    if unit_number < 1 or unit_number > 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unit number must be between 1 and 10"
+            detail="Unit number must be between 1 and 100"
         )
 
     try:
@@ -374,8 +374,8 @@ async def get_filter_words(
     Get words for tinder-style filtering — only completely unseen words.
     Any word the user has already interacted with (known OR unknown) is excluded.
     """
-    if unit_number < 1 or unit_number > 10:
-        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+    if unit_number < 1 or unit_number > 100:
+        raise HTTPException(status_code=400, detail="Unit must be 1-100")
 
     try:
         stmt = (
@@ -424,8 +424,8 @@ async def get_learned_words(
     """
     Get REVIEW or MASTERED words in a unit — used as source for quiz questions.
     """
-    if unit_number < 1 or unit_number > 10:
-        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+    if unit_number < 1 or unit_number > 100:
+        raise HTTPException(status_code=400, detail="Unit must be 1-100")
 
     try:
         stmt = (
@@ -489,8 +489,8 @@ async def get_acquisition_words(
     Only words the user has previously categorised as 'don't know' in FilterMode
     will appear here; fully-unseen words are handled by FilterMode first.
     """
-    if unit_number < 1 or unit_number > 10:
-        raise HTTPException(status_code=400, detail="Unit must be 1-10")
+    if unit_number < 1 or unit_number > 100:
+        raise HTTPException(status_code=400, detail="Unit must be 1-100")
 
     try:
         pairs = await ReviewService.get_acquisition_words(db, current_user.id, unit_number, language)

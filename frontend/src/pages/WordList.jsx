@@ -29,6 +29,9 @@ const WordList = () => {
   const [filter,  setFilter]  = useState('all'); // 'all' | 'know' | 'dontknow'
   const [marks,   setMarks]   = useState(loadMarks);
 
+  const isExtraWords = unitNum === 11;
+  const unitLabel = isExtraWords ? 'מילים נוספות' : `יחידה ${unitNum}`;
+
   useEffect(() => {
     reviewAPI.getUnitWords(unitNum, 500, language)
       .then((data) => {
@@ -99,7 +102,7 @@ const WordList = () => {
             className="flex items-center gap-1.5 shrink-0 text-gray-700 hover:text-gray-900 transition-colors"
           >
             <ArrowRight className="w-4 h-4" />
-            <span className="text-sm font-bold">יחידה {unitNum}</span>
+            <span className="text-sm font-bold">{unitLabel}</span>
           </button>
 
           <div className="w-px h-5 bg-gray-200 shrink-0" />
