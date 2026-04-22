@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -195,6 +195,13 @@ const Admin = () => {
   const [timeline, setTimeline] = useState([]);
   const [timelineTotal, setTimelineTotal] = useState(0);
 
+  // Broadcast push state
+  const [broadcastTitle, setBroadcastTitle] = useState('');
+  const [broadcastBody, setBroadcastBody] = useState('');
+  const [broadcastScheduleAt, setBroadcastScheduleAt] = useState(''); // datetime-local string
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastToast, setBroadcastToast] = useState(null); // { type: 'success'|'error', msg }
+
   useEffect(() => {
     loadData();
     // Poll online count immediately then every 30s
@@ -280,6 +287,34 @@ const Admin = () => {
     setFlagged(f.words || []);
   };
 
+  const handleBroadcastPush = async () => {
+    if (!broadcastTitle.trim() || !broadcastBody.trim()) return;
+    setBroadcasting(true);
+    setBroadcastToast(null);
+    try {
+      // Convert local datetime-local string to UTC ISO 8601 if provided
+      const send_at = broadcastScheduleAt
+        ? new Date(broadcastScheduleAt).toISOString()
+        : undefined;
+      const res = await adminAPI.sendPushToAll({ title: broadcastTitle.trim(), body: broadcastBody.trim(), send_at });
+      if (res.scheduled) {
+        const localTime = new Date(res.scheduled_at).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+        setBroadcastToast({ type: 'success', msg: `⏰ מתוזמן ל-${localTime}` });
+      } else {
+        setBroadcastToast({ type: 'success', msg: `✅ נשלח ל-${res.sent} מנויים${res.failed ? ` (${res.failed} נכשלו)` : ''}` });
+      }
+      setBroadcastTitle('');
+      setBroadcastBody('');
+      setBroadcastScheduleAt('');
+    } catch (err) {
+      const detail = err?.response?.data?.detail || 'שגיאה בשליחת ההתראה';
+      setBroadcastToast({ type: 'error', msg: `❌ ${detail}` });
+    } finally {
+      setBroadcasting(false);
+      setTimeout(() => setBroadcastToast(null), 3500);
+    }
+  };
+
   const removeFlagged = (id) => {
     setFlagged((prev) => prev.filter((w) => w.id !== id));
     setStats((s) => s ? { ...s, flagged_count: Math.max(0, s.flagged_count - 1) } : s);
@@ -349,6 +384,120 @@ const Admin = () => {
           >
             Test Send
           </button>
+        </div>
+      </motion.div>
+
+      {/* ── Push Notification Sender (Broadcast) ─────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="bg-white/70 backdrop-blur border border-gray-200/70 rounded-2xl shadow-sm p-5"
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
+            <Send className="w-5 h-5 text-violet-700" />
+          </div>
+          <div>
+            <p className="font-black text-gray-900">שליחת התראה לכולם</p>
+            <p className="text-xs text-gray-500">שלח push notification לכל המשתמשים הרשומים</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">כותרת</label>
+            <input
+              id="broadcast-title"
+              value={broadcastTitle}
+              onChange={(e) => setBroadcastTitle(e.target.value)}
+              placeholder="למשל: הרצף שלך עומד להתאפס! 🔥"
+              dir="rtl"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">תוכן</label>
+            <textarea
+              id="broadcast-body"
+              value={broadcastBody}
+              onChange={(e) => setBroadcastBody(e.target.value)}
+              placeholder="תוכן ההתראה..."
+              rows={3}
+              dir="rtl"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              id="broadcast-send-btn"
+              onClick={handleBroadcastPush}
+              disabled={broadcasting || !broadcastTitle.trim() || !broadcastBody.trim()}
+              className="flex items-center gap-2 px-5 py-2.5 text-sm bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors font-bold"
+            >
+              <Send className="w-4 h-4" />
+              {broadcasting
+                ? 'שולח…'
+                : broadcastScheduleAt
+                  ? 'תזמן שליחה'
+                  : 'שלח לכל המשתמשים'
+              }
+            </button>
+
+            {/* Schedule datetime picker */}
+            <div className="flex items-center gap-1.5">
+              {broadcastScheduleAt ? (
+                <>
+                  <input
+                    id="broadcast-schedule-at"
+                    type="datetime-local"
+                    value={broadcastScheduleAt}
+                    min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
+                    onChange={(e) => setBroadcastScheduleAt(e.target.value)}
+                    className="px-2 py-1.5 text-xs border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400 text-gray-700"
+                  />
+                  <button
+                    onClick={() => setBroadcastScheduleAt('')}
+                    title="בטל תזמון"
+                    className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    // Default to 1 hour from now, rounded to nearest 5 min
+                    const d = new Date(Date.now() + 60 * 60 * 1000);
+                    d.setSeconds(0, 0);
+                    d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5);
+                    setBroadcastScheduleAt(d.toISOString().slice(0, 16));
+                  }}
+                  title="תזמן שליחה"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-500 hover:border-violet-400 hover:text-violet-600 transition-colors"
+                >
+                  <Clock className="w-3.5 h-3.5" />
+                  תזמן
+                </button>
+              )}
+            </div>
+
+            <AnimatePresence>
+              {broadcastToast && (
+                <motion.span
+                  key="broadcast-toast"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className={`text-sm font-semibold ${
+                    broadcastToast.type === 'success' ? 'text-green-600' : 'text-red-500'
+                  }`}
+                >
+                  {broadcastToast.msg}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </motion.div>
 

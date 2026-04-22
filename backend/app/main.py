@@ -20,6 +20,9 @@ from app.models import User, Word, Association, UserWordProgress, PlacementSessi
 from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router, push_router
 from app.api.v1.push import send_streak_reminders
 
+# Module-level scheduler — assigned during lifespan startup so other modules can import it
+scheduler: AsyncIOScheduler | None = None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -113,6 +116,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     print("[OK] Database tables ready.")
 
     # ── Streak reminder scheduler ─────────────────────────────────────────────
+    global scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         send_streak_reminders,

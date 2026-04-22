@@ -65,4 +65,13 @@ export const adminAPI = {
     const res = await apiClient.get('/v1/admin/activity-timeline', { params: { mode } });
     return res.data;
   },
+
+  sendPushToAll: async ({ title, body, send_at }) => {
+    const res = await apiClient.post('/v1/push/send-all', {
+      title,
+      body,
+      ...(send_at ? { send_at } : {}),
+    });
+    return res.data;
+  },
 };

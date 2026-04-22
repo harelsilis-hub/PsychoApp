@@ -2,13 +2,16 @@ import os
 import json
 import asyncio
 import logging
-from datetime import date
+import uuid
+from datetime import date, datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from pydantic import BaseModel
 from pywebpush import webpush, WebPushException
+from apscheduler.triggers.date import DateTrigger
 
 from app.db.session import get_db, AsyncSessionLocal
 from app.models.push_subscription import PushSubscription
@@ -26,6 +29,12 @@ VAPID_CLAIMS = {"sub": "mailto:harel.silis@gmail.com"}
 class SubscribeRequest(BaseModel):
     endpoint: str
     keys: dict  # {"p256dh": "...", "auth": "..."}
+
+
+class SendAllRequest(BaseModel):
+    title: str
+    body: str
+    send_at: Optional[datetime] = None  # UTC datetime; if None, send immediately
 
 
 @router.get("/vapid-public-key")
@@ -104,6 +113,92 @@ async def test_push(current_user: User = Depends(get_current_user)):
             logger.warning(f"[Push] Test failed: {e}")
 
     return {"ok": True, "sent": sent}
+
+
+@router.post("/send-all", dependencies=[Depends(require_admin)])
+async def send_push_to_all(
+    body: SendAllRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Admin-only: broadcast a custom push notification to ALL subscribed users.
+    If send_at is provided (UTC), the broadcast is scheduled for that time.
+    """
+    # ── Scheduled send ────────────────────────────────────────────────────────
+    if body.send_at is not None:
+        from app.main import scheduler  # import here to avoid circular import at module load
+        if scheduler is None:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail="Scheduler not available")
+
+        job_id = f"broadcast_{uuid.uuid4().hex[:8]}"
+        scheduler.add_job(
+            _do_broadcast,
+            DateTrigger(run_date=body.send_at),
+            id=job_id,
+            kwargs={"title": body.title, "body": body.body},
+            replace_existing=False,
+        )
+        logger.info(f"[Push] send-all scheduled at {body.send_at} UTC (job={job_id})")
+        return {"ok": True, "scheduled": True, "scheduled_at": body.send_at.isoformat(), "job_id": job_id}
+
+    # ── Immediate send ────────────────────────────────────────────────────────
+    result = await _do_broadcast(body.title, body.body)
+    return {"ok": True, "scheduled": False, **result}
+
+
+async def _do_broadcast(title: str, body: str) -> dict:
+    """Core broadcast logic — called directly or by the scheduler."""
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(PushSubscription))
+        subs = result.scalars().all()
+
+    if not subs:
+        logger.info("[Push] send-all: no subscribers.")
+        return {"sent": 0, "failed": 0, "total": 0}
+
+    payload = json.dumps({
+        "title": title,
+        "body": body,
+        "icon": "/mila_logo.png",
+        "url": "/",
+    })
+
+    sent = 0
+    failed = 0
+    stale_endpoints = []
+
+    for sub in subs:
+        try:
+            await asyncio.to_thread(
+                webpush,
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
+                },
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims=VAPID_CLAIMS,
+            )
+            sent += 1
+        except WebPushException as e:
+            if e.response and e.response.status_code in (404, 410):
+                stale_endpoints.append(sub.endpoint)
+            else:
+                logger.warning(f"[Push] send-all failed for subscription {sub.id}: {e}")
+            failed += 1
+
+    if stale_endpoints:
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                delete(PushSubscription).where(
+                    PushSubscription.endpoint.in_(stale_endpoints)
+                )
+            )
+            await db.commit()
+        logger.info(f"[Push] send-all: cleaned up {len(stale_endpoints)} stale subscriptions.")
+
+    logger.info(f"[Push] send-all: sent={sent}, failed={failed}, total={len(subs)}")
+    return {"sent": sent, "failed": failed, "total": len(subs)}
 
 
 async def send_streak_reminders():
