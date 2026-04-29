@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -195,6 +195,13 @@ const Admin = () => {
   const [timeline, setTimeline] = useState([]);
   const [timelineTotal, setTimelineTotal] = useState(0);
 
+  // Custom word submission queue
+  const [customWords, setCustomWords]           = useState([]);
+  const [customTotal, setCustomTotal]           = useState(0);
+  const [customSkip, setCustomSkip]             = useState(0);
+  const [customLoading, setCustomLoading]       = useState(false);
+  const [customWordActions, setCustomWordActions] = useState({}); // { [id]: 'approving'|'rejecting'|'approved'|'rejected'|'error' }
+
   // Broadcast push state
   const [broadcastTitle, setBroadcastTitle] = useState('');
   const [broadcastBody, setBroadcastBody] = useState('');
@@ -223,6 +230,56 @@ const Admin = () => {
     setFlagged(f.words || []);
     setUsers(u.users || []);
     setFeedback(fb.feedback || []);
+    // Load first page of custom word queue
+    loadCustomWords(0, true);
+  };
+
+  const loadCustomWords = async (skip = 0, reset = false) => {
+    setCustomLoading(true);
+    try {
+      const data = await adminAPI.getCustomWordQueue(skip, 50);
+      const words = data.words || [];
+      setCustomTotal(data.total_pending || 0);
+      setCustomSkip(skip);
+      setCustomWords((prev) => reset ? words : [...prev, ...words]);
+    } catch (err) {
+      console.error('Failed to load custom word queue', err);
+    } finally {
+      setCustomLoading(false);
+    }
+  };
+
+  const handleApproveCustomWord = async (id) => {
+    setCustomWordActions((prev) => ({ ...prev, [id]: 'approving' }));
+    try {
+      await adminAPI.approveCustomWord(id);
+      setCustomWordActions((prev) => ({ ...prev, [id]: 'approved' }));
+      setCustomTotal((t) => Math.max(0, t - 1));
+      setTimeout(() => {
+        setCustomWords((prev) => prev.filter((w) => w.id !== id));
+        setCustomWordActions((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      }, 1200);
+    } catch (err) {
+      const detail = err?.response?.data?.detail || 'Error';
+      setCustomWordActions((prev) => ({ ...prev, [id]: `error:${detail}` }));
+      setTimeout(() => setCustomWordActions((prev) => { const n = { ...prev }; delete n[id]; return n; }), 3500);
+    }
+  };
+
+  const handleRejectCustomWord = async (id) => {
+    setCustomWordActions((prev) => ({ ...prev, [id]: 'rejecting' }));
+    try {
+      await adminAPI.rejectCustomWord(id);
+      setCustomWordActions((prev) => ({ ...prev, [id]: 'rejected' }));
+      setCustomTotal((t) => Math.max(0, t - 1));
+      setTimeout(() => {
+        setCustomWords((prev) => prev.filter((w) => w.id !== id));
+        setCustomWordActions((prev) => { const n = { ...prev }; delete n[id]; return n; });
+      }, 1200);
+    } catch (err) {
+      setCustomWordActions((prev) => ({ ...prev, [id]: 'error:Error' }));
+      setTimeout(() => setCustomWordActions((prev) => { const n = { ...prev }; delete n[id]; return n; }), 3500);
+    }
   };
 
   const handleSearch = async (e) => {
@@ -865,6 +922,153 @@ const Admin = () => {
               </motion.div>
             ))}
           </div>
+        )}
+      </Section>
+
+      {/* ── Section 6: Custom Word Submissions ──────────────────────────── */}
+      <Section
+        icon={Sparkles}
+        title="Custom Word Submissions"
+        badge={customTotal || undefined}
+        color="green"
+      >
+        <div className="space-y-1 mb-4">
+          <p className="text-xs text-gray-400">
+            Words submitted by users that are not yet in the main dictionary.
+            Approve to add them to <span className="font-semibold text-violet-600">Unit 11 (Extra Words)</span>.
+            Words already in the DB are flagged — you can only reject those.
+          </p>
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs text-gray-400">
+              Showing {customWords.length} of {customTotal} pending
+            </span>
+            <button
+              onClick={() => loadCustomWords(0, true)}
+              disabled={customLoading}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-violet-600 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3 h-3 ${customLoading ? 'animate-spin' : ''}`} /> Refresh
+            </button>
+          </div>
+        </div>
+
+        {customWords.length === 0 && !customLoading ? (
+          <p className="text-sm text-gray-400 text-center py-8">🎉 No pending submissions — queue is empty!</p>
+        ) : (
+          <>
+            <AnimatePresence mode="popLayout">
+              {customWords.map((w) => {
+                const action = customWordActions[w.id];
+                const isApproved   = action === 'approved';
+                const isRejected   = action === 'rejected';
+                const isApproving  = action === 'approving';
+                const isRejecting  = action === 'rejecting';
+                const isError      = action?.startsWith('error:');
+                const errorMsg     = isError ? action.replace('error:', '') : null;
+                const isBusy       = isApproving || isRejecting;
+
+                return (
+                  <motion.div
+                    key={w.id}
+                    layout
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{
+                      opacity: isApproved || isRejected ? 0.4 : 1,
+                      scale:   isApproved || isRejected ? 0.97 : 1,
+                      y: 0,
+                    }}
+                    exit={{ opacity: 0, x: 40, height: 0, marginBottom: 0, padding: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className={`p-3 rounded-xl border mb-2 ${
+                      isApproved ? 'bg-green-50 border-green-200' :
+                      isRejected ? 'bg-gray-50 border-gray-200' :
+                      w.already_in_db ? 'bg-amber-50/60 border-amber-200' :
+                      'bg-white border-gray-100 shadow-sm'
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-start gap-2">
+                      {/* Word info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900">{w.english}</span>
+                          <span className="text-gray-300">/</span>
+                          <span className="text-sm text-gray-700" dir="rtl">{w.hebrew}</span>
+                          {w.already_in_db && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">
+                              ⚠️ Already in DB
+                            </span>
+                          )}
+                          {isApproved && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
+                              ✓ Approved
+                            </span>
+                          )}
+                          {isRejected && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 shrink-0">
+                              Rejected
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-3 text-[11px] text-gray-400">
+                          <span>👤 {w.user_email}</span>
+                          <span>📅 {new Date(w.created_at).toLocaleDateString()}</span>
+                          <span className="text-gray-300">#{w.id}</span>
+                        </div>
+                        {isError && (
+                          <p className="text-xs text-red-500 mt-1">❌ {errorMsg}</p>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      {!isApproved && !isRejected && (
+                        <div className="flex gap-2 shrink-0 self-center">
+                          <button
+                            onClick={() => handleApproveCustomWord(w.id)}
+                            disabled={isBusy || w.already_in_db}
+                            title={w.already_in_db ? 'Already in DB — cannot approve duplicate' : 'Approve and add to Unit 11'}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-semibold"
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            {isApproving ? 'Adding…' : 'Approve'}
+                          </button>
+                          <button
+                            onClick={() => handleRejectCustomWord(w.id)}
+                            disabled={isBusy}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 disabled:opacity-40 transition-colors font-semibold"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            {isRejecting ? '…' : 'Reject'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+
+            {/* Load more */}
+            {customWords.length < customTotal && (
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => loadCustomWords(customSkip + 50, false)}
+                  disabled={customLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors font-bold"
+                >
+                  {customLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Plus className="w-4 h-4" />
+                  )}
+                  Load more ({customTotal - customWords.length} remaining)
+                </button>
+              </div>
+            )}
+
+            {customLoading && customWords.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-6">Loading submissions…</p>
+            )}
+          </>
         )}
       </Section>
     </div>

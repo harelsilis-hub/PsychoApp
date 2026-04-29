@@ -73,6 +73,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 # Only Mastered words (marked 'known' in FilterMode) are pre-graduated.
                 # Review words may still be waiting for the acquisition quiz.
                 "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status = 'Mastered' AND learning_state = 'learning'",
+                # Custom word admin moderation queue
+                "ALTER TABLE custom_words ADD COLUMN IF NOT EXISTS admin_status VARCHAR(20) DEFAULT 'pending' NOT NULL",
             ]
             for migration_sql in migrations:
                 try:
@@ -106,6 +108,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                 # Only Mastered words (marked 'known' in FilterMode) are pre-graduated.
                 # Review words may still be waiting for the acquisition quiz.
                 "UPDATE user_word_progress SET learning_state = 'graduated' WHERE status = 'Mastered' AND learning_state = 'learning'",
+                # Custom word admin moderation queue
+                "ALTER TABLE custom_words ADD COLUMN admin_status VARCHAR(20) DEFAULT 'pending' NOT NULL",
             ]
             for migration_sql in migrations:
                 try:

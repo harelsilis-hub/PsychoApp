@@ -74,4 +74,21 @@ export const adminAPI = {
     });
     return res.data;
   },
+
+  // ── Custom Word Submissions ──────────────────────────────────────────────────
+
+  getCustomWordQueue: async (skip = 0, limit = 50) => {
+    const res = await apiClient.get('/v1/admin/custom-words', { params: { skip, limit } });
+    return res.data;
+  },
+
+  approveCustomWord: async (id) => {
+    const res = await apiClient.post(`/v1/admin/custom-words/${id}/approve`);
+    return res.data;
+  },
+
+  rejectCustomWord: async (id) => {
+    const res = await apiClient.post(`/v1/admin/custom-words/${id}/reject`);
+    return res.data;
+  },
 };

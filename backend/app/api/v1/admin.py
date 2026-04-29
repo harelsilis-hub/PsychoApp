@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text
 from pydantic import BaseModel
 
-from app.db.session import get_db
+from app.db.session import get_db, DIALECT
 from app.models.word import Word
 from app.models.user import User
 from app.models.user_feedback import UserFeedback
@@ -18,6 +18,7 @@ from app.models.word_interaction_event import WordInteractionEvent
 from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.models.association import Association
 from app.models.point_event import PointEvent
+from app.models.custom_word import CustomWord
 from app.services.gamification import get_level_info
 from app.auth.dependencies import get_current_user, require_admin
 from app.api.v1.push import notify_admins
@@ -258,8 +259,8 @@ async def add_word(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Add a brand-new word to the dictionary."""
-    if body.unit < 1 or body.unit > 10:
-        raise HTTPException(status_code=400, detail="Unit must be between 1 and 10")
+    if body.unit < 1 or body.unit > 11:
+        raise HTTPException(status_code=400, detail="Unit must be between 1 and 11")
     word = Word(english=body.english.strip(), hebrew=body.hebrew.strip(), unit=body.unit)
     db.add(word)
     await db.commit()
@@ -441,30 +442,48 @@ async def get_activity_timeline(
     now = datetime.utcnow()
     if mode == "24h":
         since = now - timedelta(hours=24)
-        rows = await db.execute(
-            text("""
+        if DIALECT == "postgresql":
+            sql = """
                 SELECT TO_CHAR(created_at AT TIME ZONE 'Asia/Jerusalem', 'HH24:00') AS bucket,
                        COUNT(DISTINCT user_id) AS active_users
                 FROM word_interaction_events
                 WHERE created_at >= :since
                 GROUP BY DATE_TRUNC('hour', created_at AT TIME ZONE 'Asia/Jerusalem')
                 ORDER BY DATE_TRUNC('hour', created_at AT TIME ZONE 'Asia/Jerusalem') ASC
-            """),
-            {"since": since},
-        )
+            """
+        else:
+            # SQLite approximation
+            sql = """
+                SELECT strftime('%H:00', datetime(created_at, '+3 hours')) AS bucket,
+                       COUNT(DISTINCT user_id) AS active_users
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY strftime('%Y-%m-%d %H', datetime(created_at, '+3 hours'))
+                ORDER BY strftime('%Y-%m-%d %H', datetime(created_at, '+3 hours')) ASC
+            """
+        rows = await db.execute(text(sql), {"since": since})
     else:
         since = now - timedelta(days=7)
-        rows = await db.execute(
-            text("""
+        if DIALECT == "postgresql":
+            sql = """
                 SELECT (created_at AT TIME ZONE 'Asia/Jerusalem')::date AS bucket,
                        COUNT(DISTINCT user_id) AS active_users
                 FROM word_interaction_events
                 WHERE created_at >= :since
                 GROUP BY (created_at AT TIME ZONE 'Asia/Jerusalem')::date
                 ORDER BY (created_at AT TIME ZONE 'Asia/Jerusalem')::date ASC
-            """),
-            {"since": since},
-        )
+            """
+        else:
+            # SQLite approximation
+            sql = """
+                SELECT date(created_at, '+3 hours') AS bucket,
+                       COUNT(DISTINCT user_id) AS active_users
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY date(created_at, '+3 hours')
+                ORDER BY date(created_at, '+3 hours') ASC
+            """
+        rows = await db.execute(text(sql), {"since": since})
     data = [{"bucket": str(row.bucket), "active_users": row.active_users} for row in rows]
     total_result = await db.execute(
         text("SELECT COUNT(DISTINCT user_id) FROM word_interaction_events WHERE created_at >= :since"),
@@ -487,3 +506,119 @@ async def fix_hyphens(
     )
     await db.commit()
     return {"success": True, "rows_updated": result.rowcount}
+
+
+# ── Custom Words Moderation Queue ─────────────────────────────────────────────
+
+@router.get("/custom-words")
+async def get_custom_word_queue(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    List all pending custom word submissions.
+    Each entry includes an `already_in_db` flag to warn if the English word
+    already exists in the main words table (case-insensitive).
+    """
+    # Fetch pending custom words, newest first
+    stmt = (
+        select(CustomWord, User.email.label("user_email"))
+        .join(User, CustomWord.user_id == User.id)
+        .where(CustomWord.admin_status == "pending")
+        .order_by(CustomWord.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # Count total pending
+    total_stmt = select(func.count(CustomWord.id)).where(CustomWord.admin_status == "pending")
+    total_pending = await db.scalar(total_stmt) or 0
+
+    items = []
+    for cw, user_email in rows:
+        # Check if the word already exists in the main words table (case-insensitive)
+        duplicate_stmt = select(func.count(Word.id)).where(
+            func.lower(Word.english) == func.lower(cw.english_word)
+        )
+        dup_count = await db.scalar(duplicate_stmt) or 0
+        items.append({
+            "id": cw.id,
+            "english": cw.english_word,
+            "hebrew": cw.hebrew_translation,
+            "language": cw.language,
+            "user_email": user_email,
+            "created_at": cw.created_at.isoformat(),
+            "already_in_db": dup_count > 0,
+        })
+
+    return {"words": items, "total_pending": total_pending, "skip": skip, "limit": limit}
+
+
+@router.post("/custom-words/{word_id}/approve")
+async def approve_custom_word(
+    word_id: int,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Approve a custom word submission: adds it to the main words table (Unit 11)
+    and marks the custom_word row as approved.
+    Blocks if the word already exists in the main DB.
+    """
+    cw = await db.get(CustomWord, word_id)
+    if not cw:
+        raise HTTPException(status_code=404, detail="Custom word not found")
+    if cw.admin_status != "pending":
+        raise HTTPException(status_code=400, detail=f"Word already {cw.admin_status}")
+
+    # Guard: check for duplicate in main words table
+    dup_count = await db.scalar(
+        select(func.count(Word.id)).where(
+            func.lower(Word.english) == func.lower(cw.english_word)
+        )
+    ) or 0
+    if dup_count > 0:
+        raise HTTPException(
+            status_code=409,
+            detail=f"'{cw.english_word}' already exists in the main dictionary"
+        )
+
+    # Insert into main words table as Unit 11
+    new_word = Word(
+        english=cw.english_word.strip(),
+        hebrew=cw.hebrew_translation.strip(),
+        unit=11,
+    )
+    db.add(new_word)
+    cw.admin_status = "approved"
+    await db.commit()
+    await db.refresh(new_word)
+
+    return {
+        "success": True,
+        "word_id": new_word.id,
+        "english": new_word.english,
+        "hebrew": new_word.hebrew,
+        "unit": new_word.unit,
+    }
+
+
+@router.post("/custom-words/{word_id}/reject")
+async def reject_custom_word(
+    word_id: int,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Mark a custom word submission as rejected (will no longer appear in the queue)."""
+    cw = await db.get(CustomWord, word_id)
+    if not cw:
+        raise HTTPException(status_code=404, detail="Custom word not found")
+    if cw.admin_status != "pending":
+        raise HTTPException(status_code=400, detail=f"Word already {cw.admin_status}")
+    cw.admin_status = "rejected"
+    await db.commit()
+    return {"success": True, "word_id": word_id}

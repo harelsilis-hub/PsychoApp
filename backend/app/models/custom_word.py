@@ -2,7 +2,7 @@
 from typing import Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy import Integer, ForeignKey, String, DateTime, JSON, Enum as SQLEnum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
 from app.models.user_word_progress import WordStatus
@@ -35,6 +35,11 @@ class CustomWord(Base):
         default=lambda: {"repetition_number": 0, "easiness_factor": 2.5, "interval_days": 0},
     )
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # Admin moderation status: 'pending' | 'approved' | 'rejected'
+    admin_status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="pending", server_default="pending"
+    )
 
     def __repr__(self) -> str:
         return f"<CustomWord(id={self.id}, user_id={self.user_id}, word='{self.english_word}')>"
