@@ -519,14 +519,24 @@ async def get_custom_word_queue(
 ) -> dict:
     """
     List all pending custom word submissions.
-    Each entry includes an `already_in_db` flag to warn if the English word
-    already exists in the main words table (case-insensitive).
+    Only shows English words that do not already exist in the main database.
     """
-    # Fetch pending custom words, newest first
+    from sqlalchemy import exists
+
+    # Subquery to check if word exists in main words table
+    subq = (
+        select(1)
+        .where(func.lower(Word.english) == func.lower(CustomWord.english_word))
+        .correlate(CustomWord)
+    )
+
+    # Fetch pending English custom words not in DB, newest first
     stmt = (
         select(CustomWord, User.email.label("user_email"))
         .join(User, CustomWord.user_id == User.id)
         .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~exists(subq))
         .order_by(CustomWord.created_at.desc())
         .offset(skip)
         .limit(limit)
@@ -535,16 +545,16 @@ async def get_custom_word_queue(
     rows = result.all()
 
     # Count total pending
-    total_stmt = select(func.count(CustomWord.id)).where(CustomWord.admin_status == "pending")
+    total_stmt = (
+        select(func.count(CustomWord.id))
+        .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~exists(subq))
+    )
     total_pending = await db.scalar(total_stmt) or 0
 
     items = []
     for cw, user_email in rows:
-        # Check if the word already exists in the main words table (case-insensitive)
-        duplicate_stmt = select(func.count(Word.id)).where(
-            func.lower(Word.english) == func.lower(cw.english_word)
-        )
-        dup_count = await db.scalar(duplicate_stmt) or 0
         items.append({
             "id": cw.id,
             "english": cw.english_word,
@@ -552,7 +562,7 @@ async def get_custom_word_queue(
             "language": cw.language,
             "user_email": user_email,
             "created_at": cw.created_at.isoformat(),
-            "already_in_db": dup_count > 0,
+            "already_in_db": False,
         })
 
     return {"words": items, "total_pending": total_pending, "skip": skip, "limit": limit}
