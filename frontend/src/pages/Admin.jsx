@@ -251,6 +251,24 @@ const Admin = () => {
     }
   };
 
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
+
+  const handleApproveAll = async () => {
+    if (!window.confirm(`Are you sure you want to approve all ${customWords.length} visible words?`)) return;
+    setIsApprovingAll(true);
+    for (const w of customWords) {
+      if (!w.already_in_db && customWordActions[w.id] !== 'approved' && customWordActions[w.id] !== 'rejected') {
+        // Use suggested hebrew if verification marked it as wrong, otherwise just approve
+        let editedData = null;
+        if (verifyResults[w.id]?.verdict === 'wrong' && verifyResults[w.id]?.suggested_hebrew) {
+          editedData = { edited_english: w.english, edited_hebrew: verifyResults[w.id].suggested_hebrew };
+        }
+        await handleApproveCustomWord(w.id, editedData);
+      }
+    }
+    setIsApprovingAll(false);
+  };
+
   const [editingWord, setEditingWord] = useState(null);
   const [editForm, setEditForm] = useState({ english: '', hebrew: '' });
 
@@ -969,11 +987,19 @@ const Admin = () => {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleVerifyTranslations}
-                disabled={verifying || customWords.length === 0}
+                disabled={verifying || customWords.length === 0 || isApprovingAll}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
               >
                 <ShieldCheck className={`w-3.5 h-3.5 ${verifying ? 'animate-pulse' : ''}`} />
                 {verifying ? 'Checking…' : 'Verify Translations'}
+              </button>
+              <button
+                onClick={handleApproveAll}
+                disabled={isApprovingAll || customWords.length === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+              >
+                <CheckCircle className={`w-3.5 h-3.5 ${isApprovingAll ? 'animate-spin' : ''}`} />
+                {isApprovingAll ? 'Approving…' : 'Approve All Visible'}
               </button>
               <button
                 onClick={() => loadCustomWords(0, true)}
