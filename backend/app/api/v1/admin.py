@@ -598,7 +598,7 @@ async def verify_custom_word_translations(
         .where(CustomWord.language == "en")
         .where(~_exists(subq))
         .order_by(CustomWord.created_at.desc())
-        .limit(200)
+        .limit(50)
     )
     result = await db.execute(stmt)
     words = result.scalars().all()
