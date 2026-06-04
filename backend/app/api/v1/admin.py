@@ -628,14 +628,14 @@ No markdown fences, no explanation — pure JSON array only.
 Words:
 {word_list}"""
 
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
     try:
         async with _httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(url, params={"key": api_key}, json=payload)
         if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"Gemini API error: {resp.status_code}")
+            raise HTTPException(status_code=502, detail=f"Gemini API error {resp.status_code}: {resp.text}")
 
         raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
         # Strip markdown code fences if Gemini adds them
