@@ -10,6 +10,7 @@ from app.api.v1.leaderboard import router as leaderboard_router
 from app.api.v1.tts import router as tts_router
 from app.api.v1.custom_words import router as custom_words_router
 from app.api.v1.push import router as push_router
+from app.api.v1.system import router as system_router
 
 __all__ = [
     "auth_router",
@@ -23,4 +24,5 @@ __all__ = [
     "tts_router",
     "custom_words_router",
     "push_router",
+    "system_router",
 ]

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
+import { systemAPI } from '../api/system';
 
 // ─── Inline editable word row ─────────────────────────────────────────────────
 
@@ -211,6 +212,11 @@ const Admin = () => {
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastToast, setBroadcastToast] = useState(null); // { type: 'success'|'error', msg }
 
+  // System Welcome Message
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [savingWelcomeMessage, setSavingWelcomeMessage] = useState(false);
+  const [welcomeMessageToast, setWelcomeMessageToast] = useState(null);
+
   useEffect(() => {
     loadData();
     // Poll online count immediately then every 30s
@@ -234,6 +240,14 @@ const Admin = () => {
     setFeedback(fb.feedback || []);
     // Load first page of custom word queue
     loadCustomWords(0, true);
+    
+    // Load welcome message
+    try {
+      const w = await systemAPI.getSetting('welcome_message');
+      if (w && w.value) setWelcomeMessage(w.value);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const loadCustomWords = async (skip = 0, reset = false) => {
@@ -406,11 +420,25 @@ const Admin = () => {
       setBroadcastBody('');
       setBroadcastScheduleAt('');
     } catch (err) {
-      const detail = err?.response?.data?.detail || 'שגיאה בשליחת ההתראה';
-      setBroadcastToast({ type: 'error', msg: `❌ ${detail}` });
+      console.error(err);
+      setBroadcastToast({ type: 'error', msg: 'שגיאה בשליחת הודעה' });
     } finally {
       setBroadcasting(false);
-      setTimeout(() => setBroadcastToast(null), 3500);
+      setTimeout(() => setBroadcastToast(null), 3000);
+    }
+  };
+
+  const handleSaveWelcomeMessage = async () => {
+    setSavingWelcomeMessage(true);
+    setWelcomeMessageToast(null);
+    try {
+      await adminAPI.updateSystemSetting('welcome_message', welcomeMessage);
+      setWelcomeMessageToast({ type: 'success', msg: welcomeMessage.trim() ? 'ההודעה נשמרה!' : 'ההודעה נמחקה!' });
+    } catch (err) {
+      setWelcomeMessageToast({ type: 'error', msg: 'שגיאה בשמירת הודעה' });
+    } finally {
+      setSavingWelcomeMessage(false);
+      setTimeout(() => setWelcomeMessageToast(null), 3000);
     }
   };
 
@@ -596,6 +624,67 @@ const Admin = () => {
                 </motion.span>
               )}
             </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── System Welcome Message ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/70 backdrop-blur border border-blue-200/70 rounded-2xl shadow-sm p-6 flex flex-col md:flex-row gap-6 relative overflow-hidden"
+      >
+        {/* Accent line */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-blue-600" />
+        
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
+              <MessageSquare className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-black text-gray-900">הודעת פתיחה לאתר</p>
+              <p className="text-xs text-gray-500">קבע הודעה שתקפוץ לכל המשתמשים ברגע שיכנסו לאתר</p>
+            </div>
+          </div>
+
+          <div className="space-y-3 mt-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">תוכן ההודעה (השאר ריק כדי למחוק)</label>
+              <textarea
+                value={welcomeMessage}
+                onChange={(e) => setWelcomeMessage(e.target.value)}
+                placeholder="למשל: ברוכים הבאים למערכת החדשה..."
+                rows={3}
+                dir="rtl"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSaveWelcomeMessage}
+                disabled={savingWelcomeMessage}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors font-bold"
+              >
+                <Save className="w-4 h-4" />
+                {savingWelcomeMessage ? 'שומר…' : 'שמור הודעה'}
+              </button>
+
+              <AnimatePresence>
+                {welcomeMessageToast && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`text-sm font-semibold ${
+                      welcomeMessageToast.type === 'success' ? 'text-green-600' : 'text-red-500'
+                    }`}
+                  >
+                    {welcomeMessageToast.msg}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </motion.div>

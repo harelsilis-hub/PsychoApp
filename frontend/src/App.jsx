@@ -30,6 +30,7 @@ import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
 import InstallPWA from './components/InstallPWA';
 import UpdateBanner from './components/UpdateBanner';
+import GlobalWelcomeMessage from './components/GlobalWelcomeMessage';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -66,6 +67,7 @@ function App() {
         <Router>
           <ConditionalBackground />
           <UpdateBanner />
+          <GlobalWelcomeMessage />
           <AuthenticatedFeedback />
           <OnboardingTour />
           <InstallPWA />

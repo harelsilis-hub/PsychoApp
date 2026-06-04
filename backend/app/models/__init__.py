@@ -11,6 +11,7 @@ from app.models.user_badge import UserBadge
 from app.models.point_event import PointEvent
 from app.models.custom_word import CustomWord
 from app.models.push_subscription import PushSubscription
+from app.models.system_setting import SystemSetting
 
 __all__ = [
     "User",
@@ -26,4 +27,5 @@ __all__ = [
     "PointEvent",
     "CustomWord",
     "PushSubscription",
+    "SystemSetting",
 ]

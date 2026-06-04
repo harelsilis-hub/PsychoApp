@@ -87,8 +87,13 @@ export const adminAPI = {
     return res.data;
   },
 
-  rejectCustomWord: async (id) => {
-    const res = await apiClient.post(`/v1/admin/custom-words/${id}/reject`);
+  rejectCustomWord: async (wordId) => {
+    const res = await apiClient.post(`/v1/admin/custom-words/${wordId}/reject`);
+    return res.data;
+  },
+
+  updateSystemSetting: async (key, value) => {
+    const res = await apiClient.put(`/v1/admin/system-settings/${key}`, { value });
     return res.data;
   },
 

@@ -16,8 +16,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from app.db.session import engine, Base, DIALECT
-from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord, PushSubscription
-from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router, push_router
+from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord, PushSubscription, SystemSetting
+from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router, push_router, system_router
 from app.api.v1.push import send_streak_reminders
 
 # Module-level scheduler — assigned during lifespan startup so other modules can import it
@@ -286,7 +286,8 @@ app.include_router(
 
 # TODO: Add additional route modules here
 # from app.api.v1 import users, words, associations, progress
-# app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
+# app.include_router(push_router, prefix="/api/v1/push", tags=["push"])
+app.include_router(system_router, prefix="/api/v1/system", tags=["system"])
 # app.include_router(words.router, prefix="/api/v1/words", tags=["words"])
 # app.include_router(associations.router, prefix="/api/v1/associations", tags=["associations"])
 # app.include_router(progress.router, prefix="/api/v1/progress", tags=["progress"])

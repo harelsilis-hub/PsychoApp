@@ -18,6 +18,7 @@ from app.models.word_interaction_event import WordInteractionEvent
 from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.models.association import Association
 from app.models.point_event import PointEvent
+from app.models.system_setting import SystemSetting
 from app.models.custom_word import CustomWord
 from app.services.gamification import get_level_info
 from app.auth.dependencies import get_current_user, require_admin
@@ -665,6 +666,12 @@ Words:
     return {"results": results, "total_checked": len(results)}
 
 
+class BatchAddWordsRequest(BaseModel):
+    words: list[WordCreate]
+
+class SystemSettingUpdate(BaseModel):
+    value: Optional[str] = None
+
 class ApproveCustomWordRequest(BaseModel):
     edited_english: str | None = None
     edited_hebrew: str | None = None
@@ -731,7 +738,8 @@ async def reject_custom_word(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Mark a custom word submission as rejected (will no longer appear in the queue)."""
-    cw = await db.get(CustomWord, word_id)
+    result = await db.execute(select(CustomWord).where(CustomWord.id == word_id))
+    cw = result.scalar_one_or_none()
     if not cw:
         raise HTTPException(status_code=404, detail="Custom word not found")
     if cw.admin_status != "pending":
@@ -739,3 +747,29 @@ async def reject_custom_word(
     cw.admin_status = "rejected"
     await db.commit()
     return {"success": True, "word_id": word_id}
+
+@router.put("/system-settings/{key}")
+async def update_system_setting(
+    key: str,
+    data: SystemSettingUpdate,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update or delete a system setting."""
+    result = await db.execute(select(SystemSetting).where(SystemSetting.key == key))
+    setting = result.scalar_one_or_none()
+    
+    if data.value is None or data.value.strip() == "":
+        if setting:
+            await db.delete(setting)
+            await db.commit()
+        return {"success": True, "message": "Setting deleted"}
+    
+    if setting:
+        setting.value = data.value
+    else:
+        setting = SystemSetting(key=key, value=data.value)
+        db.add(setting)
+    
+    await db.commit()
+    return {"success": True, "key": key, "value": setting.value}
