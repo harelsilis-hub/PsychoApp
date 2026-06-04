@@ -93,7 +93,7 @@ export const adminAPI = {
   },
 
   verifyCustomWords: async () => {
-    const res = await apiClient.post('/v1/admin/custom-words/verify');
+    const res = await apiClient.post('/v1/admin/custom-words/verify', {}, { timeout: 60000 });
     return res.data;
   },
 };
