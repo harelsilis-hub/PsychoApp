@@ -284,14 +284,20 @@ const Admin = () => {
     }
   };
 
+  const [verifyError, setVerifyError] = useState(null);
+
   const handleVerifyTranslations = async () => {
     setVerifying(true);
     setVerifyResults({});
+    setVerifyError(null);
     try {
       const data = await adminAPI.verifyCustomWords();
       setVerifyResults(data.results || {});
     } catch (err) {
+      const detail = err?.response?.data?.detail || err.message || 'Unknown error';
+      setVerifyError(detail);
       console.error('Verification failed', err);
+      setTimeout(() => setVerifyError(null), 6000);
     } finally {
       setVerifying(false);
     }
@@ -976,6 +982,12 @@ const Admin = () => {
             </div>
           </div>
         </div>
+
+        {verifyError && (
+          <div className="mb-3 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-sm text-red-600 font-medium">
+            ❌ Verification failed: {verifyError}
+          </div>
+        )}
 
         {customWords.length === 0 && !customLoading ? (
           <p className="text-sm text-gray-400 text-center py-8">🎉 No pending submissions — queue is empty!</p>

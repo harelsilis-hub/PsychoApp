@@ -16,3 +16,5 @@ services:
         value: re_Cm4GMzFa_FKievEXcCDza8fsG2k9FyGD9
       - key: FRONTEND_URL
         value: https://psychoapp-il.vercel.app
+      - key: GEMINI_API_KEY
+        value: AIzaSyDRmgM0CidnjgaF5w7sBsNEgA2PWxdsAO0
