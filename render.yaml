@@ -9,7 +9,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: ALLOWED_ORIGINS
-        value: https://psychoapp-il.vercel.app,https://frontend-one-mu-68.vercel.app
+        value: https://psychoapp-il.vercel.app,https://frontend-one-mu-68.vercel.app,https://www.milawords.site,https://milawords.site
       - key: PYTHON_VERSION
         value: 3.11.0
       - key: RESEND_API_KEY
