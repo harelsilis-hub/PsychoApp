@@ -665,15 +665,21 @@ Words:
     return {"results": results, "total_checked": len(results)}
 
 
+class ApproveCustomWordRequest(BaseModel):
+    edited_english: str | None = None
+    edited_hebrew: str | None = None
+
 @router.post("/custom-words/{word_id}/approve")
 async def approve_custom_word(
     word_id: int,
+    data: ApproveCustomWordRequest = None,
     _: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """
     Approve a custom word submission: adds it to the main words table (Unit 11)
     and marks the custom_word row as approved.
+    Optionally accepts edited English/Hebrew fields to fix typos before approving.
     Blocks if the word already exists in the main DB.
     """
     cw = await db.get(CustomWord, word_id)
@@ -682,22 +688,26 @@ async def approve_custom_word(
     if cw.admin_status != "pending":
         raise HTTPException(status_code=400, detail=f"Word already {cw.admin_status}")
 
+    # Determine final text (use edited if provided, else fallback to original)
+    final_english = (data.edited_english if data and data.edited_english else cw.english_word).strip()
+    final_hebrew = (data.edited_hebrew if data and data.edited_hebrew else cw.hebrew_translation).strip()
+
     # Guard: check for duplicate in main words table
     dup_count = await db.scalar(
         select(func.count(Word.id)).where(
-            func.lower(Word.english) == func.lower(cw.english_word)
+            func.lower(Word.english) == func.lower(final_english)
         )
     ) or 0
     if dup_count > 0:
         raise HTTPException(
             status_code=409,
-            detail=f"'{cw.english_word}' already exists in the main dictionary"
+            detail=f"'{final_english}' already exists in the main dictionary"
         )
 
     # Insert into main words table as Unit 11
     new_word = Word(
-        english=cw.english_word.strip(),
-        hebrew=cw.hebrew_translation.strip(),
+        english=final_english,
+        hebrew=final_hebrew,
         unit=11,
     )
     db.add(new_word)

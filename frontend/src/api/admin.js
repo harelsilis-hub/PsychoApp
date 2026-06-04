@@ -82,8 +82,8 @@ export const adminAPI = {
     return res.data;
   },
 
-  approveCustomWord: async (id) => {
-    const res = await apiClient.post(`/v1/admin/custom-words/${id}/approve`);
+  approveCustomWord: async (id, editedData = null) => {
+    const res = await apiClient.post(`/v1/admin/custom-words/${id}/approve`, editedData || {});
     return res.data;
   },
 

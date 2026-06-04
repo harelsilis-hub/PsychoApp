@@ -251,10 +251,13 @@ const Admin = () => {
     }
   };
 
-  const handleApproveCustomWord = async (id) => {
+  const [editingWord, setEditingWord] = useState(null);
+  const [editForm, setEditForm] = useState({ english: '', hebrew: '' });
+
+  const handleApproveCustomWord = async (id, editedData = null) => {
     setCustomWordActions((prev) => ({ ...prev, [id]: 'approving' }));
     try {
-      await adminAPI.approveCustomWord(id);
+      await adminAPI.approveCustomWord(id, editedData);
       setCustomWordActions((prev) => ({ ...prev, [id]: 'approved' }));
       setCustomTotal((t) => Math.max(0, t - 1));
       setTimeout(() => {
@@ -1027,9 +1030,28 @@ const Admin = () => {
                       {/* Word info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm text-gray-900">{w.english}</span>
-                          <span className="text-gray-300">/</span>
-                          <span className="text-sm text-gray-700" dir="rtl">{w.hebrew}</span>
+                          {editingWord === w.id ? (
+                            <div className="flex items-center gap-2 w-full mb-1">
+                              <input 
+                                className="px-2 py-1 text-sm border rounded w-1/3" 
+                                value={editForm.english} 
+                                onChange={(e) => setEditForm({...editForm, english: e.target.value})} 
+                              />
+                              <span className="text-gray-300">/</span>
+                              <input 
+                                className="px-2 py-1 text-sm border rounded w-1/3" 
+                                dir="rtl" 
+                                value={editForm.hebrew} 
+                                onChange={(e) => setEditForm({...editForm, hebrew: e.target.value})} 
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <span className="font-semibold text-sm text-gray-900">{w.english}</span>
+                              <span className="text-gray-300">/</span>
+                              <span className="text-sm text-gray-700" dir="rtl">{w.hebrew}</span>
+                            </>
+                          )}
                           {verifyResults[w.id]?.verdict === 'correct' && (
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
                               ✅ Correct
@@ -1063,24 +1085,55 @@ const Admin = () => {
 
                       {/* Action buttons */}
                       {!isApproved && !isRejected && (
-                        <div className="flex gap-2 shrink-0 self-center">
-                          <button
-                            onClick={() => handleApproveCustomWord(w.id)}
-                            disabled={isBusy || w.already_in_db}
-                            title={w.already_in_db ? 'Already in DB — cannot approve duplicate' : 'Approve and add to Unit 11'}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-semibold"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            {isApproving ? 'Adding…' : 'Approve'}
-                          </button>
-                          <button
-                            onClick={() => handleRejectCustomWord(w.id)}
-                            disabled={isBusy}
-                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 disabled:opacity-40 transition-colors font-semibold"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            {isRejecting ? '…' : 'Reject'}
-                          </button>
+                        <div className="flex gap-2 shrink-0 self-center mt-1">
+                          {editingWord === w.id ? (
+                            <>
+                              <button
+                                onClick={() => handleApproveCustomWord(w.id, { edited_english: editForm.english, edited_hebrew: editForm.hebrew })}
+                                disabled={isBusy}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 transition-colors font-semibold"
+                              >
+                                {isApproving ? 'Saving…' : 'Save & Approve'}
+                              </button>
+                              <button
+                                onClick={() => setEditingWord(null)}
+                                disabled={isBusy}
+                                className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors font-semibold"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleApproveCustomWord(w.id)}
+                                disabled={isBusy || w.already_in_db}
+                                title={w.already_in_db ? 'Already in DB — cannot approve duplicate' : 'Approve and add to Unit 11'}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors font-semibold"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                {isApproving ? 'Adding…' : 'Approve'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEditingWord(w.id);
+                                  setEditForm({ english: w.english, hebrew: verifyResults[w.id]?.suggested_hebrew || w.hebrew });
+                                }}
+                                disabled={isBusy || w.already_in_db}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-40 transition-colors font-semibold"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleRejectCustomWord(w.id)}
+                                disabled={isBusy}
+                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-600 disabled:opacity-40 transition-colors font-semibold"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                {isRejecting ? 'Rejecting…' : 'Reject'}
+                              </button>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
