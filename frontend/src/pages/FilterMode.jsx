@@ -149,6 +149,28 @@ const FilterMode = () => {
     }, 180);
   };
 
+  // ── Keyboard shortcuts ──────────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is typing or app is busy
+      if (document.activeElement?.tagName === 'TEXTAREA' || document.activeElement?.tagName === 'INPUT') return;
+      if (swipingRef.current || !currentWord || autoRedirecting || loading || exitDir) return;
+      
+      if (e.key === 'ArrowRight') {
+        handleChoice(true); // Know it
+      } else if (e.key === 'ArrowLeft') {
+        handleChoice(false); // Don't know it
+      } else if (e.key === ' ' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        setIsFlipped((f) => !f);
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentWord, autoRedirecting, loading, exitDir, history, unknowns, queue]);
+
+
   // ── Loading ────────────────────────────────────────────────
   if (loading) {
     return (

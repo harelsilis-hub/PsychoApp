@@ -1,7 +1,17 @@
+import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, XCircle } from 'lucide-react';
 
 const WordCard = ({ word, onKnow, onDontKnow, loading, questionNumber }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (loading) return;
+      if (e.key === 'ArrowRight') onKnow();
+      else if (e.key === 'ArrowLeft') onDontKnow();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [loading, onKnow, onDontKnow]);
   return (
     <motion.div
       key={word.id}
