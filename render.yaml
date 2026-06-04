@@ -18,3 +18,9 @@ services:
         value: https://psychoapp-il.vercel.app
       - key: GEMINI_API_KEY
         value: AIzaSyDRmgM0CidnjgaF5w7sBsNEgA2PWxdsAO0
+      - key: GOOGLE_CLIENT_ID
+        value: 580553263438-7d4kdn21aah6f74o7i75cut6onangtpj.apps.googleusercontent.com
+      - key: VAPID_PRIVATE_KEY
+        value: oE9e_-FL0XoJOz1mGPgHXguLXe4RtujMDxwaC1vJNa0
+      - key: VAPID_PUBLIC_KEY
+        value: BDEmwkDdLMfenjfvM5Sw2zpxGXoEGd1eQX-uffTc0TU23cZZWJsZzHpsKBfqK8Vhhv7o_V6Z0hkImMTVa6iDGFE
