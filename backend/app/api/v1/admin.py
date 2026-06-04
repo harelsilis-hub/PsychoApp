@@ -568,6 +568,103 @@ async def get_custom_word_queue(
     return {"words": items, "total_pending": total_pending, "skip": skip, "limit": limit}
 
 
+@router.post("/custom-words/verify")
+async def verify_custom_word_translations(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Use Gemini to batch-verify all pending custom word translations.
+    Returns a verdict per word: correct, wrong, or a suggested fix.
+    """
+    import os
+    import httpx as _httpx
+    import json as _json
+    from sqlalchemy import exists as _exists
+
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    # Reuse the same duplicate-exclusion subquery from the listing endpoint
+    subq = (
+        select(1)
+        .where(func.lower(Word.english) == func.lower(CustomWord.english_word))
+        .correlate(CustomWord)
+    )
+    stmt = (
+        select(CustomWord)
+        .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~_exists(subq))
+        .order_by(CustomWord.created_at.desc())
+        .limit(200)
+    )
+    result = await db.execute(stmt)
+    words = result.scalars().all()
+
+    if not words:
+        return {"results": {}, "total_checked": 0}
+
+    # Build the prompt — ask Gemini for JSON verdicts
+    word_list = "\n".join(
+        f'{w.id}. "{w.english_word}" → "{w.hebrew_translation}"'
+        for w in words
+    )
+    prompt = f"""You are a bilingual English–Hebrew dictionary expert.
+Below is a numbered list of English words with user-submitted Hebrew translations.
+For each word, determine if the Hebrew translation is correct or wrong.
+
+Rules:
+- A translation is "correct" if the Hebrew reasonably matches the English meaning (accept synonyms, slight variations).
+- A translation is "wrong" if the Hebrew does not match the English meaning at all, or is gibberish / a different language.
+- If wrong, provide the correct Hebrew translation.
+
+Respond ONLY with a valid JSON array. Each element must be:
+{{"id": <number>, "verdict": "correct"}} or {{"id": <number>, "verdict": "wrong", "suggested_hebrew": "<correct translation>"}}
+
+No markdown fences, no explanation — pure JSON array only.
+
+Words:
+{word_list}"""
+
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+    try:
+        async with _httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(url, params={"key": api_key}, json=payload)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Gemini API error: {resp.status_code}")
+
+        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        # Strip markdown code fences if Gemini adds them
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+
+        verdicts = _json.loads(cleaned)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail=f"Could not parse Gemini response as JSON")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gemini verification failed: {str(e)}")
+
+    # Convert list to dict keyed by word id
+    results = {}
+    for v in verdicts:
+        word_id = v.get("id")
+        if word_id is not None:
+            results[str(word_id)] = {
+                "verdict": v.get("verdict", "unknown"),
+                "suggested_hebrew": v.get("suggested_hebrew"),
+            }
+
+    return {"results": results, "total_checked": len(results)}
+
+
 @router.post("/custom-words/{word_id}/approve")
 async def approve_custom_word(
     word_id: int,

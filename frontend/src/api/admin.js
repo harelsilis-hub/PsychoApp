@@ -91,4 +91,9 @@ export const adminAPI = {
     const res = await apiClient.post(`/v1/admin/custom-words/${id}/reject`);
     return res.data;
   },
+
+  verifyCustomWords: async () => {
+    const res = await apiClient.post('/v1/admin/custom-words/verify');
+    return res.data;
+  },
 };

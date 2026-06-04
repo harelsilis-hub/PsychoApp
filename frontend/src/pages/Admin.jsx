@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 
@@ -201,6 +201,8 @@ const Admin = () => {
   const [customSkip, setCustomSkip]             = useState(0);
   const [customLoading, setCustomLoading]       = useState(false);
   const [customWordActions, setCustomWordActions] = useState({}); // { [id]: 'approving'|'rejecting'|'approved'|'rejected'|'error' }
+  const [verifyResults, setVerifyResults] = useState({}); // { [id]: { verdict, suggested_hebrew } }
+  const [verifying, setVerifying] = useState(false);
 
   // Broadcast push state
   const [broadcastTitle, setBroadcastTitle] = useState('');
@@ -279,6 +281,19 @@ const Admin = () => {
     } catch (err) {
       setCustomWordActions((prev) => ({ ...prev, [id]: 'error:Error' }));
       setTimeout(() => setCustomWordActions((prev) => { const n = { ...prev }; delete n[id]; return n; }), 3500);
+    }
+  };
+
+  const handleVerifyTranslations = async () => {
+    setVerifying(true);
+    setVerifyResults({});
+    try {
+      const data = await adminAPI.verifyCustomWords();
+      setVerifyResults(data.results || {});
+    } catch (err) {
+      console.error('Verification failed', err);
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -942,13 +957,23 @@ const Admin = () => {
             <span className="text-xs text-gray-400">
               Showing {customWords.length} of {customTotal} pending
             </span>
-            <button
-              onClick={() => loadCustomWords(0, true)}
-              disabled={customLoading}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-violet-600 transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3 h-3 ${customLoading ? 'animate-spin' : ''}`} /> Refresh
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleVerifyTranslations}
+                disabled={verifying || customWords.length === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                <ShieldCheck className={`w-3.5 h-3.5 ${verifying ? 'animate-pulse' : ''}`} />
+                {verifying ? 'Checking…' : 'Verify Translations'}
+              </button>
+              <button
+                onClick={() => loadCustomWords(0, true)}
+                disabled={customLoading}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-violet-600 transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${customLoading ? 'animate-spin' : ''}`} /> Refresh
+              </button>
+            </div>
           </div>
         </div>
 
@@ -993,9 +1018,14 @@ const Admin = () => {
                           <span className="font-semibold text-sm text-gray-900">{w.english}</span>
                           <span className="text-gray-300">/</span>
                           <span className="text-sm text-gray-700" dir="rtl">{w.hebrew}</span>
-                          {w.already_in_db && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 shrink-0">
-                              ⚠️ Already in DB
+                          {verifyResults[w.id]?.verdict === 'correct' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 shrink-0">
+                              ✅ Correct
+                            </span>
+                          )}
+                          {verifyResults[w.id]?.verdict === 'wrong' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 shrink-0" dir="rtl">
+                              ❌ Wrong — should be: {verifyResults[w.id].suggested_hebrew}
                             </span>
                           )}
                           {isApproved && (
