@@ -42,9 +42,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # await conn.run_sync(Base.metadata.drop_all)
 
         # Create tables if they don't exist
-    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        
         # One-time migration for polls
         try:
             from sqlalchemy import text
