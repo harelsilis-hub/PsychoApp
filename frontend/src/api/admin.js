@@ -97,8 +97,8 @@ export const adminAPI = {
     return res.data;
   },
 
-  createPoll: async (question, options) => {
-    const res = await apiClient.post('/v1/admin/polls', { question, options });
+  createPoll: async (question, options, is_test = false) => {
+    const res = await apiClient.post('/v1/admin/polls', { question, options, is_test });
     return res.data;
   },
 

@@ -704,6 +704,18 @@ async def fix_hyphens(
     await db.commit()
     return {"success": True, "rows_updated": result.rowcount}
 
+@router.post("/alter-polls")
+async def alter_polls_table(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """One-time fix: add is_test to polls."""
+    try:
+        await db.execute(text("ALTER TABLE polls ADD COLUMN is_test BOOLEAN DEFAULT FALSE"))
+        await db.commit()
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 # ── Custom Words Moderation Queue ─────────────────────────────────────────────
 
@@ -871,6 +883,7 @@ class SystemSettingUpdate(BaseModel):
 class CreatePollRequest(BaseModel):
     question: str
     options: list[str]
+    is_test: bool = False
 
 class ApproveCustomWordRequest(BaseModel):
     edited_english: str | None = None
@@ -984,7 +997,7 @@ async def create_poll(
     # Deactivate all current polls
     await db.execute(update(Poll).values(is_active=False))
     
-    poll = Poll(question=req.question, options=req.options, is_active=True)
+    poll = Poll(question=req.question, options=req.options, is_active=True, is_test=req.is_test)
     db.add(poll)
     await db.commit()
     return {"success": True, "poll_id": poll.id}
@@ -1023,6 +1036,7 @@ async def get_active_poll_results(
             "id": poll.id,
             "question": poll.question,
             "options": poll.options,
+            "is_test": poll.is_test,
             "results": results
         }
     }

@@ -41,8 +41,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         # Drop all tables (useful during development)
         # await conn.run_sync(Base.metadata.drop_all)
 
-        # Create all tables (no-op for tables that already exist)
+        # Create tables if they don't exist
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        # One-time migration for polls
+        try:
+            from sqlalchemy import text
+            await conn.execute(text("ALTER TABLE polls ADD COLUMN is_test BOOLEAN DEFAULT FALSE"))
+            print("Successfully added is_test column to polls table")
+        except Exception as e:
+            # Column likely already exists
+            print("Migration skip (or error):", e)
 
         # ── Column migrations (idempotent, dialect-aware) ─────────────────────
         if DIALECT == "postgresql":

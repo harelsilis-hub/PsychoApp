@@ -222,6 +222,7 @@ const Admin = () => {
   const [pollOptions, setPollOptions] = useState(['', '']);
   const [creatingPoll, setCreatingPoll] = useState(false);
   const [pollToast, setPollToast] = useState(null);
+  const [pollIsTest, setPollIsTest] = useState(false);
   const [activePoll, setActivePoll] = useState(null);
   const [closingPoll, setClosingPoll] = useState(false);
 
@@ -467,10 +468,11 @@ const Admin = () => {
     }
     setCreatingPoll(true);
     try {
-      await adminAPI.createPoll(pollQuestion, validOptions);
+      await adminAPI.createPoll(pollQuestion, validOptions, pollIsTest);
       setPollToast({ type: 'success', msg: 'סקר פורסם בהצלחה!' });
       setPollQuestion('');
       setPollOptions(['', '']);
+      setPollIsTest(false);
       const p = await adminAPI.getActivePollResults();
       setActivePoll(p.poll || null);
     } catch (err) {
@@ -807,6 +809,16 @@ const Admin = () => {
               )}
             </div>
 
+            <label className="flex items-center gap-2 mt-4 text-sm font-semibold text-gray-700 cursor-pointer">
+              <input 
+                type="checkbox" 
+                checked={pollIsTest} 
+                onChange={e => setPollIsTest(e.target.checked)} 
+                className="w-4 h-4 text-fuchsia-600 rounded focus:ring-fuchsia-500" 
+              />
+              מצב בדיקה (יוצג למנהלים בלבד)
+            </label>
+
             <div className="pt-2 flex items-center gap-3">
               <button
                 onClick={handleCreatePoll}
@@ -844,6 +856,9 @@ const Admin = () => {
             <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
               סקר פעיל ותוצאות
+              {activePoll?.is_test && (
+                <span className="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-0.5 rounded-full font-bold ml-2">מצב בדיקה</span>
+              )}
             </h3>
             
             {activePoll ? (

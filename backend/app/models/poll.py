@@ -15,6 +15,7 @@ class Poll(Base):
     question: Mapped[str] = mapped_column(String(500), nullable=False)
     options: Mapped[list] = mapped_column(JSON, nullable=False) # List of option strings
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_test: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
 
     votes: Mapped[list["PollVote"]] = relationship(

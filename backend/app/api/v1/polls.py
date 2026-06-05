@@ -25,6 +25,10 @@ async def get_active_poll(
     if not poll:
         return {"poll": None}
         
+    # Check if poll is in test mode, only admins can see it
+    if poll.is_test and not user.is_admin:
+        return {"poll": None}
+        
     # Check if user already voted
     vote_result = await db.execute(
         select(PollVote).where(PollVote.poll_id == poll.id, PollVote.user_id == user.id)
