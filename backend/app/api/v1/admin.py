@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
+from sqlalchemy import select, func, text, update
 from pydantic import BaseModel
 
 from app.db.session import get_db, DIALECT
@@ -19,6 +19,7 @@ from app.models.user_word_progress import UserWordProgress, WordStatus
 from app.models.association import Association
 from app.models.point_event import PointEvent
 from app.models.system_setting import SystemSetting
+from app.models.poll import Poll, PollVote
 from app.models.custom_word import CustomWord
 from app.services.gamification import get_level_info
 from app.auth.dependencies import get_current_user, require_admin
@@ -664,6 +665,201 @@ Words:
             }
 
     return {"results": results, "total_checked": len(results)}
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY (created_at AT TIME ZONE 'Asia/Jerusalem')::date
+                ORDER BY (created_at AT TIME ZONE 'Asia/Jerusalem')::date ASC
+            """
+        else:
+            # SQLite approximation
+            sql = """
+                SELECT date(created_at, '+3 hours') AS bucket,
+                       COUNT(DISTINCT user_id) AS active_users
+                FROM word_interaction_events
+                WHERE created_at >= :since
+                GROUP BY date(created_at, '+3 hours')
+                ORDER BY date(created_at, '+3 hours') ASC
+            """
+        rows = await db.execute(text(sql), {"since": since})
+    data = [{"bucket": str(row.bucket), "active_users": row.active_users} for row in rows]
+    total_result = await db.execute(
+        text("SELECT COUNT(DISTINCT user_id) FROM word_interaction_events WHERE created_at >= :since"),
+        {"since": since},
+    )
+    total_unique = total_result.scalar() or 0
+    return {"timeline": data, "mode": mode, "total_unique_users": total_unique}
+
+
+# ── ONE-TIME: strip trailing hyphens from english words ───────────────────────
+
+@router.post("/fix-hyphens")
+async def fix_hyphens(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """One-time fix: remove trailing hyphens from english field."""
+    result = await db.execute(
+        text("UPDATE words SET english = TRIM(TRAILING '-' FROM TRIM(english)) WHERE english LIKE '%-'")
+    )
+    await db.commit()
+    return {"success": True, "rows_updated": result.rowcount}
+
+
+# ── Custom Words Moderation Queue ─────────────────────────────────────────────
+
+@router.get("/custom-words")
+async def get_custom_word_queue(
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    List all pending custom word submissions.
+    Only shows English words that do not already exist in the main database.
+    """
+    from sqlalchemy import exists
+
+    # Subquery to check if word exists in main words table
+    subq = (
+        select(1)
+        .where(func.lower(Word.english) == func.lower(CustomWord.english_word))
+        .correlate(CustomWord)
+    )
+
+    # Fetch pending English custom words not in DB, newest first
+    stmt = (
+        select(CustomWord, User.email.label("user_email"))
+        .join(User, CustomWord.user_id == User.id)
+        .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~exists(subq))
+        .order_by(CustomWord.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    rows = result.all()
+
+    # Count total pending
+    total_stmt = (
+        select(func.count(CustomWord.id))
+        .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~exists(subq))
+    )
+    total_pending = await db.scalar(total_stmt) or 0
+
+    items = []
+    for cw, user_email in rows:
+        items.append({
+            "id": cw.id,
+            "english": cw.english_word,
+            "hebrew": cw.hebrew_translation,
+            "language": cw.language,
+            "user_email": user_email,
+            "created_at": cw.created_at.isoformat(),
+            "already_in_db": False,
+        })
+
+    return {"words": items, "total_pending": total_pending, "skip": skip, "limit": limit}
+
+
+@router.post("/custom-words/verify")
+async def verify_custom_word_translations(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Use Gemini to batch-verify all pending custom word translations.
+    Returns a verdict per word: correct, wrong, or a suggested fix.
+    """
+    import os
+    import httpx as _httpx
+    import json as _json
+    from sqlalchemy import exists as _exists
+
+    api_key = os.getenv("GEMINI_API_KEY", "")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    # Reuse the same duplicate-exclusion subquery from the listing endpoint
+    subq = (
+        select(1)
+        .where(func.lower(Word.english) == func.lower(CustomWord.english_word))
+        .correlate(CustomWord)
+    )
+    stmt = (
+        select(CustomWord)
+        .where(CustomWord.admin_status == "pending")
+        .where(CustomWord.language == "en")
+        .where(~_exists(subq))
+        .order_by(CustomWord.created_at.desc())
+        .limit(50)
+    )
+    result = await db.execute(stmt)
+    words = result.scalars().all()
+
+    if not words:
+        return {"results": {}, "total_checked": 0}
+
+    # Build the prompt — ask Gemini for JSON verdicts
+    word_list = "\n".join(
+        f'{w.id}. "{w.english_word}" → "{w.hebrew_translation}"'
+        for w in words
+    )
+    prompt = f"""You are a bilingual English–Hebrew dictionary expert.
+Below is a numbered list of English words with user-submitted Hebrew translations.
+For each word, determine if the Hebrew translation is correct or wrong.
+
+Rules:
+- A translation is "correct" if the Hebrew reasonably matches the English meaning (accept synonyms, slight variations).
+- A translation is "wrong" if the Hebrew does not match the English meaning at all, or is gibberish / a different language.
+- If wrong, provide the correct Hebrew translation.
+
+Respond ONLY with a valid JSON array. Each element must be:
+{{"id": <number>, "verdict": "correct"}} or {{"id": <number>, "verdict": "wrong", "suggested_hebrew": "<correct translation>"}}
+
+No markdown fences, no explanation — pure JSON array only.
+
+Words:
+{word_list}"""
+
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+
+    try:
+        async with _httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(url, params={"key": api_key}, json=payload)
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Gemini API error {resp.status_code}: {resp.text}")
+
+        raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+        # Strip markdown code fences if Gemini adds them
+        cleaned = raw_text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+
+        verdicts = _json.loads(cleaned)
+    except _json.JSONDecodeError:
+        raise HTTPException(status_code=502, detail=f"Could not parse Gemini response as JSON")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Gemini verification failed: {str(e)}")
+
+    # Convert list to dict keyed by word id
+    results = {}
+    for v in verdicts:
+        word_id = v.get("id")
+        if word_id is not None:
+            results[str(word_id)] = {
+                "verdict": v.get("verdict", "unknown"),
+                "suggested_hebrew": v.get("suggested_hebrew"),
+            }
+
+    return {"results": results, "total_checked": len(results)}
 
 
 class BatchAddWordsRequest(BaseModel):
@@ -671,6 +867,10 @@ class BatchAddWordsRequest(BaseModel):
 
 class SystemSettingUpdate(BaseModel):
     value: Optional[str] = None
+
+class CreatePollRequest(BaseModel):
+    question: str
+    options: list[str]
 
 class ApproveCustomWordRequest(BaseModel):
     edited_english: str | None = None
@@ -773,3 +973,66 @@ async def update_system_setting(
     
     await db.commit()
     return {"success": True, "key": key, "value": setting.value}
+
+@router.post("/polls")
+async def create_poll(
+    req: CreatePollRequest,
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new global poll and deactivate existing ones."""
+    # Deactivate all current polls
+    await db.execute(update(Poll).values(is_active=False))
+    
+    poll = Poll(question=req.question, options=req.options, is_active=True)
+    db.add(poll)
+    await db.commit()
+    return {"success": True, "poll_id": poll.id}
+
+@router.get("/polls/active/results")
+async def get_active_poll_results(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get the currently active poll and its vote counts."""
+    result = await db.execute(select(Poll).where(Poll.is_active == True))
+    poll = result.scalar_one_or_none()
+    
+    if not poll:
+        return {"poll": None}
+        
+    # Get votes counts
+    votes_result = await db.execute(
+        select(PollVote.option_index, func.count(PollVote.id))
+        .where(PollVote.poll_id == poll.id)
+        .group_by(PollVote.option_index)
+    )
+    vote_counts = {idx: count for idx, count in votes_result.all()}
+    
+    # Format options with counts
+    results = []
+    for idx, opt in enumerate(poll.options):
+        results.append({
+            "index": idx,
+            "text": opt,
+            "votes": vote_counts.get(idx, 0)
+        })
+        
+    return {
+        "poll": {
+            "id": poll.id,
+            "question": poll.question,
+            "options": poll.options,
+            "results": results
+        }
+    }
+
+@router.delete("/polls/active")
+async def close_active_poll(
+    _: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db)
+):
+    """Close the currently active poll."""
+    await db.execute(update(Poll).values(is_active=False))
+    await db.commit()
+    return {"success": True}

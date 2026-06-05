@@ -12,6 +12,7 @@ from app.models.point_event import PointEvent
 from app.models.custom_word import CustomWord
 from app.models.push_subscription import PushSubscription
 from app.models.system_setting import SystemSetting
+from app.models.poll import Poll, PollVote
 
 __all__ = [
     "User",
@@ -28,4 +29,6 @@ __all__ = [
     "CustomWord",
     "PushSubscription",
     "SystemSetting",
+    "Poll",
+    "PollVote",
 ]

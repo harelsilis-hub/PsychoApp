@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle, ShieldCheck } from 'lucide-react';
+import { Flag, Search, Plus, Trash2, Save, X, Database, AlertTriangle, Users, ChevronDown, ChevronUp, MessageSquare, CheckCheck, Bell, Radio, RefreshCw, Activity, Send, Clock, Sparkles, CheckCircle, XCircle, ShieldCheck, PieChart, BarChart2 } from 'lucide-react';
 import { adminAPI } from '../api/admin';
 import { testPushNotification, subscribeToPush } from '../api/push';
 import { systemAPI } from '../api/system';
@@ -217,6 +217,14 @@ const Admin = () => {
   const [savingWelcomeMessage, setSavingWelcomeMessage] = useState(false);
   const [welcomeMessageToast, setWelcomeMessageToast] = useState(null);
 
+  // Polls
+  const [pollQuestion, setPollQuestion] = useState('');
+  const [pollOptions, setPollOptions] = useState(['', '']);
+  const [creatingPoll, setCreatingPoll] = useState(false);
+  const [pollToast, setPollToast] = useState(null);
+  const [activePoll, setActivePoll] = useState(null);
+  const [closingPoll, setClosingPoll] = useState(false);
+
   useEffect(() => {
     loadData();
     // Poll online count immediately then every 30s
@@ -245,6 +253,14 @@ const Admin = () => {
     try {
       const w = await systemAPI.getSetting('welcome_message');
       if (w && w.value) setWelcomeMessage(w.value);
+    } catch (e) {
+      console.error(e);
+    }
+    
+    // Load active poll
+    try {
+      const p = await adminAPI.getActivePollResults();
+      setActivePoll(p.poll || null);
     } catch (e) {
       console.error(e);
     }
@@ -439,6 +455,42 @@ const Admin = () => {
     } finally {
       setSavingWelcomeMessage(false);
       setTimeout(() => setWelcomeMessageToast(null), 3000);
+    }
+  };
+
+  const handleCreatePoll = async () => {
+    const validOptions = pollOptions.filter((opt) => opt.trim());
+    if (!pollQuestion.trim() || validOptions.length < 2) {
+      setPollToast({ type: 'error', msg: 'יש למלא שאלה ולפחות 2 אפשרויות' });
+      setTimeout(() => setPollToast(null), 3000);
+      return;
+    }
+    setCreatingPoll(true);
+    try {
+      await adminAPI.createPoll(pollQuestion, validOptions);
+      setPollToast({ type: 'success', msg: 'סקר פורסם בהצלחה!' });
+      setPollQuestion('');
+      setPollOptions(['', '']);
+      const p = await adminAPI.getActivePollResults();
+      setActivePoll(p.poll || null);
+    } catch (err) {
+      setPollToast({ type: 'error', msg: 'שגיאה ביצירת סקר' });
+    } finally {
+      setCreatingPoll(false);
+      setTimeout(() => setPollToast(null), 3000);
+    }
+  };
+
+  const handleClosePoll = async () => {
+    if (!window.confirm('האם אתה בטוח שברצונך לסגור את הסקר הנוכחי?')) return;
+    setClosingPoll(true);
+    try {
+      await adminAPI.closeActivePoll();
+      setActivePoll(null);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setClosingPoll(false);
     }
   };
 
@@ -685,6 +737,161 @@ const Admin = () => {
                 )}
               </AnimatePresence>
             </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── User Polls ───────────────────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white/70 backdrop-blur border border-fuchsia-200/70 rounded-2xl shadow-sm p-6 flex flex-col lg:flex-row gap-8 relative overflow-hidden"
+      >
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-fuchsia-400 to-fuchsia-600" />
+        
+        <div className="flex-1 flex flex-col">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-fuchsia-100 rounded-xl flex items-center justify-center shrink-0">
+              <PieChart className="w-5 h-5 text-fuchsia-600" />
+            </div>
+            <div>
+              <p className="font-black text-gray-900">סקר משתמשים (Poll)</p>
+              <p className="text-xs text-gray-500">פרסם סקר חדש למשתמשים או צפה בתוצאות הסקר הנוכחי</p>
+            </div>
+          </div>
+
+          <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">שאלת הסקר</label>
+              <input
+                value={pollQuestion}
+                onChange={(e) => setPollQuestion(e.target.value)}
+                placeholder="למשל: איזה פיצ'ר הייתם רוצים לראות קודם?"
+                dir="rtl"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">אפשרויות בחירה</label>
+              {pollOptions.map((opt, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <input
+                    value={opt}
+                    onChange={(e) => {
+                      const newOpts = [...pollOptions];
+                      newOpts[idx] = e.target.value;
+                      setPollOptions(newOpts);
+                    }}
+                    placeholder={`אפשרות ${idx + 1}`}
+                    dir="rtl"
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+                  />
+                  {pollOptions.length > 2 && (
+                    <button
+                      onClick={() => setPollOptions(pollOptions.filter((_, i) => i !== idx))}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors bg-white border border-gray-200 rounded-xl"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {pollOptions.length < 5 && (
+                <button
+                  onClick={() => setPollOptions([...pollOptions, ''])}
+                  className="text-xs text-fuchsia-600 hover:text-fuchsia-700 font-semibold flex items-center gap-1 mt-1"
+                >
+                  <Plus className="w-3 h-3" /> הוסף אפשרות
+                </button>
+              )}
+            </div>
+
+            <div className="pt-2 flex items-center gap-3">
+              <button
+                onClick={handleCreatePoll}
+                disabled={creatingPoll || !pollQuestion.trim()}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm bg-fuchsia-600 text-white rounded-xl hover:bg-fuchsia-700 disabled:opacity-50 transition-colors font-bold"
+              >
+                <BarChart2 className="w-4 h-4" />
+                {creatingPoll ? 'מפרסם...' : 'פרסם סקר חדש'}
+              </button>
+
+              <AnimatePresence>
+                {pollToast && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`text-sm font-semibold ${
+                      pollToast.type === 'success' ? 'text-green-600' : 'text-red-500'
+                    }`}
+                  >
+                    {pollToast.msg}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </div>
+            <p className="text-[11px] text-gray-400">
+              * יצירת סקר חדש תסגור אוטומטית כל סקר פעיל אחר
+            </p>
+          </div>
+        </div>
+
+        {/* Active Poll Results */}
+        <div className="flex-1">
+          <div className="h-full bg-white border border-gray-200 rounded-xl p-5 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+            <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              סקר פעיל ותוצאות
+            </h3>
+            
+            {activePoll ? (
+              <div className="space-y-5">
+                <div>
+                  <p className="font-bold text-gray-900 leading-snug">{activePoll.question}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    סה״כ הצבעות: {activePoll.results.reduce((acc, curr) => acc + curr.votes, 0)}
+                  </p>
+                </div>
+                
+                <div className="space-y-3">
+                  {activePoll.results.map((res, i) => {
+                    const totalVotes = activePoll.results.reduce((acc, curr) => acc + curr.votes, 0);
+                    const percentage = totalVotes === 0 ? 0 : Math.round((res.votes / totalVotes) * 100);
+                    return (
+                      <div key={i} className="space-y-1">
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span className="text-gray-700">{res.text}</span>
+                          <span className="text-fuchsia-600">{res.votes} ({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                          <div 
+                            className="bg-fuchsia-500 h-2.5 rounded-full transition-all duration-500"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <button
+                    onClick={handleClosePoll}
+                    disabled={closingPoll}
+                    className="w-full py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 font-semibold rounded-lg transition-colors"
+                  >
+                    {closingPoll ? 'סוגר...' : 'סגור סקר זה'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="h-40 flex flex-col items-center justify-center text-gray-400">
+                <BarChart2 className="w-8 h-8 mb-2 opacity-50" />
+                <p className="text-sm font-medium">אין סקר פעיל כרגע</p>
+              </div>
+            )}
           </div>
         </div>
       </motion.div>

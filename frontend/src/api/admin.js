@@ -97,6 +97,21 @@ export const adminAPI = {
     return res.data;
   },
 
+  createPoll: async (question, options) => {
+    const res = await apiClient.post('/v1/admin/polls', { question, options });
+    return res.data;
+  },
+
+  getActivePollResults: async () => {
+    const res = await apiClient.get('/v1/admin/polls/active/results');
+    return res.data;
+  },
+
+  closeActivePoll: async () => {
+    const res = await apiClient.delete('/v1/admin/polls/active');
+    return res.data;
+  },
+
   verifyCustomWords: async () => {
     const res = await apiClient.post('/v1/admin/custom-words/verify', {}, { timeout: 60000 });
     return res.data;

@@ -31,6 +31,7 @@ import OnboardingTour from './components/OnboardingTour';
 import InstallPWA from './components/InstallPWA';
 import UpdateBanner from './components/UpdateBanner';
 import GlobalWelcomeMessage from './components/GlobalWelcomeMessage';
+import GlobalPollModal from './components/GlobalPollModal';
 
 const AdminRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -68,6 +69,7 @@ function App() {
           <ConditionalBackground />
           <UpdateBanner />
           <GlobalWelcomeMessage />
+          <GlobalPollModal />
           <AuthenticatedFeedback />
           <OnboardingTour />
           <InstallPWA />

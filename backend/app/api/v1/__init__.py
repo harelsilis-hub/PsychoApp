@@ -11,6 +11,7 @@ from app.api.v1.tts import router as tts_router
 from app.api.v1.custom_words import router as custom_words_router
 from app.api.v1.push import router as push_router
 from app.api.v1.system import router as system_router
+from app.api.v1.polls import router as polls_router
 
 __all__ = [
     "auth_router",
@@ -25,4 +26,5 @@ __all__ = [
     "custom_words_router",
     "push_router",
     "system_router",
+    "polls_router",
 ]
