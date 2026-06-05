@@ -9,8 +9,10 @@ import psycopg2.extensions
 import json
 import sys
 
-SRC = "postgresql://postgres.uvxfxyekmgrnhgxrhpej:vrNHPkLofFut68dG@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
-DST = "postgresql://postgres.yhqnwexctzmhvfqttruk:8JJumrwXMZNPSu9Y@aws-0-us-west-2.pooler.supabase.com:5432/postgres?sslmode=require"
+import os
+
+SRC = os.environ.get("MIGRATE_SRC_URL", "")
+DST = os.environ.get("MIGRATE_DST_URL", "")
 
 def connect(url, label):
     print(f"Connecting to {label}...", end=" ", flush=True)
