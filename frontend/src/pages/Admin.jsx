@@ -569,22 +569,8 @@ const Admin = () => {
       </motion.div>
 
       {/* ── Push Notification Sender (Broadcast) ─────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="bg-white/70 backdrop-blur border border-gray-200/70 rounded-2xl shadow-sm p-5"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center shrink-0">
-            <Send className="w-5 h-5 text-violet-700" />
-          </div>
-          <div>
-            <p className="font-black text-gray-900">שליחת התראה לכולם</p>
-            <p className="text-xs text-gray-500">שלח push notification לכל המשתמשים הרשומים</p>
-          </div>
-        </div>
-
+      <Section icon={Send} title="שליחת התראה לכולם" color="violet">
+        <p className="text-xs text-gray-500 mb-4">שלח push notification לכל המשתמשים הרשומים</p>
         <div className="space-y-3">
           <div className="flex flex-col gap-1">
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">כותרת</label>
@@ -680,27 +666,12 @@ const Admin = () => {
             </AnimatePresence>
           </div>
         </div>
-      </motion.div>
+      </Section>
 
       {/* ── System Welcome Message ─────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white/70 backdrop-blur border border-blue-200/70 rounded-2xl shadow-sm p-6 flex flex-col md:flex-row gap-6 relative overflow-hidden"
-      >
-        {/* Accent line */}
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-blue-400 to-blue-600" />
-        
+      <Section icon={MessageSquare} title="הודעת פתיחה לאתר" color="blue">
+        <p className="text-xs text-gray-500 mb-4">קבע הודעה שתקפוץ לכל המשתמשים ברגע שיכנסו לאתר</p>
         <div className="flex-1 flex flex-col justify-center">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="font-black text-gray-900">הודעת פתיחה לאתר</p>
-              <p className="text-xs text-gray-500">קבע הודעה שתקפוץ לכל המשתמשים ברגע שיכנסו לאתר</p>
-            </div>
-          </div>
 
           <div className="space-y-3 mt-4">
             <div className="flex flex-col gap-1">
@@ -741,26 +712,13 @@ const Admin = () => {
             </div>
           </div>
         </div>
-      </motion.div>
+      </Section>
 
       {/* ── User Polls ───────────────────────────────────────────────────────── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white/70 backdrop-blur border border-fuchsia-200/70 rounded-2xl shadow-sm p-6 flex flex-col lg:flex-row gap-8 relative overflow-hidden"
-      >
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-fuchsia-400 to-fuchsia-600" />
-        
+      <Section icon={PieChart} title="סקר משתמשים (Poll)" color="fuchsia">
+        <p className="text-xs text-gray-500 mb-6">פרסם סקר חדש למשתמשים או צפה בתוצאות הסקר הנוכחי</p>
+        <div className="flex flex-col lg:flex-row gap-8">
         <div className="flex-1 flex flex-col">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 bg-fuchsia-100 rounded-xl flex items-center justify-center shrink-0">
-              <PieChart className="w-5 h-5 text-fuchsia-600" />
-            </div>
-            <div>
-              <p className="font-black text-gray-900">סקר משתמשים (Poll)</p>
-              <p className="text-xs text-gray-500">פרסם סקר חדש למשתמשים או צפה בתוצאות הסקר הנוכחי</p>
-            </div>
-          </div>
 
           <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-100 space-y-4">
             <div className="flex flex-col gap-1">
@@ -909,7 +867,8 @@ const Admin = () => {
             )}
           </div>
         </div>
-      </motion.div>
+        </div>
+      </Section>
 
       {/* ── Section 1: Stats ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-3">
