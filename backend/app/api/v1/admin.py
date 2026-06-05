@@ -8,7 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, text, update
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.db.session import get_db, DIALECT
 from app.models.word import Word
@@ -29,13 +29,13 @@ router = APIRouter()
 
 
 class WordEditBody(BaseModel):
-    english: Optional[str] = None
-    hebrew: Optional[str] = None
+    english: Optional[str] = Field(None, max_length=100)
+    hebrew: Optional[str] = Field(None, max_length=100)
 
 
 class WordCreateBody(BaseModel):
-    english: str
-    hebrew: str
+    english: str = Field(..., max_length=100)
+    hebrew: str = Field(..., max_length=100)
     unit: int
 
 
@@ -101,7 +101,7 @@ async def delete_user(
 # ── User-facing: flag a word as having a mistake ──────────────────────────────
 
 class FlagWordBody(BaseModel):
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(None, max_length=500)
 
 
 @router.post("/flag/{word_id}")
@@ -279,8 +279,8 @@ async def add_word(
 # ── Feedback: user submit ─────────────────────────────────────────────────────
 
 class FeedbackBody(BaseModel):
-    message: str
-    category: str = "general"   # "bug" | "idea" | "general"
+    message: str = Field(..., max_length=2000)
+    category: str = Field("general", max_length=50)
 
 
 @router.post("/feedback")
@@ -776,8 +776,8 @@ async def update_system_setting(
     return {"success": True, "key": key, "value": setting.value}
 
 class CreatePollRequest(BaseModel):
-    question: str
-    options: list[str]
+    question: str = Field(..., max_length=500)
+    options: list[str] = Field(..., max_length=10)
     is_test: bool = False
 
 @router.post("/polls")

@@ -24,6 +24,7 @@ cryptography==46.0.6
 # Python utilities
 python-multipart==0.0.27
 python-dotenv==1.0.1
+slowapi==0.1.9
 
 # ASGI server
 anyio==4.2.0

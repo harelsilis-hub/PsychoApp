@@ -15,6 +15,10 @@ from sqlalchemy import text
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
 from app.db.session import engine, Base, DIALECT
 from app.models import User, Word, Association, UserWordProgress, PlacementSession, UserFeedback, PasswordResetToken, UserBadge, PointEvent, CustomWord, PushSubscription, SystemSetting, Poll, PollVote
 from app.api.v1 import auth_router, sorting_router, progress_router, review_router, associations_router, words_router, admin_router, leaderboard_router, tts_router, custom_words_router, push_router, system_router, polls_router
@@ -188,6 +192,10 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+from app.limiter import limiter
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware configuration
 # Set ALLOWED_ORIGINS env var in production, e.g. "https://your-app.vercel.app"

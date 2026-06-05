@@ -9,7 +9,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pywebpush import webpush, WebPushException
 from apscheduler.triggers.date import DateTrigger
 
@@ -27,13 +27,13 @@ VAPID_CLAIMS = {"sub": "mailto:harel.silis@gmail.com"}
 
 
 class SubscribeRequest(BaseModel):
-    endpoint: str
+    endpoint: str = Field(..., max_length=1000)
     keys: dict  # {"p256dh": "...", "auth": "..."}
 
 
 class SendAllRequest(BaseModel):
-    title: str
-    body: str
+    title: str = Field(..., max_length=100)
+    body: str = Field(..., max_length=500)
     send_at: Optional[datetime] = None  # UTC datetime; if None, send immediately
 
 
