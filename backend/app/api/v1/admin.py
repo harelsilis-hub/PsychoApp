@@ -668,7 +668,7 @@ Words:
 
 
 class BatchAddWordsRequest(BaseModel):
-    words: list[WordCreate]
+    words: list[WordCreateBody]
 
 class SystemSettingUpdate(BaseModel):
     value: Optional[str] = None
