@@ -787,13 +787,17 @@ async def create_poll(
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new global poll and deactivate existing ones."""
-    # Deactivate all current polls
-    await db.execute(update(Poll).values(is_active=False))
-    
-    poll = Poll(question=req.question, options=req.options, is_active=True, is_test=req.is_test)
-    db.add(poll)
-    await db.commit()
-    return {"success": True, "poll_id": poll.id}
+    try:
+        # Deactivate all current polls
+        await db.execute(update(Poll).values(is_active=False))
+        
+        poll = Poll(question=req.question, options=req.options, is_active=True, is_test=req.is_test)
+        db.add(poll)
+        await db.commit()
+        return {"success": True, "poll_id": poll.id}
+    except Exception as e:
+        import traceback
+        return {"success": False, "error": str(e), "traceback": traceback.format_exc()}
 
 @router.get("/polls/active/results")
 async def get_active_poll_results(
