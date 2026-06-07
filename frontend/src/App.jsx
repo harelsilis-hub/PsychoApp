@@ -25,6 +25,7 @@ import LeaderboardPage from './pages/LeaderboardPage';
 import MyWordsDetail from './pages/MyWordsDetail';
 import DailyReview from './pages/DailyReview';
 import CramMode from './pages/CramMode';
+import MatchingGame from './pages/MatchingGame';
 import AcquisitionQuiz from './pages/AcquisitionQuiz';
 import FeedbackWidget from './components/FeedbackWidget';
 import OnboardingTour from './components/OnboardingTour';
@@ -99,6 +100,7 @@ function App() {
             {/* Phase 2: Global Daily Review */}
             <Route path="/daily-review" element={<ProtectedRoute><DailyReview /></ProtectedRoute>} />
             <Route path="/cram" element={<ProtectedRoute><CramMode /></ProtectedRoute>} />
+            <Route path="/matching-game" element={<ProtectedRoute><MatchingGame /></ProtectedRoute>} />
 
             {/* Legacy review route */}
             <Route path="/review" element={<ProtectedRoute><ReviewSession /></ProtectedRoute>} />

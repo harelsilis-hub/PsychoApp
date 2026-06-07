@@ -17,6 +17,19 @@ const PlacementTest = () => {
   const [feedback, setFeedback] = useState(null); // 'correct' or 'incorrect'
   const [countdown, setCountdown] = useState(3);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (isSubmitting || selectedAnswer) return;
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const index = parseInt(e.key, 10) - 1;
+        if (options && options[index]) {
+          handleAnswerSelect(options[index]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   // Helper function to calculate level from difficulty_rank (1-100 → 1-20)
   const calculateLevel = (difficultyRank) => {
@@ -273,6 +286,9 @@ const PlacementTest = () => {
                         disabled={isSubmitting || selectedAnswer}
                         className={buttonClass}
                       >
+                        <span className="kbd-hint absolute bottom-1.5 left-2 text-[10px] text-gray-400/80 font-black bg-gray-100/50 px-1.5 py-0.5 rounded leading-none" dir="ltr">
+                          {index + 1}
+                        </span>
                         <span dir="rtl" className="text-2xl">
                           {option.hebrew}
                         </span>

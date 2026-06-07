@@ -749,6 +749,66 @@ async def submit_cram_result(
         raise HTTPException(status_code=500, detail=f"Failed to submit cram result: {str(e)}")
 
 
+from pydantic import BaseModel
+class MatchingTimeSubmit(BaseModel):
+    time_seconds: float
+    combo_max: int = 0
+
+@router.post("/matching-game/submit-time")
+async def submit_matching_time(
+    data: MatchingTimeSubmit,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Submit matching game time and get rank + award combo bonus."""
+    try:
+        is_new_best = False
+        if current_user.best_matching_time is None or data.time_seconds < current_user.best_matching_time:
+            current_user.best_matching_time = data.time_seconds
+            is_new_best = True
+
+        # Calculate rank
+        stmt = select(func.count(User.id)).where(
+            User.best_matching_time != None,
+            User.best_matching_time < current_user.best_matching_time
+        )
+        rank_result = await db.scalar(stmt)
+        rank = (rank_result or 0) + 1
+
+        # Combo XP Finish Bonus (e.g., combo * 5 XP)
+        xp_earned = 0
+        level_up = False
+        new_level_title = None
+        if data.combo_max > 1:
+            bonus_xp = data.combo_max * 5
+            xp_res = await award_xp(db, current_user, "matching_combo", bonus_xp)
+            xp_earned = xp_res["xp_earned"]
+            level_up = xp_res["level_up"]
+            new_level_info = xp_res.get("new_level_info")
+            if new_level_info:
+                new_level_title = new_level_info["title"]
+
+        new_badges = await check_and_award_badges(db, current_user)
+
+        await db.commit()
+        await db.refresh(current_user)
+
+        return {
+            "success": True,
+            "personal_best": current_user.best_matching_time,
+            "is_new_best": is_new_best,
+            "global_rank": rank,
+            "xp_earned": xp_earned,
+            "new_xp": current_user.xp,
+            "level_up": level_up,
+            "new_level_title": new_level_title,
+            "new_badges": new_badges
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to submit matching time: {str(e)}")
+
+
 @router.get("/sample")
 async def get_word_sample(
     limit: int = Query(default=40, ge=10, le=100),

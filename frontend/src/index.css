@@ -24,6 +24,16 @@ code {
   display: none !important;
 }
 
+/* ── Keyboard Hints ────────────────────────────────────────── */
+.kbd-hint {
+  display: none;
+}
+@media (pointer: fine) {
+  .kbd-hint {
+    display: inline-flex;
+  }
+}
+
 /* ── Dark mode CSS variables ─────────────────────────────── */
 :root {
   --fw-bg: white;

@@ -44,6 +44,7 @@ class User(Base):
     last_seen: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     referral_code: Mapped[Optional[str]] = mapped_column(String(12), unique=True, nullable=True, index=True)
     referred_by_user_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    best_matching_time: Mapped[Optional[float]] = mapped_column(nullable=True)
 
     # Relationships
     progress: Mapped[List["UserWordProgress"]] = relationship(

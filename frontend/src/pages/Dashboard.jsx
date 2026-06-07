@@ -7,6 +7,7 @@ import { reviewAPI } from '../api/review';
 import { customWordsAPI } from '../api/customWords';
 import { subscribeToPush } from '../api/push';
 import { useAuth } from '../context/AuthContext';
+import WhatsNewModal from '../components/WhatsNewModal';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useSound } from '../context/SoundContext';
@@ -164,8 +165,9 @@ const Dashboard = () => {
 
   return (
     <div className="h-[100dvh] flex flex-col relative bg-gray-50">
+      <WhatsNewModal />
 
-      {/* ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• HEADER ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג•ג• */}
+      {/* ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג•  HEADER ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג• ג•  */}
       <div className="shrink-0 z-20 sticky top-0 bg-gray-50 px-4 sm:px-5 pt-2 sm:pt-3 pb-1.5 sm:pb-2">
         <div className="max-w-6xl mx-auto flex flex-wrap items-stretch gap-2 sm:gap-3">
 
@@ -576,16 +578,28 @@ const Dashboard = () => {
                 <span className="text-sm shrink-0">✅</span>
                 <p className="text-sm font-black text-emerald-700">חזרה יומית הושלמה — כל הכבוד!</p>
               </div>
-              <button
-                onClick={() => navigate('/cram')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2
-                           bg-gradient-to-r from-amber-500 to-orange-500
-                           text-white text-sm font-black rounded-[16px]
-                           shadow-md shadow-amber-200/50
-                           hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-              >
-                🔥 מצב חרישה — תרגול אקסטרה לחיזוק מילים קשות
-              </button>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => navigate('/cram')}
+                  className="w-full flex items-center justify-center gap-2 px-2 py-2
+                             bg-gradient-to-r from-amber-500 to-orange-500
+                             text-white text-sm font-black rounded-[16px]
+                             shadow-md shadow-amber-200/50
+                             hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  🔥 חרישה
+                </button>
+                <button
+                  onClick={() => navigate('/matching-game')}
+                  className="w-full flex items-center justify-center gap-2 px-2 py-2
+                             bg-gradient-to-r from-indigo-500 to-purple-500
+                             text-white text-sm font-black rounded-[16px]
+                             shadow-md shadow-indigo-200/50
+                             hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  🎮 משחק התאמה
+                </button>
+              </div>
             </div>
           )}
         </motion.div>

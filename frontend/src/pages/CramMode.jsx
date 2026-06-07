@@ -153,6 +153,26 @@ const CramMode = () => {
   const selected   = answers[qIndex] ?? null;
   const isAnswered = selected !== null;
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (isAnswered) {
+        if (['Enter', ' '].includes(e.key)) {
+          e.preventDefault();
+          handleNext();
+        }
+        return;
+      }
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        const index = parseInt(e.key, 10) - 1;
+        if (currentQ?.options && currentQ.options[index]) {
+          handleSelect(currentQ.options[index]);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }); // run on every render to capture latest handleSelect closures
+
   const handleSelect = (opt) => {
     if (isAnswered) return;
     if (opt.isCorrect) playCorrect(); else playWrong();
@@ -357,10 +377,13 @@ const CramMode = () => {
                       onClick={() => handleSelect(opt)}
                       disabled={isAnswered}
                       dir="rtl"
-                      className={`${style} rounded-2xl p-4 font-bold text-lg transition-all
+                      className={`${style} relative rounded-2xl p-4 font-bold text-lg transition-all
                                  text-center leading-tight shadow-sm hover:shadow-md
                                  disabled:cursor-default`}
                     >
+                      <span className="kbd-hint absolute bottom-1.5 left-2 text-[10px] text-gray-400/80 font-black bg-gray-100/50 px-1.5 py-0.5 rounded leading-none" dir="ltr">
+                        {i + 1}
+                      </span>
                       {opt.hebrew}
                     </button>
                   );
@@ -404,8 +427,8 @@ const CramMode = () => {
                              hover:shadow-md transition-all flex items-center justify-center gap-2"
                 >
                   {qIndex + 1 >= questions.length
-                    ? <><Trophy className="w-4 h-4" /> ראה תוצאות</>
-                    : 'הבא ←'}
+                    ? <><Trophy className="w-4 h-4" /> ראה תוצאות <span className="kbd-hint text-[10px] mr-2 opacity-70 border border-white/30 px-1.5 py-0.5 rounded">Enter</span></>
+                    : <>הבא ← <span className="kbd-hint text-[10px] mr-2 opacity-70 border border-white/30 px-1.5 py-0.5 rounded">Enter</span></>}
                 </motion.button>
               )}
             </motion.div>

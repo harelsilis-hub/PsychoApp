@@ -88,4 +88,12 @@ export const reviewAPI = {
     });
     return response.data;
   },
+
+  submitMatchingTime: async (timeSeconds, comboMax) => {
+    const response = await apiClient.post('/v1/review/matching-game/submit-time', {
+      time_seconds: timeSeconds,
+      combo_max: comboMax,
+    });
+    return response.data;
+  },
 };
