@@ -96,8 +96,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             for migration_sql in migrations:
                 try:
                     await conn.execute(text(migration_sql))
-                except Exception:
-                    pass
+                    await conn.commit()
+                except Exception as e:
+                    await conn.rollback()
+                    print(f"Migration error (PostgreSQL): {e}")
         else:
             # SQLite: raises OperationalError when column already exists — safe to ignore.
             migrations = [
@@ -132,8 +134,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             for migration_sql in migrations:
                 try:
                     await conn.execute(text(migration_sql))
-                except Exception:
-                    pass  # column already present
+                    await conn.commit()
+                except Exception as e:
+                    await conn.rollback()
+                    # print(f"Migration error (SQLite): {e}") # usually duplicate column
 
     print("[OK] Database tables ready.")
 
