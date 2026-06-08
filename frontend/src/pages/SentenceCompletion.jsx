@@ -21,6 +21,7 @@ const SentenceCompletion = () => {
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
+  const [wrongAnswers, setWrongAnswers] = useState([]);
   
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [isCorrect, setIsCorrect] = useState(null);
@@ -38,6 +39,7 @@ const SentenceCompletion = () => {
     setNoWords(false);
     setCurrentIndex(0);
     setScore(0);
+    setWrongAnswers([]);
     setSelectedAnswer(null);
     setIsCorrect(null);
     setShowTranslation(false);
@@ -89,6 +91,7 @@ const SentenceCompletion = () => {
       setScore((s) => s + 1);
     } else {
       playWrong();
+      setWrongAnswers(prev => [...prev, currentQ]);
     }
 
     // Move to next question after delay
@@ -404,7 +407,7 @@ const SentenceCompletion = () => {
               key="gameover"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-[32px] shadow-2xl p-8 sm:p-10 text-center max-w-sm mx-auto w-full relative overflow-hidden"
+              className="bg-white rounded-[32px] shadow-2xl p-8 sm:p-10 text-center max-w-md mx-auto w-full relative overflow-hidden"
             >
               <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-pink-100 to-purple-100 opacity-50" />
               
@@ -415,6 +418,61 @@ const SentenceCompletion = () => {
                 </h2>
                 <p className="text-gray-500 mb-8 font-medium">ענית נכון על {score} מתוך {questions.length} משפטים.</p>
                 
+                {wrongAnswers.length > 0 && (
+                  <div className="mb-8 bg-gray-50/80 rounded-2xl p-5 border border-red-100 max-h-72 overflow-y-auto custom-scrollbar shadow-inner">
+                    <h3 className="font-bold text-red-600 mb-4 text-base flex items-center justify-center gap-2">
+                      <XCircle className="w-5 h-5" />
+                      משפטים שכדאי לחזור עליהם:
+                    </h3>
+                    <div className="space-y-4 text-left" dir="ltr">
+                      {wrongAnswers.map((wa, i) => {
+                        const parts = wa.sentence.split('___');
+                        
+                        // If the AI correctly put '___', we fill it with the bold word.
+                        // If it forgot and just wrote the full sentence, we just highlight the target word if it exists in the sentence.
+                        let renderedSentence;
+                        if (parts.length > 1) {
+                          renderedSentence = (
+                            <>
+                              {parts[0]}
+                              <span className="font-bold text-indigo-600 underline decoration-indigo-300 underline-offset-2 bg-indigo-50/50 px-1 rounded mx-0.5">
+                                {wa.word_form}
+                              </span>
+                              {parts.slice(1).join('___')}
+                            </>
+                          );
+                        } else {
+                          // Try to highlight the word if it's in the text
+                          const regex = new RegExp(`(${wa.word_form})`, 'gi');
+                          const splitByWord = wa.sentence.split(regex);
+                          if (splitByWord.length > 1) {
+                            renderedSentence = splitByWord.map((segment, idx) => 
+                              segment.toLowerCase() === wa.word_form.toLowerCase() ? (
+                                <span key={idx} className="font-bold text-indigo-600 underline decoration-indigo-300 underline-offset-2 bg-indigo-50/50 px-1 rounded mx-0.5">
+                                  {segment}
+                                </span>
+                              ) : segment
+                            );
+                          } else {
+                            renderedSentence = <span>{wa.sentence}</span>;
+                          }
+                        }
+
+                        return (
+                          <div key={i} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <p className="text-gray-800 text-[15px] font-medium leading-relaxed">
+                              {renderedSentence}
+                            </p>
+                            <p className="text-gray-500 mt-2 text-sm text-right font-medium" dir="rtl">
+                              <span className="font-bold text-gray-400">פירוש המילה:</span> <span className="text-pink-600 font-bold">{wa.hebrew}</span>
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 <div className="space-y-3">
                   <button
                     onClick={loadGame}
