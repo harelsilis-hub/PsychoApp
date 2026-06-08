@@ -669,7 +669,7 @@ async def get_cram_session(
         pairs = result.all()
 
         # Sort by easiness_factor ascending — weakest words first
-        pairs.sort(key=lambda row: (row[0].srs_data or {}).get("easiness_factor", 2.5))
+        pairs.sort(key=lambda row: (row[0].srs_data or {}).get("easiness_factor") or 2.5)
         pairs = pairs[:limit]
 
         words = [

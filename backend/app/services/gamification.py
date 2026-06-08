@@ -61,6 +61,10 @@ POINTS = {
     "cram_q4":               55,   # good recall
     "cram_q5":               75,   # perfect recall
 
+    # Sentence Completion
+    "sentence_completion_correct":   30,
+    "sentence_completion_incorrect":  5,
+
     # Milestones
     "daily_goal":           200,   # completing 15 daily-review words in one day
     "placement_complete":   500,

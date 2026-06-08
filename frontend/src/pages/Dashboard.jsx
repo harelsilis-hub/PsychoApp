@@ -578,7 +578,7 @@ const Dashboard = () => {
                 <span className="text-sm shrink-0">✅</span>
                 <p className="text-sm font-black text-emerald-700">חזרה יומית הושלמה — כל הכבוד!</p>
               </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 <button
                   onClick={() => navigate('/cram')}
                   className="w-full flex items-center justify-center gap-2 px-2 py-2
@@ -598,6 +598,16 @@ const Dashboard = () => {
                              hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                 >
                   🎮 משחק התאמה
+                </button>
+                <button
+                  onClick={() => navigate('/sentence-completion')}
+                  className="w-full col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-2 py-2
+                             bg-gradient-to-r from-pink-500 to-rose-500
+                             text-white text-sm font-black rounded-[16px]
+                             shadow-md shadow-pink-200/50
+                             hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  🧩 השלמת משפטים
                 </button>
               </div>
             </div>

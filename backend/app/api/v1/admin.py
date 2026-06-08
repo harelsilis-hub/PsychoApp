@@ -31,6 +31,7 @@ router = APIRouter()
 class WordEditBody(BaseModel):
     english: Optional[str] = Field(None, max_length=100)
     hebrew: Optional[str] = Field(None, max_length=100)
+    ai_association: Optional[str] = Field(None, max_length=2000)
 
 
 class WordCreateBody(BaseModel):
@@ -172,7 +173,7 @@ async def get_flagged_words(
     words = result.scalars().all()
     return {
         "words": [
-            {"id": w.id, "english": w.english, "hebrew": w.hebrew, "unit": w.unit, "flag_reason": w.flag_reason}
+            {"id": w.id, "english": w.english, "hebrew": w.hebrew, "unit": w.unit, "flag_reason": w.flag_reason, "ai_association": w.ai_association}
             for w in words
         ],
         "count": len(words),
@@ -228,6 +229,8 @@ async def edit_word(
         word.english = body.english.strip()
     if body.hebrew is not None:
         word.hebrew = body.hebrew.strip()
+    if body.ai_association is not None:
+        word.ai_association = body.ai_association.strip() or None
     word.is_flagged = False
     word.flag_reason = None
     await db.commit()
@@ -630,7 +633,7 @@ No markdown fences, no explanation — pure JSON array only.
 Words:
 {word_list}"""
 
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent"
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
     try:

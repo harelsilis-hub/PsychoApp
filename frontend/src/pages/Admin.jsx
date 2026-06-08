@@ -11,15 +11,22 @@ const WordRow = ({ word, onSaved, onDeleted, showFlag = false }) => {
   const [editing, setEditing]     = useState(false);
   const [english, setEnglish]     = useState(word.english);
   const [hebrew, setHebrew]       = useState(word.hebrew);
+  const [aiAssociation, setAiAssociation] = useState(word.ai_association || '');
   const [saving, setSaving]       = useState(false);
   const [deleting, setDeleting]   = useState(false);
   const [toast, setToast]         = useState(null);
+
+  const isSentenceFlag = showFlag && word.flag_reason?.startsWith('[SENTENCE]');
 
   const handleSave = async () => {
     if (!english.trim() || !hebrew.trim()) return;
     setSaving(true);
     try {
-      const updated = await adminAPI.editWord(word.id, { english: english.trim(), hebrew: hebrew.trim() });
+      const updated = await adminAPI.editWord(word.id, { 
+        english: english.trim(), 
+        hebrew: hebrew.trim(),
+        ai_association: aiAssociation.trim() || null
+      });
       setToast('Saved!');
       setTimeout(() => setToast(null), 2000);
       setEditing(false);
@@ -48,6 +55,7 @@ const WordRow = ({ word, onSaved, onDeleted, showFlag = false }) => {
   const handleCancel = () => {
     setEnglish(word.english);
     setHebrew(word.hebrew);
+    setAiAssociation(word.ai_association || '');
     setEditing(false);
   };
 
@@ -64,50 +72,71 @@ const WordRow = ({ word, onSaved, onDeleted, showFlag = false }) => {
         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full shrink-0">Unit {word.unit}</span>
 
         {showFlag && word.is_flagged && (
-          <span className="text-xs bg-red-50 text-red-400 px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+          <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 shrink-0 ${isSentenceFlag ? 'bg-orange-50 text-orange-400' : 'bg-red-50 text-red-400'}`}>
             <Flag className="w-2.5 h-2.5" /> flagged
           </span>
         )}
       </div>
 
       {showFlag && word.flag_reason && (
-        <div className="text-xs text-red-600 bg-red-50 border border-red-100 px-2.5 py-1.5 rounded-lg">
+        <div className={`text-xs px-2.5 py-1.5 rounded-lg ${isSentenceFlag ? 'text-orange-600 bg-orange-50 border border-orange-100' : 'text-red-600 bg-red-50 border border-red-100'}`}>
           💬 <span className="font-medium">סיבה:</span> {word.flag_reason}
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
+      {!editing && isSentenceFlag && word.ai_association && (
+        <div className="text-xs text-gray-600 bg-gray-50 border border-gray-100 px-2.5 py-1.5 rounded-lg font-mono whitespace-pre-wrap">
+          {word.ai_association}
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 mt-1">
         {editing ? (
-          <>
-            <input
-              value={english}
-              onChange={(e) => setEnglish(e.target.value)}
-              className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
-              placeholder="English"
-            />
-            <input
-              value={hebrew}
-              onChange={(e) => setHebrew(e.target.value)}
-              dir="rtl"
-              className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
-              placeholder="Hebrew"
-            />
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
-            >
-              <Save className="w-3 h-3" />
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              <X className="w-3 h-3" /> Cancel
-            </button>
-            {toast && <span className="text-xs text-violet-500 font-medium">{toast}</span>}
-          </>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex flex-wrap items-center gap-2 w-full">
+              <input
+                value={english}
+                onChange={(e) => setEnglish(e.target.value)}
+                className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
+                placeholder="English"
+              />
+              <input
+                value={hebrew}
+                onChange={(e) => setHebrew(e.target.value)}
+                dir="rtl"
+                className="flex-1 min-w-[120px] px-2 py-1 text-sm border border-violet-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"
+                placeholder="Hebrew"
+              />
+            </div>
+            
+            {isSentenceFlag && (
+              <textarea
+                value={aiAssociation}
+                onChange={(e) => setAiAssociation(e.target.value)}
+                className="w-full px-2 py-1 text-xs font-mono border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
+                placeholder='{"sentence": "...", "word_form": "..."}'
+                rows={3}
+              />
+            )}
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50 transition-colors"
+              >
+                <Save className="w-3 h-3" />
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                <X className="w-3 h-3" /> Cancel
+              </button>
+              {toast && <span className="text-xs text-violet-500 font-medium">{toast}</span>}
+            </div>
+          </div>
         ) : (
           <>
             <span className="flex-1 min-w-[100px] text-sm font-medium text-gray-800">{word.english}</span>
@@ -1043,9 +1072,9 @@ const Admin = () => {
         )}
       </Section>
 
-      {/* ── Section 4: Flagged Inbox ─────────────────────────────────────────── */}
-      <Section icon={AlertTriangle} title="Flagged Inbox" badge={flagged.length} color="red">
-        {flagged.length === 0 ? (
+      {/* ── Section 4a: Flagged Inbox (Words) ─────────────────────────────────────────── */}
+      <Section icon={AlertTriangle} title="Flagged Inbox (Words)" badge={flagged.filter(w => !w.flag_reason?.startsWith('[SENTENCE]')).length} color="red">
+        {flagged.filter(w => !w.flag_reason?.startsWith('[SENTENCE]')).length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-6">No flagged words — inbox is clean ✓</p>
         ) : (
           <div className="space-y-2">
@@ -1062,7 +1091,40 @@ const Admin = () => {
               </button>
             </div>
             <AnimatePresence>
-              {flagged.map((w) => (
+              {flagged.filter(w => !w.flag_reason?.startsWith('[SENTENCE]')).map((w) => (
+                <WordRow
+                  showFlag
+                  key={w.id}
+                  word={w}
+                  onSaved={updateFlaggedWord}
+                  onDeleted={removeFlagged}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </Section>
+
+      {/* ── Section 4b: Flagged Inbox (Sentences) ─────────────────────────────────────────── */}
+      <Section icon={AlertTriangle} title="Flagged Inbox (Sentences)" badge={flagged.filter(w => w.flag_reason?.startsWith('[SENTENCE]')).length} color="orange">
+        {flagged.filter(w => w.flag_reason?.startsWith('[SENTENCE]')).length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No flagged sentences — inbox is clean ✓</p>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs text-gray-400">
+                These words have bad AI sentences reported from the Sentence Completion game.
+              </p>
+              <button
+                onClick={refreshFlagged}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-600 transition-colors"
+                title="Refresh"
+              >
+                <RefreshCw className="w-3 h-3" /> Refresh
+              </button>
+            </div>
+            <AnimatePresence>
+              {flagged.filter(w => w.flag_reason?.startsWith('[SENTENCE]')).map((w) => (
                 <WordRow
                   showFlag
                   key={w.id}

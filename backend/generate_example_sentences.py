@@ -44,7 +44,7 @@ if env_path.exists():
 # ── Config ────────────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 BATCH_SIZE = 20          # words per API call
-RATE_LIMIT_DELAY = 4.5   # seconds between calls (stays under 15 req/min free tier)
+RATE_LIMIT_DELAY = 15.0   # seconds between calls to avoid 429 errors
 
 # ── Gemini API call (via httpx, already in requirements.txt) ──────────────────
 try:
@@ -55,14 +55,34 @@ except ImportError:
 
 GEMINI_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.5-flash:generateContent"
+    "gemini-3.1-flash-lite:generateContent"
 )
 
 
-def call_gemini(words: list[dict]) -> list[str]:
+# JSON Schema for structured output — one object per word
+GEMINI_RESPONSE_SCHEMA = {
+    "type": "ARRAY",
+    "items": {
+        "type": "OBJECT",
+        "properties": {
+            "word_form": {
+                "type": "STRING",
+                "description": "The exact form of the word that appears in the sentence (may be conjugated, e.g. 'amazed' for 'amaze')."
+            },
+            "sentence": {
+                "type": "STRING",
+                "description": "The complete sentence with the target word appearing exactly once."
+            }
+        },
+        "required": ["word_form", "sentence"]
+    }
+}
+
+
+def call_gemini(words: list[dict]) -> list[dict]:
     """
     words: list of {"english": str, "hebrew": str}
-    Returns: list of sentence strings, same order and length as input.
+    Returns: list of {"sentence": str, "word_form": str}, same order and length as input.
     """
     if not GEMINI_API_KEY:
         raise RuntimeError(
@@ -72,35 +92,39 @@ def call_gemini(words: list[dict]) -> list[str]:
         )
 
     word_list = "\n".join(
-        f"{i + 1}. {w['english']} → {w['hebrew']}" for i, w in enumerate(words)
+        f"{i + 1}. {w['english']} (Hebrew: {w['hebrew']})" for i, w in enumerate(words)
     )
 
     prompt = textwrap.dedent(f"""
-        You are an expert test-prep educator creating material for Israeli university entrance exams (Psychometric).
+        You are an expert test-prep educator creating fill-in-the-blank sentences for Israeli university entrance exams (Psychometric / Bagrut).
 
-        Your task: Generate ONE example sentence for each vocabulary word below.
+        For EACH word below, follow these four internal steps before producing output:
 
-        Requirements for EACH sentence:
-        1. Written in academic English (like SAT/Psychometric reading comprehension), but NOT overly dense or excessively long.
-        2. The sentence must provide logical context clues for the missing word (cause/effect, contrast, etc).
-        3. The target word must appear EXACTLY ONCE in the sentence.
-        4. Length: 12–22 words maximum. Keep it concise.
-        5. Use clear, understandable vocabulary for the rest of the sentence (so the student isn't struggling with the clue words too).
-        6. Do NOT begin the sentence with the target word.
-        7. Do NOT include the Hebrew translation.
+        Step 1 — Understand: Identify the word's exact part of speech (Noun, Verb, Adjective, Adverb, Phrase) and its core meaning from the Hebrew gloss.
+        Step 2 — Design the clue: Plan a sentence whose OTHER words create an unambiguous contextual clue that points ONLY to this word's meaning (use cause/effect, contrast, or synonyms in context).
+        Step 3 — Write naturally: Use the word in a realistic, native-English academic context. If the base form sounds unnatural, conjugate it properly (e.g. 'amaze' → 'amazed', 'run' → 'running').
+        Step 4 — Record: Set `word_form` to the EXACT string that appears in the sentence (not the dictionary form). Set `sentence` to the complete sentence.
 
-        Words (English → Hebrew for context only):
+        Hard rules:
+        - The word (in whatever form) must appear EXACTLY ONCE in the sentence.
+        - Sentence length: 12–22 words.
+        - Do NOT start the sentence with the target word.
+        - Do NOT include Hebrew.
+        - The rest of the sentence must be simple enough that the blank is the only hard word.
+
+        Words:
         {word_list}
 
-        Respond with a valid JSON array of {len(words)} strings — one sentence per word, in the same order.
-        No markdown. No explanation. Just the JSON array.
+        Return a JSON array of {len(words)} objects in the SAME order as the input.
     """).strip()
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
         "generationConfig": {
-            "temperature": 0.7,
-            "maxOutputTokens": 4096,
+            "temperature": 0.4,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "application/json",
+            "responseSchema": GEMINI_RESPONSE_SCHEMA,
         },
     }
 
@@ -108,20 +132,25 @@ def call_gemini(words: list[dict]) -> list[str]:
         GEMINI_URL,
         params={"key": GEMINI_API_KEY},
         json=payload,
-        timeout=60,
+        timeout=90,
     )
     resp.raise_for_status()
     data = resp.json()
 
     raw_text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-    sentences = json.loads(raw_text)
+    results = json.loads(raw_text)
 
-    if not isinstance(sentences, list) or len(sentences) != len(words):
+    if not isinstance(results, list) or len(results) != len(words):
         raise ValueError(
-            f"Expected {len(words)} sentences, got: {sentences!r:.200}"
+            f"Expected {len(words)} objects, got: {results!r:.200}"
         )
 
-    return [str(s).strip() for s in sentences]
+    # Validate each item has both required fields
+    for i, item in enumerate(results):
+        if "sentence" not in item or "word_form" not in item:
+            raise ValueError(f"Item {i} missing 'sentence' or 'word_form': {item!r}")
+
+    return results
 
 
 # ── Database helpers ───────────────────────────────────────────────────────────
@@ -164,12 +193,19 @@ def sqlite_fetch_pending(db_path: str, overwrite: bool) -> list[dict]:
 
 
 def sqlite_update_batch(db_path: str, updates: list[dict]) -> None:
-    """updates: list of {"id": int, "sentence": str}"""
+    """
+    updates: list of {"id": int, "sentence": str, "word_form": str}
+    Stores a JSON envelope so the frontend can find the exact word form.
+    """
     conn = sqlite3.connect(db_path)
     try:
+        rows = []
+        for u in updates:
+            payload = json.dumps({"sentence": u["sentence"], "word_form": u["word_form"]}, ensure_ascii=False)
+            rows.append((payload, u["id"]))
         conn.executemany(
             "UPDATE words SET ai_association = ? WHERE id = ?",
-            [(u["sentence"], u["id"]) for u in updates],
+            rows,
         )
         conn.commit()
     finally:
@@ -207,6 +243,10 @@ def pg_fetch_pending(db_url: str, overwrite: bool) -> list[dict]:
 
 
 def pg_update_batch(db_url: str, updates: list[dict]) -> None:
+    """
+    updates: list of {"id": int, "sentence": str, "word_form": str}
+    Stores a JSON envelope so the frontend can find the exact word form.
+    """
     try:
         import psycopg2
         import psycopg2.extras
@@ -218,11 +258,15 @@ def pg_update_batch(db_url: str, updates: list[dict]) -> None:
     conn = psycopg2.connect(sync_url)
     conn.autocommit = True
     try:
+        rows = []
+        for u in updates:
+            payload = json.dumps({"sentence": u["sentence"], "word_form": u["word_form"]}, ensure_ascii=False)
+            rows.append((payload, u["id"]))
         with conn.cursor() as cur:
             psycopg2.extras.execute_batch(
                 cur,
                 "UPDATE words SET ai_association = %s WHERE id = %s",
-                [(u["sentence"], u["id"]) for u in updates],
+                rows,
             )
     finally:
         conn.close()
@@ -259,7 +303,7 @@ def main():
     db_type = detect_db_type(db_url)
 
     print(f"[DB] Type: {db_type.upper()}")
-    print(f"[API] Gemini key: {'SET ✓' if GEMINI_API_KEY else 'MISSING ✗'}")
+    print(f"[API] Gemini key: {'SET' if GEMINI_API_KEY else 'MISSING'}")
     if not GEMINI_API_KEY:
         print()
         print("  ➜ Get a free key at https://aistudio.google.com/app/apikey")
@@ -294,7 +338,7 @@ def main():
 
     for batch_idx, batch in enumerate(batches):
         batch_num = batch_idx + 1
-        print(f"\n{'─'*60}")
+        print(f"\n{'-'*60}")
         print(f"Batch {batch_num}/{len(batches)}  [{processed}/{total} words done]")
 
         # ETA
@@ -315,9 +359,9 @@ def main():
                 sentences = call_gemini(batch)
                 break
             except httpx.HTTPStatusError as e:
-                if e.response.status_code == 429:
+                if e.response.status_code in (429, 503):
                     wait = 60 * attempt
-                    print(f"  [Rate limit] Waiting {wait}s before retry {attempt}/3…")
+                    print(f"  [Rate limit / High demand] Waiting {wait}s before retry {attempt}/3…")
                     time.sleep(wait)
                 else:
                     print(f"  [HTTP {e.response.status_code}] {e.response.text[:200]}")
@@ -333,10 +377,12 @@ def main():
 
         # Show generated sentences
         updates = []
-        for word, sentence in zip(batch, sentences):
-            print(f"\n  [{word['english']}]")
-            print(f"  → {sentence}")
-            updates.append({"id": word["id"], "sentence": sentence})
+        for word, result in zip(batch, sentences):
+            sentence = result["sentence"]
+            word_form = result["word_form"]
+            print(f"\n  [{word['english']}] (form used: {word_form})")
+            print(f"  -> {sentence}")
+            updates.append({"id": word["id"], "sentence": sentence, "word_form": word_form})
 
         # Write to DB
         if not args.dry_run:
