@@ -100,6 +100,9 @@ async def get_sentence_completion_questions(
         .where(Word.ai_association.isnot(None))
         .where(Word.ai_association.like('%"word_form"%'))
         .where(~Word.english.like('%...%'))
+        .where(~Word.english.like('%(%'))
+        .where(~Word.english.like('%)%'))
+        .where(~Word.english.like('%/%'))
         .where(Word.language == language)
         .limit(500)
     )
@@ -136,6 +139,9 @@ async def get_sentence_completion_questions(
         .join(UserWordProgress, UserWordProgress.word_id == Word.id)
         .where(Word.language == language)
         .where(~Word.english.like('%...%'))
+        .where(~Word.english.like('%(%'))
+        .where(~Word.english.like('%)%'))
+        .where(~Word.english.like('%/%'))
         .where(UserWordProgress.user_id == current_user.id)
         .order_by(func.random())
         .limit(limit * 4 + 10)
@@ -150,6 +156,9 @@ async def get_sentence_completion_questions(
         fallback_stmt = select(Word.english).where(
             Word.language == language,
             ~Word.english.like('%...%'),
+            ~Word.english.like('%(%'),
+            ~Word.english.like('%)%'),
+            ~Word.english.like('%/%'),
             Word.english.notin_(pool) if pool else True
         ).order_by(func.random()).limit(needed)
         fb_res = await db.execute(fallback_stmt)
