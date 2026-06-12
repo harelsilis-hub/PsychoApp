@@ -33,8 +33,8 @@ def load_words_from_json() -> list[dict]:
     words = []
     units = sorted(data.keys(), key=lambda u: int(u.split()[-1]))  # sort Unit 1..10
 
-    for unit_idx, unit_name in enumerate(units):
-        unit_number = unit_idx + 1  # 1-based
+    for unit_name in units:
+        unit_number = int(unit_name.split()[-1])
 
         entries = data[unit_name]
         for english, hebrew in entries.items():

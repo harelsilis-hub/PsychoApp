@@ -1309,7 +1309,7 @@ const Admin = () => {
         <div className="space-y-1 mb-4">
           <p className="text-xs text-gray-400">
             English words submitted by users that are not yet in the main dictionary.
-            Approve to add them to <span className="font-semibold text-violet-600">Unit 11 (Extra Words)</span>.
+            Approve to add them to <span className="font-semibold text-violet-600">an Expansion Pack</span>.
             (Words already in the DB are automatically hidden.)
           </p>
           <div className="flex items-center justify-between pt-1">

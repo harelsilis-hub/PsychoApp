@@ -147,11 +147,14 @@ const Dashboard = () => {
     return found || { learned: 0, total: fallbackTotal, percent: 0 };
   };
 
-  // Derive available unit numbers from server data (supports any number of units)
   const availableUnits = unitStats?.units?.map((u) => u.unit) ??
-    Array.from({ length: 10 }, (_, i) => i + 1);
-  const regularUnits = availableUnits.filter(u => u <= 10);
-  const extraUnits   = availableUnits.filter(u => u > 10);
+    Array.from({ length: 16 }, (_, i) => i + 1);
+  if (!availableUnits.includes(16)) {
+    availableUnits.push(16);
+    availableUnits.sort((a, b) => a - b);
+  }
+  const regularUnits = availableUnits.filter(u => u !== 16);
+  const extraUnits   = availableUnits.filter(u => u === 16);
 
   const overallPercent = unitStats?.overall_percent ?? 0;
   const totalLearned   = unitStats?.total_learned  ?? 0;

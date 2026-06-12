@@ -29,7 +29,7 @@ const WordList = () => {
   const [filter,  setFilter]  = useState('all'); // 'all' | 'know' | 'dontknow'
   const [marks,   setMarks]   = useState(loadMarks);
 
-  const isExtraWords = unitNum === 11;
+  const isExtraWords = unitNum === 16;
   const unitLabel = isExtraWords ? 'מילים נוספות' : `יחידה ${unitNum}`;
 
   useEffect(() => {

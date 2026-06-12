@@ -122,7 +122,7 @@ const UnitDetail = () => {
   const percent   = stats?.percent  ?? 0;
   const remaining = total - learned;
   const completed = percent >= 100;
-  const isExtraWords = unitNum === 11;
+  const isExtraWords = unitNum === 16;
   const unitLabel = isExtraWords ? 'מילים נוספות' : `יחידה ${unitNum}`;
 
   const barGrad = completed
