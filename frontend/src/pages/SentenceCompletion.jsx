@@ -276,10 +276,16 @@ const SentenceCompletion = () => {
                 
                 <h3 className="text-xl sm:text-2xl font-black text-gray-800 leading-relaxed relative z-10" dir="ltr">
                   {(() => {
-                    const escapedWord = currentQ.word_form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    let parts = currentQ.sentence.split(new RegExp(`\\b${escapedWord}\\b`, 'i'));
+                    let regexStr;
+                    if (currentQ.word_form.includes('...')) {
+                      const formParts = currentQ.word_form.split('...');
+                      regexStr = formParts.map(p => p.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+.*?\\s+');
+                    } else {
+                      regexStr = currentQ.word_form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                    }
+                    let parts = currentQ.sentence.split(new RegExp(`\\b${regexStr}\\b`, 'i'));
                     if (parts.length === 1) {
-                      parts = currentQ.sentence.split(new RegExp(escapedWord, 'i'));
+                      parts = currentQ.sentence.split(new RegExp(regexStr, 'i'));
                     }
                     if (parts.length === 1) {
                       // Fallback: blank at the end
@@ -443,11 +449,18 @@ const SentenceCompletion = () => {
                           );
                         } else {
                           // Try to highlight the word if it's in the text
-                          const regex = new RegExp(`(${wa.word_form})`, 'gi');
+                          let regexStrForHighlight;
+                          if (wa.word_form.includes('...')) {
+                            const formParts = wa.word_form.split('...');
+                            regexStrForHighlight = formParts.map(p => p.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+.*?\\s+');
+                          } else {
+                            regexStrForHighlight = wa.word_form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                          }
+                          const regex = new RegExp(`(${regexStrForHighlight})`, 'gi');
                           const splitByWord = wa.sentence.split(regex);
                           if (splitByWord.length > 1) {
                             renderedSentence = splitByWord.map((segment, idx) => 
-                              segment.toLowerCase() === wa.word_form.toLowerCase() ? (
+                              idx % 2 !== 0 ? (
                                 <span key={idx} className="font-bold text-indigo-600 underline decoration-indigo-300 underline-offset-2 bg-indigo-50/50 px-1 rounded mx-0.5">
                                   {segment}
                                 </span>
